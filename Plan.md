@@ -57,8 +57,7 @@ The crate stays zero-dependency apart from the local `miniwin` example dependenc
 
 ### `miniwin` Integration
 
-- `raw_ns_window() -> *mut c_void`
-- `raw_ns_view() -> *mut c_void`
+- Access the public `window.ns_view` handle directly.
 - Use existing `content_size()` and `scale_factor()`.
 - Attach the Metal layer with `setWantsLayer:` and `setLayer:`.
 
@@ -181,7 +180,7 @@ The v1 API should include:
 - Precompiled `.metallib` loading and optional `build.rs` shader compilation.
 - Compute pipelines and compute command encoders.
 - Samplers, depth/stencil, multisampling, and indexed drawing.
-- Heaps, fences, shared events, capture tooling, argument buffers, sparse resources, counters, and ray tracing.
+- Capture tooling, counters, sparse resources, and ray tracing.
 
 ## V2 Core Renderer Binding Surface
 
@@ -255,3 +254,70 @@ V2 expands the crate from framebuffer presentation into bindings needed by a For
 
 - `examples/compute.rs` validates compute pipeline creation, dispatch, command completion, and CPU-visible buffer readback.
 - `examples/depth_triangle.rs` validates depth state, depth attachments, vertex descriptors, indexed drawing, viewport/scissor state, and presentation.
+
+## V3 GPU-Driven Core Binding Surface
+
+V3 adds GPU-driven Metal features needed by scalable Forward+ renderer architecture while staying bindings-only, runtime-shader-only, zero-dependency, and macro-free.
+
+### V3 Decisions
+
+- Keep direct `window.ns_view` access for `CAMetalLayer` attachment.
+- Keep diagnostics, capture tooling, counters, sparse resources, ray tracing, and renderer architecture out of v3.
+- Keep advanced API bindings available through `minmetal::*`.
+
+### V3 Binding Additions
+
+- Function constants:
+  - `MTLFunctionConstantValues`
+  - typed bool, integer, float, and byte setters
+  - `newFunctionWithName:constantValues:error:`
+
+- Binary archives:
+  - `MTLBinaryArchiveDescriptor`
+  - `newBinaryArchiveWithDescriptor:error:`
+  - render and compute pipeline function insertion
+  - render and compute descriptor archive lists
+
+- Argument buffers:
+  - `MTLArgumentDescriptor`
+  - `MTLArgumentEncoder`
+  - encoded length and alignment
+  - buffer, texture, sampler, and byte encoding
+  - argument buffer allocation and binding
+
+- Indirect command buffers:
+  - `MTLIndirectCommandBufferDescriptor`
+  - command type flags and inheritance controls
+  - render and compute indirect commands
+  - indirect draw, indexed draw, and compute dispatch
+  - render and compute encoder execution
+
+- Heaps:
+  - `MTLHeapDescriptor`
+  - heap type, storage mode, CPU cache mode, hazard tracking mode, and size
+  - device heap size/alignment queries
+  - heap buffer and texture allocation
+  - heap usage/availability queries
+
+- Shared events:
+  - `MTLSharedEvent`
+  - signaled value get/set
+  - command buffer signal and wait encoding
+
+- Resource-state commands:
+  - `MTLResourceStateCommandEncoder`
+  - fence update/wait
+  - sparse texture mapping entry points later
+
+- Render/compute resource usage declarations:
+  - `useResource:usage:`
+  - `useHeap:`
+  - fence update/wait
+
+### V3 Smoke Examples
+
+- `examples/function_constants.rs`
+- `examples/heap_resources.rs`
+- `examples/resource_state.rs`
+- `examples/argument_buffer.rs`
+- `examples/indirect_commands.rs`

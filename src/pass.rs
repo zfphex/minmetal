@@ -1,10 +1,8 @@
-use super::ffi::*;
-use super::resource::Texture;
-use super::types::*;
+use crate::*;
 
 #[derive(Debug)]
 pub struct RenderPassDescriptor {
-    pub(crate) raw: id,
+    pub raw: id,
 }
 
 impl RenderPassDescriptor {

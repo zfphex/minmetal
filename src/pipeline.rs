@@ -1,10 +1,172 @@
-use super::device::Function;
-use super::ffi::*;
-use super::types::*;
+use crate::*;
+use std::ffi::c_void;
+use std::mem::transmute;
+
+#[derive(Debug)]
+pub struct FunctionConstantValues {
+    pub raw: id,
+}
+
+impl FunctionConstantValues {
+    pub fn new() -> Self {
+        unsafe {
+            let allocated = msg_id(class(b"MTLFunctionConstantValues\0"), sel(b"alloc\0"));
+            Self {
+                raw: msg_id(allocated, sel(b"init\0")),
+            }
+        }
+    }
+
+    pub fn set_bool(&self, index: usize, value: bool) {
+        let value: bool = value;
+        self.set_raw(
+            index,
+            DataType::Bool,
+            &value as *const bool as *const c_void,
+        );
+    }
+
+    pub fn set_u32(&self, index: usize, value: u32) {
+        self.set_raw(index, DataType::UInt, &value as *const u32 as *const c_void);
+    }
+
+    pub fn set_i32(&self, index: usize, value: i32) {
+        self.set_raw(index, DataType::Int, &value as *const i32 as *const c_void);
+    }
+
+    pub fn set_f32(&self, index: usize, value: f32) {
+        self.set_raw(
+            index,
+            DataType::Float,
+            &value as *const f32 as *const c_void,
+        );
+    }
+
+    pub fn set_bytes(&self, index: usize, data_type: DataType, bytes: &[u8]) {
+        self.set_raw(index, data_type, bytes.as_ptr() as *const c_void);
+    }
+
+    fn set_raw(&self, index: usize, data_type: DataType, ptr: *const c_void) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, *const c_void, usize, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"setConstantValue:type:atIndex:\0"),
+                ptr,
+                data_type as usize,
+                index,
+            );
+        }
+    }
+}
+
+impl Default for FunctionConstantValues {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Drop for FunctionConstantValues {
+    fn drop(&mut self) {
+        unsafe { release(self.raw) };
+    }
+}
+
+#[derive(Debug)]
+pub struct BinaryArchiveDescriptor {
+    pub raw: id,
+}
+
+impl BinaryArchiveDescriptor {
+    pub fn new() -> Self {
+        unsafe {
+            let allocated = msg_id(class(b"MTLBinaryArchiveDescriptor\0"), sel(b"alloc\0"));
+            Self {
+                raw: msg_id(allocated, sel(b"init\0")),
+            }
+        }
+    }
+}
+
+impl Default for BinaryArchiveDescriptor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Drop for BinaryArchiveDescriptor {
+    fn drop(&mut self) {
+        unsafe { release(self.raw) };
+    }
+}
+
+#[derive(Debug)]
+pub struct BinaryArchive {
+    pub raw: id,
+}
+
+impl BinaryArchive {
+    pub fn add_render_pipeline_functions(
+        &self,
+        descriptor: &RenderPipelineDescriptor,
+    ) -> Result<(), MetalError> {
+        unsafe {
+            let mut error = NIL;
+            let f: unsafe extern "C" fn(id, SEL, id, *mut id) -> BOOL =
+                transmute(objc_msgSend as *const c_void);
+            let ok = f(
+                self.raw,
+                sel(b"addRenderPipelineFunctionsWithDescriptor:error:\0"),
+                descriptor.raw,
+                &mut error,
+            );
+            if ok == NO {
+                Err(MetalError::new(error_message(
+                    error,
+                    "failed to add render pipeline functions to Metal binary archive",
+                )))
+            } else {
+                Ok(())
+            }
+        }
+    }
+
+    pub fn add_compute_pipeline_functions(
+        &self,
+        descriptor: &ComputePipelineDescriptor,
+    ) -> Result<(), MetalError> {
+        unsafe {
+            let mut error = NIL;
+            let f: unsafe extern "C" fn(id, SEL, id, *mut id) -> BOOL =
+                transmute(objc_msgSend as *const c_void);
+            let ok = f(
+                self.raw,
+                sel(b"addComputePipelineFunctionsWithDescriptor:error:\0"),
+                descriptor.raw,
+                &mut error,
+            );
+            if ok == NO {
+                Err(MetalError::new(error_message(
+                    error,
+                    "failed to add compute pipeline functions to Metal binary archive",
+                )))
+            } else {
+                Ok(())
+            }
+        }
+    }
+}
+
+impl Drop for BinaryArchive {
+    fn drop(&mut self) {
+        unsafe { release(self.raw) };
+    }
+}
 
 #[derive(Debug)]
 pub struct ComputePipelineDescriptor {
-    pub(crate) raw: id,
+    pub raw: id,
 }
 
 impl ComputePipelineDescriptor {
@@ -20,6 +182,14 @@ impl ComputePipelineDescriptor {
     pub fn set_compute_function(&self, function: &Function) {
         unsafe {
             msg_void_id(self.raw, sel(b"setComputeFunction:\0"), function.raw);
+        }
+    }
+
+    pub fn set_binary_archives(&self, archives: &[&BinaryArchive]) {
+        unsafe {
+            let raw: Vec<id> = archives.iter().map(|archive| archive.raw).collect();
+            let array = ns_array_from_ids(&raw);
+            msg_void_id(self.raw, sel(b"setBinaryArchives:\0"), array);
         }
     }
 }
@@ -38,7 +208,7 @@ impl Drop for ComputePipelineDescriptor {
 
 #[derive(Debug)]
 pub struct ComputePipelineState {
-    pub(crate) raw: id,
+    pub raw: id,
 }
 
 impl Drop for ComputePipelineState {
@@ -49,7 +219,7 @@ impl Drop for ComputePipelineState {
 
 #[derive(Debug)]
 pub struct VertexDescriptor {
-    pub(crate) raw: id,
+    pub raw: id,
 }
 
 impl VertexDescriptor {
@@ -110,7 +280,7 @@ impl Drop for VertexDescriptor {
 
 #[derive(Debug)]
 pub struct RenderPipelineDescriptor {
-    pub(crate) raw: id,
+    pub raw: id,
 }
 
 impl RenderPipelineDescriptor {
@@ -258,6 +428,14 @@ impl RenderPipelineDescriptor {
             msg_void_usize(attachment, sel(b"setWriteMask:\0"), mask.as_raw());
         }
     }
+
+    pub fn set_binary_archives(&self, archives: &[&BinaryArchive]) {
+        unsafe {
+            let raw: Vec<id> = archives.iter().map(|archive| archive.raw).collect();
+            let array = ns_array_from_ids(&raw);
+            msg_void_id(self.raw, sel(b"setBinaryArchives:\0"), array);
+        }
+    }
 }
 
 impl Default for RenderPipelineDescriptor {
@@ -274,7 +452,7 @@ impl Drop for RenderPipelineDescriptor {
 
 #[derive(Debug)]
 pub struct RenderPipelineState {
-    pub(crate) raw: id,
+    pub raw: id,
 }
 
 impl Drop for RenderPipelineState {
@@ -285,7 +463,7 @@ impl Drop for RenderPipelineState {
 
 #[derive(Debug)]
 pub struct StencilDescriptor {
-    pub(crate) raw: id,
+    pub raw: id,
 }
 
 impl StencilDescriptor {
@@ -348,7 +526,7 @@ impl StencilDescriptor {
 
 #[derive(Debug)]
 pub struct DepthStencilDescriptor {
-    pub(crate) raw: id,
+    pub raw: id,
 }
 
 impl DepthStencilDescriptor {
@@ -404,7 +582,7 @@ impl Drop for DepthStencilDescriptor {
 
 #[derive(Debug)]
 pub struct DepthStencilState {
-    pub(crate) raw: id,
+    pub raw: id,
 }
 
 impl Drop for DepthStencilState {
@@ -415,7 +593,7 @@ impl Drop for DepthStencilState {
 
 #[derive(Debug)]
 pub struct SamplerDescriptor {
-    pub(crate) raw: id,
+    pub raw: id,
 }
 
 impl SamplerDescriptor {
@@ -513,7 +691,7 @@ impl Drop for SamplerDescriptor {
 
 #[derive(Debug)]
 pub struct SamplerState {
-    pub(crate) raw: id,
+    pub raw: id,
 }
 
 impl Drop for SamplerState {
@@ -524,7 +702,7 @@ impl Drop for SamplerState {
 
 #[derive(Debug)]
 pub struct Fence {
-    pub(crate) raw: id,
+    pub raw: id,
 }
 
 impl Drop for Fence {

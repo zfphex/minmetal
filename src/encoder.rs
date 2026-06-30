@@ -1,15 +1,10 @@
-use super::ffi::*;
-use super::pipeline::{
-    ComputePipelineState, DepthStencilState, Fence, RenderPipelineState, SamplerState,
-};
-use super::resource::{Buffer, Texture};
-use super::types::*;
+use crate::*;
 use std::ffi::c_void;
 use std::mem::transmute;
 
 #[derive(Debug)]
 pub struct RenderCommandEncoder {
-    pub(crate) raw: id,
+    pub raw: id,
 }
 
 impl RenderCommandEncoder {
@@ -277,6 +272,51 @@ impl RenderCommandEncoder {
         }
     }
 
+    pub fn use_buffer(&self, buffer: &Buffer, usage: ResourceUsage) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"useResource:usage:\0"),
+                buffer.raw,
+                usage.as_raw(),
+            );
+        }
+    }
+
+    pub fn use_texture(&self, texture: &Texture, usage: ResourceUsage) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"useResource:usage:\0"),
+                texture.raw,
+                usage.as_raw(),
+            );
+        }
+    }
+
+    pub fn use_heap(&self, heap: &Heap) {
+        unsafe {
+            msg_void_id(self.raw, sel(b"useHeap:\0"), heap.raw);
+        }
+    }
+
+    pub fn execute_commands_in_buffer(&self, buffer: &IndirectCommandBuffer, range: Range) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, Range) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"executeCommandsInBuffer:withRange:\0"),
+                buffer.raw,
+                range,
+            );
+        }
+    }
+
     pub fn end_encoding(&self) {
         unsafe { msg_void(self.raw, sel(b"endEncoding\0")) };
     }
@@ -290,7 +330,7 @@ impl Drop for RenderCommandEncoder {
 
 #[derive(Debug)]
 pub struct ComputeCommandEncoder {
-    pub(crate) raw: id,
+    pub raw: id,
 }
 
 impl ComputeCommandEncoder {
@@ -387,6 +427,51 @@ impl ComputeCommandEncoder {
         }
     }
 
+    pub fn use_buffer(&self, buffer: &Buffer, usage: ResourceUsage) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"useResource:usage:\0"),
+                buffer.raw,
+                usage.as_raw(),
+            );
+        }
+    }
+
+    pub fn use_texture(&self, texture: &Texture, usage: ResourceUsage) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"useResource:usage:\0"),
+                texture.raw,
+                usage.as_raw(),
+            );
+        }
+    }
+
+    pub fn use_heap(&self, heap: &Heap) {
+        unsafe {
+            msg_void_id(self.raw, sel(b"useHeap:\0"), heap.raw);
+        }
+    }
+
+    pub fn execute_commands_in_buffer(&self, buffer: &IndirectCommandBuffer, range: Range) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, Range) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"executeCommandsInBuffer:withRange:\0"),
+                buffer.raw,
+                range,
+            );
+        }
+    }
+
     pub fn end_encoding(&self) {
         unsafe { msg_void(self.raw, sel(b"endEncoding\0")) };
     }
@@ -399,8 +484,37 @@ impl Drop for ComputeCommandEncoder {
 }
 
 #[derive(Debug)]
+pub struct ResourceStateCommandEncoder {
+    pub raw: id,
+}
+
+impl ResourceStateCommandEncoder {
+    pub fn update_fence(&self, fence: &Fence) {
+        unsafe {
+            msg_void_id(self.raw, sel(b"updateFence:\0"), fence.raw);
+        }
+    }
+
+    pub fn wait_for_fence(&self, fence: &Fence) {
+        unsafe {
+            msg_void_id(self.raw, sel(b"waitForFence:\0"), fence.raw);
+        }
+    }
+
+    pub fn end_encoding(&self) {
+        unsafe { msg_void(self.raw, sel(b"endEncoding\0")) };
+    }
+}
+
+impl Drop for ResourceStateCommandEncoder {
+    fn drop(&mut self) {
+        unsafe { release(self.raw) };
+    }
+}
+
+#[derive(Debug)]
 pub struct BlitCommandEncoder {
-    pub(crate) raw: id,
+    pub raw: id,
 }
 
 impl BlitCommandEncoder {

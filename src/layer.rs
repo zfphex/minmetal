@@ -1,13 +1,10 @@
-use super::device::Device;
-use super::ffi::*;
-use super::resource::Texture;
-use super::types::*;
+use crate::*;
 use std::ffi::c_void;
 use std::mem::transmute;
 
 #[derive(Debug)]
 pub struct MetalLayer {
-    pub(crate) raw: id,
+    pub raw: id,
 }
 
 impl MetalLayer {
@@ -108,7 +105,7 @@ impl Drop for MetalLayer {
 
 #[derive(Debug)]
 pub struct Drawable {
-    pub(crate) raw: id,
+    pub raw: id,
 }
 
 impl Drawable {

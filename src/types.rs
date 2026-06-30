@@ -112,6 +112,13 @@ pub struct Range {
     pub length: usize,
 }
 
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct SizeAndAlign {
+    pub size: usize,
+    pub align: usize,
+}
+
 impl Range {
     pub const fn new(location: usize, length: usize) -> Self {
         Self { location, length }
@@ -131,9 +138,9 @@ impl ClearColor {
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
-pub(crate) struct CGSize {
-    pub(crate) width: f64,
-    pub(crate) height: f64,
+pub struct CGSize {
+    pub width: f64,
+    pub height: f64,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -173,7 +180,7 @@ pub enum PixelFormat {
 }
 
 impl PixelFormat {
-    pub(crate) const fn as_raw(self) -> usize {
+    pub const fn as_raw(self) -> usize {
         self as usize
     }
 }
@@ -184,6 +191,13 @@ pub enum StorageMode {
     Shared = 0,
     Managed = 1,
     Private = 2,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(usize)]
+pub enum HeapType {
+    Automatic = 0,
+    Placement = 1,
 }
 
 impl StorageMode {
@@ -231,8 +245,29 @@ impl ResourceOptions {
         )
     }
 
-    pub(crate) const fn as_raw(self) -> usize {
+    pub const fn as_raw(self) -> usize {
         self.0
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ResourceUsage(usize);
+
+impl ResourceUsage {
+    pub const READ: Self = Self(1);
+    pub const WRITE: Self = Self(2);
+    pub const SAMPLE: Self = Self(4);
+
+    pub const fn as_raw(self) -> usize {
+        self.0
+    }
+}
+
+impl std::ops::BitOr for ResourceUsage {
+    type Output = Self;
+
+    fn bitor(self, rhs: Self) -> Self::Output {
+        Self(self.0 | rhs.0)
     }
 }
 
@@ -246,7 +281,7 @@ impl TextureUsage {
     pub const RENDER_TARGET: Self = Self(1 << 2);
     pub const PIXEL_FORMAT_VIEW: Self = Self(1 << 4);
 
-    pub(crate) const fn as_raw(self) -> usize {
+    pub const fn as_raw(self) -> usize {
         self.0
     }
 }
@@ -361,7 +396,7 @@ impl ColorWriteMask {
     pub const ALPHA: Self = Self(1);
     pub const ALL: Self = Self(0xf);
 
-    pub(crate) const fn as_raw(self) -> usize {
+    pub const fn as_raw(self) -> usize {
         self.0
     }
 }
@@ -464,13 +499,93 @@ pub enum TriangleFillMode {
     Lines = 1,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(usize)]
+pub enum DataType {
+    None = 0,
+    Struct = 1,
+    Array = 2,
+    Float = 3,
+    Float2 = 4,
+    Float3 = 5,
+    Float4 = 6,
+    Int = 29,
+    Int2 = 30,
+    Int3 = 31,
+    Int4 = 32,
+    UInt = 33,
+    UInt2 = 34,
+    UInt3 = 35,
+    UInt4 = 36,
+    Bool = 53,
+    Texture = 58,
+    Sampler = 59,
+    Pointer = 60,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(usize)]
+pub enum ArgumentAccess {
+    ReadOnly = 0,
+    ReadWrite = 1,
+    WriteOnly = 2,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct IndirectCommandType(usize);
+
+impl IndirectCommandType {
+    pub const DRAW: Self = Self(1);
+    pub const DRAW_INDEXED: Self = Self(1 << 1);
+    pub const DRAW_PATCH: Self = Self(1 << 2);
+    pub const DRAW_INDEXED_PATCH: Self = Self(1 << 3);
+    pub const CONCURRENT_DISPATCH: Self = Self(1 << 5);
+    pub const CONCURRENT_DISPATCH_THREADS: Self = Self(1 << 6);
+
+    pub const fn as_raw(self) -> usize {
+        self.0
+    }
+}
+
+impl std::ops::BitOr for IndirectCommandType {
+    type Output = Self;
+
+    fn bitor(self, rhs: Self) -> Self::Output {
+        Self(self.0 | rhs.0)
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct IndirectCommandBufferOptions(usize);
+
+impl IndirectCommandBufferOptions {
+    pub const NONE: Self = Self(0);
+    pub const STORAGE_MODE_PRIVATE: Self = Self(1 << 4);
+
+    pub const fn as_raw(self) -> usize {
+        self.0
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum FunctionConstantValue {
+    Bool(bool),
+    U32(u32),
+    I32(i32),
+    F32(f32),
+    Bytes {
+        ptr: *const std::ffi::c_void,
+        len: usize,
+    },
+}
+
 #[derive(Debug, Clone)]
 pub struct MetalError {
     message: String,
 }
 
 impl MetalError {
-    pub(crate) fn new(message: impl Into<String>) -> Self {
+    pub fn new(message: impl Into<String>) -> Self {
         Self {
             message: message.into(),
         }

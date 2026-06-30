@@ -1,20 +1,11 @@
-use super::encoder::{BlitCommandEncoder, ComputeCommandEncoder, RenderCommandEncoder};
-use super::ffi::*;
-use super::layer::Drawable;
-use super::pass::RenderPassDescriptor;
-use super::pipeline::{
-    ComputePipelineDescriptor, ComputePipelineState, DepthStencilDescriptor, DepthStencilState,
-    Fence, RenderPipelineDescriptor, RenderPipelineState, SamplerDescriptor, SamplerState,
-};
-use super::resource::{Buffer, Texture, TextureDescriptor};
-use super::types::*;
+use crate::*;
 use std::ffi::c_void;
 use std::mem::transmute;
 use std::ptr;
 
 #[derive(Debug)]
 pub struct Device {
-    pub(crate) raw: id,
+    pub raw: id,
 }
 
 impl Device {
@@ -193,6 +184,68 @@ impl Device {
         }
     }
 
+    pub fn new_shared_event(&self) -> Result<SharedEvent, MetalError> {
+        unsafe {
+            let raw = msg_id(self.raw, sel(b"newSharedEvent\0"));
+            if raw.is_null() {
+                Err(MetalError::new("failed to create Metal shared event"))
+            } else {
+                Ok(SharedEvent { raw })
+            }
+        }
+    }
+
+    pub fn new_indirect_command_buffer(
+        &self,
+        descriptor: &IndirectCommandBufferDescriptor,
+        max_command_count: usize,
+        options: IndirectCommandBufferOptions,
+    ) -> Result<IndirectCommandBuffer, MetalError> {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, usize, usize) -> id =
+                transmute(objc_msgSend as *const c_void);
+            let raw = f(
+                self.raw,
+                sel(b"newIndirectCommandBufferWithDescriptor:maxCommandCount:options:\0"),
+                descriptor.raw,
+                max_command_count,
+                options.as_raw(),
+            );
+            if raw.is_null() {
+                Err(MetalError::new(
+                    "failed to create Metal indirect command buffer",
+                ))
+            } else {
+                Ok(IndirectCommandBuffer { raw })
+            }
+        }
+    }
+
+    pub fn new_binary_archive(
+        &self,
+        descriptor: &BinaryArchiveDescriptor,
+    ) -> Result<BinaryArchive, MetalError> {
+        unsafe {
+            let mut error = NIL;
+            let f: unsafe extern "C" fn(id, SEL, id, *mut id) -> id =
+                transmute(objc_msgSend as *const c_void);
+            let raw = f(
+                self.raw,
+                sel(b"newBinaryArchiveWithDescriptor:error:\0"),
+                descriptor.raw,
+                &mut error,
+            );
+            if raw.is_null() {
+                Err(MetalError::new(error_message(
+                    error,
+                    "failed to create Metal binary archive",
+                )))
+            } else {
+                Ok(BinaryArchive { raw })
+            }
+        }
+    }
+
     pub fn new_buffer(
         &self,
         length: usize,
@@ -211,6 +264,69 @@ impl Device {
                 Err(MetalError::new("failed to create Metal buffer"))
             } else {
                 Ok(Buffer { raw })
+            }
+        }
+    }
+
+    pub fn new_heap(&self, descriptor: &HeapDescriptor) -> Result<Heap, MetalError> {
+        unsafe {
+            let raw = msg_id_id(self.raw, sel(b"newHeapWithDescriptor:\0"), descriptor.raw);
+            if raw.is_null() {
+                Err(MetalError::new("failed to create Metal heap"))
+            } else {
+                Ok(Heap { raw })
+            }
+        }
+    }
+
+    pub fn heap_buffer_size_and_align(
+        &self,
+        length: usize,
+        options: ResourceOptions,
+    ) -> SizeAndAlign {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, usize, usize) -> SizeAndAlign =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"heapBufferSizeAndAlignWithLength:options:\0"),
+                length,
+                options.as_raw(),
+            )
+        }
+    }
+
+    pub fn heap_texture_size_and_align(&self, descriptor: &TextureDescriptor) -> SizeAndAlign {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id) -> SizeAndAlign =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"heapTextureSizeAndAlignWithDescriptor:\0"),
+                descriptor.raw,
+            )
+        }
+    }
+
+    pub fn new_argument_encoder(
+        &self,
+        descriptors: &[&ArgumentDescriptor],
+    ) -> Result<ArgumentEncoder, MetalError> {
+        unsafe {
+            let raw_descriptors: Vec<id> = descriptors
+                .iter()
+                .map(|descriptor| descriptor.raw)
+                .collect();
+            let array = ns_array_from_ids(&raw_descriptors);
+            let raw = retain(msg_id_id(
+                self.raw,
+                sel(b"newArgumentEncoderWithArguments:\0"),
+                array,
+            ));
+            if raw.is_null() {
+                Err(MetalError::new("failed to create Metal argument encoder"))
+            } else {
+                Ok(ArgumentEncoder { raw })
             }
         }
     }
@@ -263,7 +379,7 @@ impl Drop for Device {
 
 #[derive(Debug)]
 pub struct CommandQueue {
-    pub(crate) raw: id,
+    pub raw: id,
 }
 
 impl CommandQueue {
@@ -287,7 +403,7 @@ impl Drop for CommandQueue {
 
 #[derive(Debug)]
 pub struct CommandBuffer {
-    pub(crate) raw: id,
+    pub raw: id,
 }
 
 impl CommandBuffer {
@@ -337,6 +453,47 @@ impl CommandBuffer {
         }
     }
 
+    pub fn resource_state_command_encoder(
+        &self,
+    ) -> Result<ResourceStateCommandEncoder, MetalError> {
+        unsafe {
+            let raw = retain(msg_id(self.raw, sel(b"resourceStateCommandEncoder\0")));
+            if raw.is_null() {
+                Err(MetalError::new(
+                    "failed to create Metal resource state command encoder",
+                ))
+            } else {
+                Ok(ResourceStateCommandEncoder { raw })
+            }
+        }
+    }
+
+    pub fn encode_signal_event(&self, event: &SharedEvent, value: u64) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, u64) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"encodeSignalEvent:value:\0"),
+                event.raw,
+                value,
+            );
+        }
+    }
+
+    pub fn encode_wait_for_event(&self, event: &SharedEvent, value: u64) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, u64) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"encodeWaitForEvent:value:\0"),
+                event.raw,
+                value,
+            );
+        }
+    }
+
     pub fn present_drawable(&self, drawable: &Drawable) {
         unsafe {
             msg_void_id(self.raw, sel(b"presentDrawable:\0"), drawable.raw);
@@ -371,7 +528,7 @@ impl Drop for CommandBuffer {
 
 #[derive(Debug)]
 pub struct Library {
-    pub(crate) raw: id,
+    pub raw: id,
 }
 
 impl Library {
@@ -381,6 +538,34 @@ impl Library {
             let raw = msg_id_id(self.raw, sel(b"newFunctionWithName:\0"), name.raw());
             if raw.is_null() {
                 Err(MetalError::new("failed to load Metal function"))
+            } else {
+                Ok(Function { raw })
+            }
+        }
+    }
+
+    pub fn function_with_constants(
+        &self,
+        name: &str,
+        constants: &FunctionConstantValues,
+    ) -> Result<Function, MetalError> {
+        unsafe {
+            let name = NSString::new(name);
+            let mut error = NIL;
+            let f: unsafe extern "C" fn(id, SEL, id, id, *mut id) -> id =
+                transmute(objc_msgSend as *const c_void);
+            let raw = f(
+                self.raw,
+                sel(b"newFunctionWithName:constantValues:error:\0"),
+                name.raw(),
+                constants.raw,
+                &mut error,
+            );
+            if raw.is_null() {
+                Err(MetalError::new(error_message(
+                    error,
+                    "failed to specialize Metal function with constants",
+                )))
             } else {
                 Ok(Function { raw })
             }
@@ -396,7 +581,7 @@ impl Drop for Library {
 
 #[derive(Debug)]
 pub struct Function {
-    pub(crate) raw: id,
+    pub raw: id,
 }
 
 impl Function {

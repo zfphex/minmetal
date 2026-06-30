@@ -1,4 +1,4 @@
-use minmetal::{Device, ResourceOptions, Size};
+use minmetal::*;
 
 const SHADER: &str = r#"
 #include <metal_stdlib>

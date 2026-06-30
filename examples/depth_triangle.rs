@@ -1,11 +1,6 @@
 use miniwin::{Event, Key, Window, WindowStyle, create_window};
 
-use minmetal::{
-    AutoreleasePool, ClearColor, CompareFunction, DepthStencilDescriptor, Device, IndexType,
-    LoadAction, MetalLayer, PixelFormat, PrimitiveType, RenderPassDescriptor,
-    RenderPipelineDescriptor, ResourceOptions, ScissorRect, StoreAction, TextureDescriptor,
-    TextureUsage, VertexDescriptor, VertexFormat, VertexStepFunction, Viewport,
-};
+use minmetal::*;
 
 #[repr(C)]
 #[derive(Clone, Copy)]
