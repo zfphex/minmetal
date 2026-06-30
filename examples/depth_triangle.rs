@@ -90,7 +90,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (width, height) = window.content_size();
     let layer = unsafe {
         MetalLayer::attach_to_view(
-            window.raw_ns_view(),
+            window.ns_view,
             &device,
             PixelFormat::Bgra8Unorm,
             (width as f64 * scale) as usize,
