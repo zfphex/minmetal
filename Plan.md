@@ -182,3 +182,76 @@ The v1 API should include:
 - Compute pipelines and compute command encoders.
 - Samplers, depth/stencil, multisampling, and indexed drawing.
 - Heaps, fences, shared events, capture tooling, argument buffers, sparse resources, counters, and ray tracing.
+
+## V2 Core Renderer Binding Surface
+
+V2 expands the crate from framebuffer presentation into bindings needed by a Forward+ renderer. It remains a bindings-only release: no renderer framework, no IBL implementation, no clustered light system, no HZB builder, no shadows, no decals, no SSR, and no post stack yet.
+
+### V2 Decisions
+
+- Keep the single-crate structure.
+- Keep runtime shader source compilation only.
+- Keep examples as single files under `examples/`.
+- Keep the API zero-dependency and macro-free.
+- Avoid advanced Metal systems in this phase: argument buffers, indirect command buffers, heaps, sparse resources, counters, capture tooling, ray tracing, and full renderer architecture.
+
+### V2 Binding Additions
+
+- Compute:
+  - compute pipeline descriptors and states
+  - compute command encoders
+  - compute buffer, texture, sampler, and bytes binding
+  - threadgroup and thread-grid dispatch
+
+- Depth/stencil:
+  - depth/stencil descriptors and states
+  - compare functions, stencil operations, stencil masks
+  - depth and stencil render pass attachments
+  - depth resolve attachment support
+
+- Pipeline state:
+  - vertex descriptors
+  - multiple color attachment configuration
+  - blending factors and operations
+  - color write masks
+  - sample count and raster sample count
+  - depth and stencil attachment pixel formats
+  - alpha-to-coverage
+
+- Drawing and encoder state:
+  - indexed drawing
+  - instanced drawing
+  - viewport and scissor state
+  - cull mode, front-facing winding, triangle fill mode
+  - depth bias
+  - vertex and fragment texture/sampler bindings
+  - small uniform byte bindings
+
+- Textures and resources:
+  - 1D, 2D, 2D array, 3D, cube, cube-array, and multisample texture types
+  - expanded color, HDR, integer, compressed, depth, and stencil pixel formats
+  - mip level count, array length, depth, sample count, and texture usage flags
+  - texture views
+  - texture CPU readback
+  - buffer modified-range notification
+
+- Samplers:
+  - sampler descriptors and states
+  - min/mag/mip filters
+  - address modes
+  - compare function
+  - anisotropy
+  - LOD clamp
+
+- Blit and synchronization:
+  - buffer-to-buffer copy
+  - buffer-to-texture copy
+  - texture-to-texture copy
+  - mipmap generation
+  - managed resource synchronization
+  - fences for render, compute, and blit encoders
+
+### V2 Smoke Examples
+
+- `examples/compute.rs` validates compute pipeline creation, dispatch, command completion, and CPU-visible buffer readback.
+- `examples/depth_triangle.rs` validates depth state, depth attachments, vertex descriptors, indexed drawing, viewport/scissor state, and presentation.

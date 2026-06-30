@@ -1,13 +1,10 @@
-#[cfg(target_os = "macos")]
 use miniwin::{Event, Key, Window, WindowStyle, create_window};
 
-#[cfg(target_os = "macos")]
 use minmetal::{
     AutoreleasePool, ClearColor, Device, LoadAction, MetalLayer, PixelFormat, PrimitiveType,
     RenderPassDescriptor, RenderPipelineDescriptor, ResourceOptions, StoreAction,
 };
 
-#[cfg(target_os = "macos")]
 #[repr(C)]
 #[derive(Clone, Copy)]
 struct Uniforms {
@@ -17,7 +14,6 @@ struct Uniforms {
     _pad: f32,
 }
 
-#[cfg(target_os = "macos")]
 const SHADERS: &str = r#"
 #include <metal_stdlib>
 using namespace metal;
@@ -59,7 +55,6 @@ fragment float4 gradient_fragment(VertexOut in [[stage_in]],
 }
 "#;
 
-#[cfg(target_os = "macos")]
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut window = create_window("Metal Demo", None, 800, 600, WindowStyle::Standard);
 
@@ -165,9 +160,4 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     Ok(())
-}
-
-#[cfg(not(target_os = "macos"))]
-fn main() {
-    eprintln!("minmetal currently targets macOS because Metal is an Apple platform API.");
 }
