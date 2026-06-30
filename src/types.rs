@@ -1,3 +1,4 @@
+#[repr(C)]
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Size {
     pub width: usize,
@@ -560,7 +561,7 @@ pub struct IndirectCommandBufferOptions(usize);
 
 impl IndirectCommandBufferOptions {
     pub const NONE: Self = Self(0);
-    pub const STORAGE_MODE_PRIVATE: Self = Self(1 << 4);
+    pub const STORAGE_MODE_PRIVATE: Self = Self(StorageMode::Private.as_resource_bits());
 
     pub const fn as_raw(self) -> usize {
         self.0

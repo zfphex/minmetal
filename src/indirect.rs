@@ -90,26 +90,28 @@ impl IndirectCommandBuffer {
         }
     }
 
-    pub fn render_command(&self, index: usize) -> IndirectRenderCommand {
+    pub fn render_command(&self, index: usize) -> Result<IndirectRenderCommand, MetalError> {
         unsafe {
-            IndirectRenderCommand {
-                raw: retain(msg_id_usize(
-                    self.raw,
-                    sel(b"indirectRenderCommandAtIndex:\0"),
-                    index,
-                )),
+            let raw = msg_id_usize(self.raw, sel(b"indirectRenderCommandAtIndex:\0"), index);
+            if raw.is_null() {
+                Err(MetalError::new(
+                    "failed to get Metal indirect render command",
+                ))
+            } else {
+                Ok(IndirectRenderCommand { raw })
             }
         }
     }
 
-    pub fn compute_command(&self, index: usize) -> IndirectComputeCommand {
+    pub fn compute_command(&self, index: usize) -> Result<IndirectComputeCommand, MetalError> {
         unsafe {
-            IndirectComputeCommand {
-                raw: retain(msg_id_usize(
-                    self.raw,
-                    sel(b"indirectComputeCommandAtIndex:\0"),
-                    index,
-                )),
+            let raw = msg_id_usize(self.raw, sel(b"indirectComputeCommandAtIndex:\0"), index);
+            if raw.is_null() {
+                Err(MetalError::new(
+                    "failed to get Metal indirect compute command",
+                ))
+            } else {
+                Ok(IndirectComputeCommand { raw })
             }
         }
     }
@@ -214,12 +216,6 @@ impl IndirectRenderCommand {
     }
 }
 
-impl Drop for IndirectRenderCommand {
-    fn drop(&mut self) {
-        unsafe { release(self.raw) };
-    }
-}
-
 #[derive(Debug)]
 pub struct IndirectComputeCommand {
     pub raw: id,
@@ -252,7 +248,7 @@ impl IndirectComputeCommand {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"dispatchThreadgroups:threadsPerThreadgroup:\0"),
+                sel(b"concurrentDispatchThreadgroups:threadsPerThreadgroup:\0"),
                 threadgroups,
                 threads_per_threadgroup,
             );
@@ -265,7 +261,7 @@ impl IndirectComputeCommand {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"dispatchThreads:threadsPerThreadgroup:\0"),
+                sel(b"concurrentDispatchThreads:threadsPerThreadgroup:\0"),
                 threads,
                 threads_per_threadgroup,
             );
@@ -274,11 +270,5 @@ impl IndirectComputeCommand {
 
     pub fn reset(&self) {
         unsafe { msg_void(self.raw, sel(b"reset\0")) };
-    }
-}
-
-impl Drop for IndirectComputeCommand {
-    fn drop(&mut self) {
-        unsafe { release(self.raw) };
     }
 }

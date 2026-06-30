@@ -192,6 +192,16 @@ impl ComputePipelineDescriptor {
             msg_void_id(self.raw, sel(b"setBinaryArchives:\0"), array);
         }
     }
+
+    pub fn set_support_indirect_command_buffers(&self, support: bool) {
+        unsafe {
+            msg_void_bool(
+                self.raw,
+                sel(b"setSupportIndirectCommandBuffers:\0"),
+                if support { YES } else { NO },
+            );
+        }
+    }
 }
 
 impl Default for ComputePipelineDescriptor {
@@ -434,6 +444,16 @@ impl RenderPipelineDescriptor {
             let raw: Vec<id> = archives.iter().map(|archive| archive.raw).collect();
             let array = ns_array_from_ids(&raw);
             msg_void_id(self.raw, sel(b"setBinaryArchives:\0"), array);
+        }
+    }
+
+    pub fn set_support_indirect_command_buffers(&self, support: bool) {
+        unsafe {
+            msg_void_bool(
+                self.raw,
+                sel(b"setSupportIndirectCommandBuffers:\0"),
+                if support { YES } else { NO },
+            );
         }
     }
 }
