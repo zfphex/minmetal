@@ -119,6 +119,16 @@ mod tests {
         drop(desc2);
         let desc3 = PrimitiveAccelerationStructureDescriptor::new();
         drop(desc3);
+        let desc4 = VisibleFunctionTableDescriptor::new();
+        drop(desc4);
+        let desc5 = IntersectionFunctionTableDescriptor::new();
+        drop(desc5);
+        let desc6 = FunctionDescriptor::new();
+        drop(desc6);
+        let desc7 = IntersectionFunctionDescriptor::new();
+        drop(desc7);
+        let desc8 = LinkedFunctions::new();
+        drop(desc8);
     }
 }
 

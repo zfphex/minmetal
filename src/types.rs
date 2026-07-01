@@ -622,3 +622,116 @@ pub enum CommandBufferStatus {
     Error = 5,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct StoreActionOptions(pub usize);
+impl StoreActionOptions {
+    pub const NONE: Self = Self(0);
+    pub const CUSTOM_SAMPLE_POSITIONS: Self = Self(1 << 0);
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(usize)]
+pub enum DispatchType {
+    Serial = 0,
+    Concurrent = 1,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct FunctionOptions(pub usize);
+impl FunctionOptions {
+    pub const NONE: Self = Self(0);
+    pub const COMPILE_TO_BINARY: Self = Self(1 << 0);
+    pub const STORE_FUNCTION_IN_METAL_PIPELINES_SCRIPT: Self = Self(1 << 1);
+    pub const FAIL_ON_BINARY_ARCHIVE_MISS: Self = Self(1 << 2);
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct IntersectionFunctionSignature(pub usize);
+impl IntersectionFunctionSignature {
+    pub const NONE: Self = Self(0);
+    pub const TRIANGLE_DATA: Self = Self(1 << 1);
+    pub const WORLD_SPACE_DATA: Self = Self(1 << 2);
+    pub const INSTANCE_MOTION: Self = Self(1 << 3);
+    pub const PRIMITIVE_MOTION: Self = Self(1 << 4);
+    pub const EXTENDED_LIMITS: Self = Self(1 << 5);
+    pub const MAX_LEVELS: Self = Self(1 << 6);
+    pub const CURVE_DATA: Self = Self(1 << 7);
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(isize)]
+pub enum LogLevel {
+    Undefined = -1,
+    Debug = 0,
+    Info = 1,
+    Notice = 2,
+    Error = 3,
+    Fault = 4,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct RenderStages(pub usize);
+impl RenderStages {
+    pub const VERTEX: Self = Self(1 << 0);
+    pub const FRAGMENT: Self = Self(1 << 1);
+    pub const TILE: Self = Self(1 << 2);
+    pub const OBJECT: Self = Self(1 << 3);
+    pub const MESH: Self = Self(1 << 4);
+}
+
+impl std::ops::BitOr for RenderStages {
+    type Output = Self;
+    fn bitor(self, rhs: Self) -> Self::Output {
+        Self(self.0 | rhs.0)
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(usize)]
+pub enum PurgeableState {
+    KeepCurrent = 1,
+    NonVolatile = 2,
+    Volatile = 3,
+    Empty = 4,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub struct ResourceID {
+    pub impl_: u64,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct AxisAlignedBoundingBox {
+    pub min: [f32; 3],
+    pub max: [f32; 3],
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct AccelerationStructureInstanceOptions(pub u32);
+impl AccelerationStructureInstanceOptions {
+    pub const NONE: Self = Self(0);
+    pub const DISABLE_TRIANGLE_CULLING: Self = Self(1 << 0);
+    pub const TRIANGLE_FRONT_FACING_WINDING_COUNTER_CLOCKWISE: Self = Self(1 << 1);
+    pub const OPAQUE: Self = Self(1 << 2);
+    pub const NON_OPAQUE: Self = Self(1 << 3);
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct AccelerationStructureRefitOptions(pub usize);
+impl AccelerationStructureRefitOptions {
+    pub const VERTEX_DATA: Self = Self(1 << 0);
+    pub const PER_PRIMITIVE_DATA: Self = Self(1 << 1);
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct AccelerationStructureInstanceDescriptor {
+    pub transformation_matrix: [[f32; 3]; 4],
+    pub options: u32,
+    pub mask: u32,
+    pub intersection_function_table_offset: u32,
+    pub acceleration_structure_index: u32,
+}
+

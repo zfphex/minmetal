@@ -124,6 +124,67 @@ impl Drop for AccelerationStructureTriangleGeometryDescriptor {
 }
 
 #[derive(Debug)]
+pub struct AccelerationStructureBoundingBoxGeometryDescriptor {
+    pub raw: id,
+}
+
+impl AccelerationStructureBoundingBoxGeometryDescriptor {
+    pub fn new() -> Self {
+        unsafe {
+            let allocated = msg_id(
+                class(b"MTLAccelerationStructureBoundingBoxGeometryDescriptor\0"),
+                sel(b"alloc\0"),
+            );
+            Self {
+                raw: msg_id(allocated, sel(b"init\0")),
+            }
+        }
+    }
+
+    pub fn set_bounding_box_buffer(&self, buffer: &Buffer) {
+        unsafe {
+            msg_void_id(self.raw, sel(b"setBoundingBoxBuffer:\0"), buffer.raw);
+        }
+    }
+
+    pub fn set_bounding_box_buffer_offset(&self, offset: usize) {
+        unsafe {
+            msg_void_usize(self.raw, sel(b"setBoundingBoxBufferOffset:\0"), offset);
+        }
+    }
+
+    pub fn set_bounding_box_stride(&self, stride: usize) {
+        unsafe {
+            msg_void_usize(self.raw, sel(b"setBoundingBoxStride:\0"), stride);
+        }
+    }
+
+    pub fn set_bounding_box_count(&self, count: usize) {
+        unsafe {
+            msg_void_usize(self.raw, sel(b"setBoundingBoxCount:\0"), count);
+        }
+    }
+
+    pub fn set_opaque(&self, opaque: bool) {
+        unsafe {
+            msg_void_bool(self.raw, sel(b"setOpaque:\0"), if opaque { YES } else { NO });
+        }
+    }
+}
+
+impl Default for AccelerationStructureBoundingBoxGeometryDescriptor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Drop for AccelerationStructureBoundingBoxGeometryDescriptor {
+    fn drop(&mut self) {
+        unsafe { release(self.raw) };
+    }
+}
+
+#[derive(Debug)]
 pub struct PrimitiveAccelerationStructureDescriptor {
     pub raw: id,
 }
@@ -151,6 +212,17 @@ impl PrimitiveAccelerationStructureDescriptor {
             msg_void_id(self.raw, sel(b"setGeometryDescriptors:\0"), array);
         }
     }
+
+    pub fn set_bounding_box_geometry_descriptors(
+        &self,
+        descriptors: &[&AccelerationStructureBoundingBoxGeometryDescriptor],
+    ) {
+        unsafe {
+            let raw_descriptors: Vec<id> = descriptors.iter().map(|d| d.raw).collect();
+            let array = ns_array_from_ids(&raw_descriptors);
+            msg_void_id(self.raw, sel(b"setGeometryDescriptors:\0"), array);
+        }
+    }
 }
 
 impl Default for PrimitiveAccelerationStructureDescriptor {
@@ -166,6 +238,69 @@ impl Drop for PrimitiveAccelerationStructureDescriptor {
 }
 
 #[derive(Debug)]
+pub struct InstanceAccelerationStructureDescriptor {
+    pub raw: id,
+}
+
+impl InstanceAccelerationStructureDescriptor {
+    pub fn new() -> Self {
+        unsafe {
+            let allocated = msg_id(
+                class(b"MTLInstanceAccelerationStructureDescriptor\0"),
+                sel(b"alloc\0"),
+            );
+            Self {
+                raw: msg_id(allocated, sel(b"init\0")),
+            }
+        }
+    }
+
+    pub fn set_instance_descriptor_buffer(&self, buffer: &Buffer) {
+        unsafe {
+            msg_void_id(self.raw, sel(b"setInstanceDescriptorBuffer:\0"), buffer.raw);
+        }
+    }
+
+    pub fn set_instance_descriptor_buffer_offset(&self, offset: usize) {
+        unsafe {
+            msg_void_usize(self.raw, sel(b"setInstanceDescriptorBufferOffset:\0"), offset);
+        }
+    }
+
+    pub fn set_instance_descriptor_stride(&self, stride: usize) {
+        unsafe {
+            msg_void_usize(self.raw, sel(b"setInstanceDescriptorStride:\0"), stride);
+        }
+    }
+
+    pub fn set_instance_count(&self, count: usize) {
+        unsafe {
+            msg_void_usize(self.raw, sel(b"setInstanceCount:\0"), count);
+        }
+    }
+
+    pub fn set_instanced_acceleration_structures(&self, structures: &[&AccelerationStructure]) {
+        unsafe {
+            let raw_structures: Vec<id> = structures.iter().map(|s| s.raw).collect();
+            let array = ns_array_from_ids(&raw_structures);
+            msg_void_id(self.raw, sel(b"setInstancedAccelerationStructures:\0"), array);
+        }
+    }
+}
+
+impl Default for InstanceAccelerationStructureDescriptor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Drop for InstanceAccelerationStructureDescriptor {
+    fn drop(&mut self) {
+        unsafe { release(self.raw) };
+    }
+}
+
+#[derive(Debug)]
 pub struct AccelerationStructure {
     pub raw: id,
 }
@@ -173,6 +308,23 @@ pub struct AccelerationStructure {
 impl Drop for AccelerationStructure {
     fn drop(&mut self) {
         unsafe { release(self.raw) };
+    }
+}
+
+impl AccelerationStructure {
+    pub fn size(&self) -> usize {
+        unsafe { msg_usize(self.raw, sel(b"size\0")) }
+    }
+
+    pub fn gpu_resource_id(&self) -> Result<ResourceID, MetalError> {
+        unsafe {
+            let selector = sel(b"gpuResourceID\0");
+            if responds_to_selector(self.raw, selector) {
+                Ok(msg_resource_id(self.raw, selector))
+            } else {
+                Err(MetalError::new("gpuResourceID not supported on AccelerationStructure"))
+            }
+        }
     }
 }
 
@@ -202,6 +354,23 @@ impl Device {
     pub fn acceleration_structure_sizes(
         &self,
         descriptor: &PrimitiveAccelerationStructureDescriptor,
+    ) -> Result<AccelerationStructureSizes, MetalError> {
+        unsafe {
+            let selector = sel(b"accelerationStructureSizesWithDescriptor:\0");
+            if !responds_to_selector(self.raw, selector) {
+                return Err(MetalError::new(
+                    "accelerationStructureSizesWithDescriptor: not supported on this Device",
+                ));
+            }
+            let f: unsafe extern "C" fn(id, SEL, id) -> AccelerationStructureSizes =
+                transmute(objc_msgSend as *const c_void);
+            Ok(f(self.raw, selector, descriptor.raw))
+        }
+    }
+
+    pub fn instance_acceleration_structure_sizes(
+        &self,
+        descriptor: &InstanceAccelerationStructureDescriptor,
     ) -> Result<AccelerationStructureSizes, MetalError> {
         unsafe {
             let selector = sel(b"accelerationStructureSizesWithDescriptor:\0");
@@ -281,6 +450,138 @@ impl AccelerationStructureCommandEncoder {
                 scratch_buffer.raw,
                 scratch_buffer_offset,
             );
+            Ok(())
+        }
+    }
+
+    pub fn build_instance_acceleration_structure(
+        &self,
+        structure: &AccelerationStructure,
+        descriptor: &InstanceAccelerationStructureDescriptor,
+        scratch_buffer: &Buffer,
+        scratch_buffer_offset: usize,
+    ) -> Result<(), MetalError> {
+        unsafe {
+            let selector =
+                sel(b"buildAccelerationStructure:descriptor:scratchBuffer:scratchBufferOffset:\0");
+            if !responds_to_selector(self.raw, selector) {
+                return Err(MetalError::new(
+                    "buildAccelerationStructure:descriptor:scratchBuffer:scratchBufferOffset: not supported",
+                ));
+            }
+            let f: unsafe extern "C" fn(id, SEL, id, id, id, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                selector,
+                structure.raw,
+                descriptor.raw,
+                scratch_buffer.raw,
+                scratch_buffer_offset,
+            );
+            Ok(())
+        }
+    }
+
+    pub fn refit_primitive_acceleration_structure(
+        &self,
+        source: &AccelerationStructure,
+        descriptor: &PrimitiveAccelerationStructureDescriptor,
+        destination: Option<&AccelerationStructure>,
+        scratch_buffer: Option<&Buffer>,
+        scratch_buffer_offset: usize,
+    ) -> Result<(), MetalError> {
+        unsafe {
+            let selector = sel(b"refitAccelerationStructure:descriptor:destination:scratchBuffer:scratchBufferOffset:\0");
+            if !responds_to_selector(self.raw, selector) {
+                return Err(MetalError::new("refitAccelerationStructure:... not supported"));
+            }
+            let f: unsafe extern "C" fn(id, SEL, id, id, id, id, usize) = transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                selector,
+                source.raw,
+                descriptor.raw,
+                destination.map_or(NIL, |d| d.raw),
+                scratch_buffer.map_or(NIL, |b| b.raw),
+                scratch_buffer_offset,
+            );
+            Ok(())
+        }
+    }
+
+    pub fn refit_instance_acceleration_structure(
+        &self,
+        source: &AccelerationStructure,
+        descriptor: &InstanceAccelerationStructureDescriptor,
+        destination: Option<&AccelerationStructure>,
+        scratch_buffer: Option<&Buffer>,
+        scratch_buffer_offset: usize,
+    ) -> Result<(), MetalError> {
+        unsafe {
+            let selector = sel(b"refitAccelerationStructure:descriptor:destination:scratchBuffer:scratchBufferOffset:\0");
+            if !responds_to_selector(self.raw, selector) {
+                return Err(MetalError::new("refitAccelerationStructure:... not supported"));
+            }
+            let f: unsafe extern "C" fn(id, SEL, id, id, id, id, usize) = transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                selector,
+                source.raw,
+                descriptor.raw,
+                destination.map_or(NIL, |d| d.raw),
+                scratch_buffer.map_or(NIL, |b| b.raw),
+                scratch_buffer_offset,
+            );
+            Ok(())
+        }
+    }
+
+    pub fn copy_acceleration_structure(
+        &self,
+        source: &AccelerationStructure,
+        destination: &AccelerationStructure,
+    ) -> Result<(), MetalError> {
+        unsafe {
+            let selector = sel(b"copyAccelerationStructure:toAccelerationStructure:\0");
+            if !responds_to_selector(self.raw, selector) {
+                return Err(MetalError::new("copyAccelerationStructure:toAccelerationStructure: not supported"));
+            }
+            let f: unsafe extern "C" fn(id, SEL, id, id) = transmute(objc_msgSend as *const c_void);
+            f(self.raw, selector, source.raw, destination.raw);
+            Ok(())
+        }
+    }
+
+    pub fn copy_and_compact_acceleration_structure(
+        &self,
+        source: &AccelerationStructure,
+        destination: &AccelerationStructure,
+    ) -> Result<(), MetalError> {
+        unsafe {
+            let selector = sel(b"copyAndCompactAccelerationStructure:toAccelerationStructure:\0");
+            if !responds_to_selector(self.raw, selector) {
+                return Err(MetalError::new("copyAndCompactAccelerationStructure:toAccelerationStructure: not supported"));
+            }
+            let f: unsafe extern "C" fn(id, SEL, id, id) = transmute(objc_msgSend as *const c_void);
+            f(self.raw, selector, source.raw, destination.raw);
+            Ok(())
+        }
+    }
+
+    pub fn write_compacted_acceleration_structure_size(
+        &self,
+        structure: &AccelerationStructure,
+        buffer: &Buffer,
+        offset: usize,
+    ) -> Result<(), MetalError> {
+        unsafe {
+            let selector = sel(b"writeCompactedAccelerationStructureSize:toBuffer:offset:\0");
+            if !responds_to_selector(self.raw, selector) {
+                return Err(MetalError::new("writeCompactedAccelerationStructureSize:toBuffer:offset: not supported"));
+            }
+            let f: unsafe extern "C" fn(id, SEL, id, id, usize) = transmute(objc_msgSend as *const c_void);
+            f(self.raw, selector, structure.raw, buffer.raw, offset);
             Ok(())
         }
     }

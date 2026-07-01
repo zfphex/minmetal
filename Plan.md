@@ -411,3 +411,62 @@ V5 expands `minmetal` with support for advanced, raw Metal systems: capture tool
   - `examples/counters.rs`
   - `examples/sparse_resources.rs`
   - `examples/raytracing.rs`
+
+## V6 Metal API Coverage Foundation
+
+V6 shifts `minmetal` from milestone-driven feature slices toward systematic Metal API coverage. The crate remains a safe, zero-dependency, macro-free Metal binding library, not a renderer and not a renderer framework.
+
+### V6 Decisions
+- Maintain a flat structure in `src/` and public `minmetal::*` exports.
+- Use Apple SDK headers as the source of truth for selectors, enum values, struct layouts, and ownership.
+- Prefer safe fallible wrappers (nil object creation returns `MetalError`, unavailable selectors return `MetalError`, owned objects release in `Drop`, borrowed objects are not retained/released unless explicitly converted).
+- No new dependencies, macros, build scripts, or renderer abstractions.
+
+### V6 Binding Additions
+
+- **Command and Pass Descriptor Coverage**:
+  - `MTLRenderPassDescriptor` remaining attachment properties, store action options, visibility result buffer, render target array length, imageblock sample length, tile size, and sample buffer attachments.
+  - `MTLComputePassDescriptor`, compute sample buffer attachments, and `computeCommandEncoderWithDescriptor:`.
+  - `MTLBlitPassDescriptor`, blit sample buffer attachments, and `blitCommandEncoderWithDescriptor:`.
+  - `MTLResourceStatePassDescriptor`, resource-state sample buffer attachments, and `resourceStateCommandEncoderWithDescriptor:`.
+  - `MTLParallelRenderCommandEncoder` creation, child render encoders, and end encoding.
+
+- **Encoder Completeness**:
+  - indirect draw calls using ordinary indirect buffers.
+  - staged resource usage APIs such as `useResource:usage:stages:` and heap staged variants.
+  - render fence update/wait with stage masks.
+  - tile shader bindings and dispatch.
+  - object/mesh shader bindings and mesh draw calls.
+  - compute acceleration-structure, visible-function-table, and intersection-function-table bindings.
+  - array/range binding variants for buffers, textures, samplers, heaps, and function tables.
+
+- **Pipeline, Library, and Function Coverage**:
+  - `MTLFunctionDescriptor`, `MTLLinkedFunctions`, `MTLDynamicLibrary`, `MTLFunctionHandle`, `MTLFunctionLog`, `MTLLogState`.
+  - `MTLVisibleFunctionTableDescriptor`, `MTLVisibleFunctionTable`.
+  - `MTLIntersectionFunctionTableDescriptor`, `MTLIntersectionFunctionTable`.
+  - render/compute pipeline descriptor fields not yet bound, including linked functions, support flags, max buffers, binary archives, and function tables.
+  - pipeline state reflection-free queries that return simple values.
+
+- **Expanded Ray Tracing**:
+  - bounding-box geometry descriptors.
+  - instance acceleration structure descriptors.
+  - acceleration-structure instance options and descriptors.
+  - acceleration-structure command encoder copy, compact, refit, write-size, and sample-counter methods.
+  - heap acceleration-structure allocation.
+  - compute/render bindings for acceleration structures.
+  - intersection function table binding and resource setup.
+
+- **Resource and Argument Completeness**:
+  - labels on all label-bearing objects.
+  - resource queries: allocated size, storage mode, hazard tracking mode, resource options, heap, heap offset, CPU cache mode, purgeable state, GPU resource ID where available.
+  - texture queries for texture type, usage, storage mode, sample count, mip count, array length, depth, parent texture, buffer-backed layout, sparse properties, and remote storage where available.
+  - argument encoder array/range setters for buffers, textures, samplers, indirect command buffers, visible function tables, intersection function tables, and acceleration structures.
+  - argument descriptor fields including constant block alignment/data size where supported.
+
+### V6 Smoke Examples
+- `examples/pass_descriptors.rs`
+- `examples/parallel_render.rs`
+- `examples/function_tables.rs`
+- `examples/raytracing_instances.rs`
+- `examples/indirect_draw.rs`
+

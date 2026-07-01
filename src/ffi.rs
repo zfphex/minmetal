@@ -339,3 +339,39 @@ pub unsafe fn responds_to_selector(obj: id, selector: SEL) -> bool {
         f(obj, sel(b"respondsToSelector:\0"), selector) != NO
     }
 }
+
+pub unsafe fn msg_resource_id(obj: id, selector: SEL) -> ResourceID {
+    unsafe {
+        let f: unsafe extern "C" fn(id, SEL) -> ResourceID = transmute(objc_msgSend as *const c_void);
+        f(obj, selector)
+    }
+}
+
+pub unsafe fn msg_void_mtlsize(obj: id, selector: SEL, arg: Size) {
+    unsafe {
+        let f: unsafe extern "C" fn(id, SEL, Size) = transmute(objc_msgSend as *const c_void);
+        f(obj, selector, arg);
+    }
+}
+
+pub unsafe fn msg_void_ptr_ptr_range(
+    obj: id,
+    selector: SEL,
+    arg1: *const id,
+    arg2: *const usize,
+    arg3: Range,
+) {
+    unsafe {
+        let f: unsafe extern "C" fn(id, SEL, *const id, *const usize, Range) =
+            transmute(objc_msgSend as *const c_void);
+        f(obj, selector, arg1, arg2, arg3);
+    }
+}
+
+pub unsafe fn msg_void_ptr_range(obj: id, selector: SEL, arg1: *const id, arg2: Range) {
+    unsafe {
+        let f: unsafe extern "C" fn(id, SEL, *const id, Range) =
+            transmute(objc_msgSend as *const c_void);
+        f(obj, selector, arg1, arg2);
+    }
+}

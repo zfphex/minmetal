@@ -426,6 +426,26 @@ impl CommandBuffer {
         }
     }
 
+    pub fn parallel_render_command_encoder(
+        &self,
+        descriptor: &RenderPassDescriptor,
+    ) -> Result<ParallelRenderCommandEncoder, MetalError> {
+        unsafe {
+            let raw = retain(msg_id_id(
+                self.raw,
+                sel(b"parallelRenderCommandEncoderWithDescriptor:\0"),
+                descriptor.raw,
+            ));
+            if raw.is_null() {
+                Err(MetalError::new(
+                    "failed to create Metal parallel render command encoder",
+                ))
+            } else {
+                Ok(ParallelRenderCommandEncoder { raw })
+            }
+        }
+    }
+
     pub fn blit_command_encoder(&self) -> Result<BlitCommandEncoder, MetalError> {
         unsafe {
             let raw = retain(msg_id(self.raw, sel(b"blitCommandEncoder\0")));

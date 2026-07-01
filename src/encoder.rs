@@ -244,6 +244,49 @@ impl RenderCommandEncoder {
         }
     }
 
+    pub fn draw_primitives_indirect(
+        &self,
+        primitive_type: PrimitiveType,
+        indirect_buffer: &Buffer,
+        indirect_buffer_offset: usize,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, usize, id, usize) = transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"drawPrimitives:indirectBuffer:indirectBufferOffset:\0"),
+                primitive_type as usize,
+                indirect_buffer.raw,
+                indirect_buffer_offset,
+            );
+        }
+    }
+
+    pub fn draw_indexed_primitives_indirect(
+        &self,
+        primitive_type: PrimitiveType,
+        index_type: IndexType,
+        index_buffer: &Buffer,
+        index_buffer_offset: usize,
+        indirect_buffer: &Buffer,
+        indirect_buffer_offset: usize,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, usize, usize, id, usize, id, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"drawIndexedPrimitives:indexType:indexBuffer:indexBufferOffset:indirectBuffer:indirectBufferOffset:\0"),
+                primitive_type as usize,
+                index_type as usize,
+                index_buffer.raw,
+                index_buffer_offset,
+                indirect_buffer.raw,
+                indirect_buffer_offset,
+            );
+        }
+    }
+
     pub fn update_fence(&self, fence: &Fence) {
         unsafe {
             msg_void_id(self.raw, sel(b"updateFence:\0"), fence.raw);
@@ -253,6 +296,32 @@ impl RenderCommandEncoder {
     pub fn wait_for_fence(&self, fence: &Fence) {
         unsafe {
             msg_void_id(self.raw, sel(b"waitForFence:\0"), fence.raw);
+        }
+    }
+
+    pub fn update_fence_after_stages(&self, fence: &Fence, stages: RenderStages) -> Result<(), MetalError> {
+        unsafe {
+            let selector = sel(b"updateFence:afterStages:\0");
+            if responds_to_selector(self.raw, selector) {
+                let f: unsafe extern "C" fn(id, SEL, id, usize) = transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector, fence.raw, stages.0);
+                Ok(())
+            } else {
+                Err(MetalError::new("updateFence:afterStages: not supported"))
+            }
+        }
+    }
+
+    pub fn wait_for_fence_before_stages(&self, fence: &Fence, stages: RenderStages) -> Result<(), MetalError> {
+        unsafe {
+            let selector = sel(b"waitForFence:beforeStages:\0");
+            if responds_to_selector(self.raw, selector) {
+                let f: unsafe extern "C" fn(id, SEL, id, usize) = transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector, fence.raw, stages.0);
+                Ok(())
+            } else {
+                Err(MetalError::new("waitForFence:beforeStages: not supported"))
+            }
         }
     }
 
@@ -278,9 +347,90 @@ impl RenderCommandEncoder {
         }
     }
 
+    pub fn use_buffer_at_stages(&self, buffer: &Buffer, usage: ResourceUsage, stages: RenderStages) -> Result<(), MetalError> {
+        unsafe {
+            let selector = sel(b"useResource:usage:stages:\0");
+            if responds_to_selector(self.raw, selector) {
+                let f: unsafe extern "C" fn(id, SEL, id, usize, usize) = transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector, buffer.raw, usage.as_raw(), stages.0);
+                Ok(())
+            } else {
+                Err(MetalError::new("useResource:usage:stages: not supported"))
+            }
+        }
+    }
+
+    pub fn use_texture_at_stages(&self, texture: &Texture, usage: ResourceUsage, stages: RenderStages) -> Result<(), MetalError> {
+        unsafe {
+            let selector = sel(b"useResource:usage:stages:\0");
+            if responds_to_selector(self.raw, selector) {
+                let f: unsafe extern "C" fn(id, SEL, id, usize, usize) = transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector, texture.raw, usage.as_raw(), stages.0);
+                Ok(())
+            } else {
+                Err(MetalError::new("useResource:usage:stages: not supported"))
+            }
+        }
+    }
+
     pub fn use_heap(&self, heap: &Heap) {
         unsafe {
             msg_void_id(self.raw, sel(b"useHeap:\0"), heap.raw);
+        }
+    }
+
+    pub fn use_heap_at_stages(&self, heap: &Heap, stages: RenderStages) -> Result<(), MetalError> {
+        unsafe {
+            let selector = sel(b"useHeap:stages:\0");
+            if responds_to_selector(self.raw, selector) {
+                let f: unsafe extern "C" fn(id, SEL, id, usize) = transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector, heap.raw, stages.0);
+                Ok(())
+            } else {
+                Err(MetalError::new("useHeap:stages: not supported"))
+            }
+        }
+    }
+
+    pub fn use_buffers_at_stages(&self, buffers: &[&Buffer], usage: ResourceUsage, stages: RenderStages) -> Result<(), MetalError> {
+        unsafe {
+            let selector = sel(b"useResources:count:usage:stages:\0");
+            if responds_to_selector(self.raw, selector) {
+                let raw_buffers: Vec<id> = buffers.iter().map(|b| b.raw).collect();
+                let f: unsafe extern "C" fn(id, SEL, *const id, usize, usize, usize) = transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector, raw_buffers.as_ptr(), raw_buffers.len(), usage.as_raw(), stages.0);
+                Ok(())
+            } else {
+                Err(MetalError::new("useResources:count:usage:stages: not supported"))
+            }
+        }
+    }
+
+    pub fn use_textures_at_stages(&self, textures: &[&Texture], usage: ResourceUsage, stages: RenderStages) -> Result<(), MetalError> {
+        unsafe {
+            let selector = sel(b"useResources:count:usage:stages:\0");
+            if responds_to_selector(self.raw, selector) {
+                let raw_textures: Vec<id> = textures.iter().map(|t| t.raw).collect();
+                let f: unsafe extern "C" fn(id, SEL, *const id, usize, usize, usize) = transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector, raw_textures.as_ptr(), raw_textures.len(), usage.as_raw(), stages.0);
+                Ok(())
+            } else {
+                Err(MetalError::new("useResources:count:usage:stages: not supported"))
+            }
+        }
+    }
+
+    pub fn use_heaps_at_stages(&self, heaps: &[&Heap], stages: RenderStages) -> Result<(), MetalError> {
+        unsafe {
+            let selector = sel(b"useHeaps:count:stages:\0");
+            if responds_to_selector(self.raw, selector) {
+                let raw_heaps: Vec<id> = heaps.iter().map(|h| h.raw).collect();
+                let f: unsafe extern "C" fn(id, SEL, *const id, usize, usize) = transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector, raw_heaps.as_ptr(), raw_heaps.len(), stages.0);
+                Ok(())
+            } else {
+                Err(MetalError::new("useHeaps:count:stages: not supported"))
+            }
         }
     }
 
@@ -290,6 +440,365 @@ impl RenderCommandEncoder {
                 self.raw,
                 sel(b"executeCommandsInBuffer:withRange:\0"),
                 buffer.raw,
+                range,
+            );
+        }
+    }
+
+    pub fn set_tile_buffer(&self, index: usize, buffer: &Buffer, offset: usize) {
+        unsafe {
+            msg_void_id_usize_usize(self.raw, sel(b"setTileBuffer:offset:atIndex:\0"), buffer.raw, offset, index);
+        }
+    }
+
+    pub fn set_tile_bytes<T>(&self, index: usize, value: &T) {
+        unsafe {
+            msg_void_ptr_usize_usize(
+                self.raw,
+                sel(b"setTileBytes:length:atIndex:\0"),
+                value as *const T as *const c_void,
+                std::mem::size_of::<T>(),
+                index,
+            );
+        }
+    }
+
+    pub fn set_tile_texture(&self, index: usize, texture: &Texture) {
+        unsafe {
+            msg_void_id_usize(self.raw, sel(b"setTileTexture:atIndex:\0"), texture.raw, index);
+        }
+    }
+
+    pub fn set_tile_sampler_state(&self, index: usize, sampler: &SamplerState) {
+        unsafe {
+            msg_void_id_usize(self.raw, sel(b"setTileSamplerState:atIndex:\0"), sampler.raw, index);
+        }
+    }
+
+    pub fn dispatch_threads_per_tile(&self, threads_per_tile: Size) {
+        unsafe {
+            msg_void_mtlsize(self.raw, sel(b"dispatchThreadsPerTile:\0"), threads_per_tile);
+        }
+    }
+
+    pub fn set_threadgroup_memory_length_offset_index(&self, length: usize, offset: usize, index: usize) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, usize, usize, usize) = transmute(objc_msgSend as *const c_void);
+            f(self.raw, sel(b"setThreadgroupMemoryLength:offset:atIndex:\0"), length, offset, index);
+        }
+    }
+
+    pub fn set_object_buffer(&self, index: usize, buffer: &Buffer, offset: usize) {
+        unsafe {
+            msg_void_id_usize_usize(self.raw, sel(b"setObjectBuffer:offset:atIndex:\0"), buffer.raw, offset, index);
+        }
+    }
+
+    pub fn set_object_bytes<T>(&self, index: usize, value: &T) {
+        unsafe {
+            msg_void_ptr_usize_usize(
+                self.raw,
+                sel(b"setObjectBytes:length:atIndex:\0"),
+                value as *const T as *const c_void,
+                std::mem::size_of::<T>(),
+                index,
+            );
+        }
+    }
+
+    pub fn set_object_texture(&self, index: usize, texture: &Texture) {
+        unsafe {
+            msg_void_id_usize(self.raw, sel(b"setObjectTexture:atIndex:\0"), texture.raw, index);
+        }
+    }
+
+    pub fn set_object_sampler_state(&self, index: usize, sampler: &SamplerState) {
+        unsafe {
+            msg_void_id_usize(self.raw, sel(b"setObjectSamplerState:atIndex:\0"), sampler.raw, index);
+        }
+    }
+
+    pub fn set_mesh_buffer(&self, index: usize, buffer: &Buffer, offset: usize) {
+        unsafe {
+            msg_void_id_usize_usize(self.raw, sel(b"setMeshBuffer:offset:atIndex:\0"), buffer.raw, offset, index);
+        }
+    }
+
+    pub fn set_mesh_bytes<T>(&self, index: usize, value: &T) {
+        unsafe {
+            msg_void_ptr_usize_usize(
+                self.raw,
+                sel(b"setMeshBytes:length:atIndex:\0"),
+                value as *const T as *const c_void,
+                std::mem::size_of::<T>(),
+                index,
+            );
+        }
+    }
+
+    pub fn set_mesh_texture(&self, index: usize, texture: &Texture) {
+        unsafe {
+            msg_void_id_usize(self.raw, sel(b"setMeshTexture:atIndex:\0"), texture.raw, index);
+        }
+    }
+
+    pub fn set_mesh_sampler_state(&self, index: usize, sampler: &SamplerState) {
+        unsafe {
+            msg_void_id_usize(self.raw, sel(b"setMeshSamplerState:atIndex:\0"), sampler.raw, index);
+        }
+    }
+
+    pub fn draw_mesh_threadgroups(
+        &self,
+        threadgroups_per_grid: Size,
+        threads_per_object_threadgroup: Size,
+        threads_per_mesh_threadgroup: Size,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, Size, Size, Size) = transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"drawMeshThreadgroups:threadsPerObjectThreadgroup:threadsPerMeshThreadgroup:\0"),
+                threadgroups_per_grid,
+                threads_per_object_threadgroup,
+                threads_per_mesh_threadgroup,
+            );
+        }
+    }
+
+    pub fn draw_mesh_threads(
+        &self,
+        threads_per_grid: Size,
+        threads_per_object_threadgroup: Size,
+        threads_per_mesh_threadgroup: Size,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, Size, Size, Size) = transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"drawMeshThreads:threadsPerObjectThreadgroup:threadsPerMeshThreadgroup:\0"),
+                threads_per_grid,
+                threads_per_object_threadgroup,
+                threads_per_mesh_threadgroup,
+            );
+        }
+    }
+
+    pub fn draw_mesh_threadgroups_indirect(
+        &self,
+        indirect_buffer: &Buffer,
+        indirect_buffer_offset: usize,
+        threads_per_object_threadgroup: Size,
+        threads_per_mesh_threadgroup: Size,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, usize, Size, Size) = transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"drawMeshThreadgroupsWithIndirectBuffer:indirectBufferOffset:threadsPerObjectThreadgroup:threadsPerMeshThreadgroup:\0"),
+                indirect_buffer.raw,
+                indirect_buffer_offset,
+                threads_per_object_threadgroup,
+                threads_per_mesh_threadgroup,
+            );
+        }
+    }
+
+    pub fn set_vertex_visible_function_table(&self, table: &VisibleFunctionTable, index: usize) {
+        unsafe {
+            msg_void_id_usize(self.raw, sel(b"setVertexVisibleFunctionTable:atBufferIndex:\0"), table.raw, index);
+        }
+    }
+
+    pub fn set_vertex_intersection_function_table(&self, table: &IntersectionFunctionTable, index: usize) {
+        unsafe {
+            msg_void_id_usize(self.raw, sel(b"setVertexIntersectionFunctionTable:atBufferIndex:\0"), table.raw, index);
+        }
+    }
+
+    pub fn set_vertex_acceleration_structure(&self, structure: &AccelerationStructure, index: usize) {
+        unsafe {
+            msg_void_id_usize(self.raw, sel(b"setVertexAccelerationStructure:atBufferIndex:\0"), structure.raw, index);
+        }
+    }
+
+    pub fn set_fragment_visible_function_table(&self, table: &VisibleFunctionTable, index: usize) {
+        unsafe {
+            msg_void_id_usize(self.raw, sel(b"setFragmentVisibleFunctionTable:atBufferIndex:\0"), table.raw, index);
+        }
+    }
+
+    pub fn set_fragment_intersection_function_table(&self, table: &IntersectionFunctionTable, index: usize) {
+        unsafe {
+            msg_void_id_usize(self.raw, sel(b"setFragmentIntersectionFunctionTable:atBufferIndex:\0"), table.raw, index);
+        }
+    }
+
+    pub fn set_fragment_acceleration_structure(&self, structure: &AccelerationStructure, index: usize) {
+        unsafe {
+            msg_void_id_usize(self.raw, sel(b"setFragmentAccelerationStructure:atBufferIndex:\0"), structure.raw, index);
+        }
+    }
+
+    pub fn set_tile_visible_function_table(&self, table: &VisibleFunctionTable, index: usize) {
+        unsafe {
+            msg_void_id_usize(self.raw, sel(b"setTileVisibleFunctionTable:atBufferIndex:\0"), table.raw, index);
+        }
+    }
+
+    pub fn set_tile_intersection_function_table(&self, table: &IntersectionFunctionTable, index: usize) {
+        unsafe {
+            msg_void_id_usize(self.raw, sel(b"setTileIntersectionFunctionTable:atBufferIndex:\0"), table.raw, index);
+        }
+    }
+
+    pub fn set_tile_acceleration_structure(&self, structure: &AccelerationStructure, index: usize) {
+        unsafe {
+            msg_void_id_usize(self.raw, sel(b"setTileAccelerationStructure:atBufferIndex:\0"), structure.raw, index);
+        }
+    }
+
+    pub fn set_vertex_buffers(&self, buffers: &[Option<&Buffer>], offsets: &[usize], range: Range) {
+        unsafe {
+            let raw_buffers: Vec<id> = buffers.iter().map(|b| b.map_or(NIL, |buf| buf.raw)).collect();
+            msg_void_ptr_ptr_range(
+                self.raw,
+                sel(b"setVertexBuffers:offsets:withRange:\0"),
+                raw_buffers.as_ptr(),
+                offsets.as_ptr(),
+                range,
+            );
+        }
+    }
+
+    pub fn set_vertex_textures(&self, textures: &[Option<&Texture>], range: Range) {
+        unsafe {
+            let raw_textures: Vec<id> = textures.iter().map(|t| t.map_or(NIL, |tex| tex.raw)).collect();
+            msg_void_ptr_range(
+                self.raw,
+                sel(b"setVertexTextures:withRange:\0"),
+                raw_textures.as_ptr(),
+                range,
+            );
+        }
+    }
+
+    pub fn set_vertex_sampler_states(&self, samplers: &[Option<&SamplerState>], range: Range) {
+        unsafe {
+            let raw_samplers: Vec<id> = samplers.iter().map(|s| s.map_or(NIL, |sm| sm.raw)).collect();
+            msg_void_ptr_range(
+                self.raw,
+                sel(b"setVertexSamplerStates:withRange:\0"),
+                raw_samplers.as_ptr(),
+                range,
+            );
+        }
+    }
+
+    pub fn set_fragment_buffers(&self, buffers: &[Option<&Buffer>], offsets: &[usize], range: Range) {
+        unsafe {
+            let raw_buffers: Vec<id> = buffers.iter().map(|b| b.map_or(NIL, |buf| buf.raw)).collect();
+            msg_void_ptr_ptr_range(
+                self.raw,
+                sel(b"setFragmentBuffers:offsets:withRange:\0"),
+                raw_buffers.as_ptr(),
+                offsets.as_ptr(),
+                range,
+            );
+        }
+    }
+
+    pub fn set_fragment_textures(&self, textures: &[Option<&Texture>], range: Range) {
+        unsafe {
+            let raw_textures: Vec<id> = textures.iter().map(|t| t.map_or(NIL, |tex| tex.raw)).collect();
+            msg_void_ptr_range(
+                self.raw,
+                sel(b"setFragmentTextures:withRange:\0"),
+                raw_textures.as_ptr(),
+                range,
+            );
+        }
+    }
+
+    pub fn set_fragment_sampler_states(&self, samplers: &[Option<&SamplerState>], range: Range) {
+        unsafe {
+            let raw_samplers: Vec<id> = samplers.iter().map(|s| s.map_or(NIL, |sm| sm.raw)).collect();
+            msg_void_ptr_range(
+                self.raw,
+                sel(b"setFragmentSamplerStates:withRange:\0"),
+                raw_samplers.as_ptr(),
+                range,
+            );
+        }
+    }
+
+    pub fn set_vertex_visible_function_tables(&self, tables: &[Option<&VisibleFunctionTable>], range: Range) {
+        unsafe {
+            let raw_tables: Vec<id> = tables.iter().map(|t| t.map_or(NIL, |tbl| tbl.raw)).collect();
+            msg_void_ptr_range(
+                self.raw,
+                sel(b"setVertexVisibleFunctionTables:withBufferRange:\0"),
+                raw_tables.as_ptr(),
+                range,
+            );
+        }
+    }
+
+    pub fn set_vertex_intersection_function_tables(&self, tables: &[Option<&IntersectionFunctionTable>], range: Range) {
+        unsafe {
+            let raw_tables: Vec<id> = tables.iter().map(|t| t.map_or(NIL, |tbl| tbl.raw)).collect();
+            msg_void_ptr_range(
+                self.raw,
+                sel(b"setVertexIntersectionFunctionTables:withBufferRange:\0"),
+                raw_tables.as_ptr(),
+                range,
+            );
+        }
+    }
+
+    pub fn set_fragment_visible_function_tables(&self, tables: &[Option<&VisibleFunctionTable>], range: Range) {
+        unsafe {
+            let raw_tables: Vec<id> = tables.iter().map(|t| t.map_or(NIL, |tbl| tbl.raw)).collect();
+            msg_void_ptr_range(
+                self.raw,
+                sel(b"setFragmentVisibleFunctionTables:withBufferRange:\0"),
+                raw_tables.as_ptr(),
+                range,
+            );
+        }
+    }
+
+    pub fn set_fragment_intersection_function_tables(&self, tables: &[Option<&IntersectionFunctionTable>], range: Range) {
+        unsafe {
+            let raw_tables: Vec<id> = tables.iter().map(|t| t.map_or(NIL, |tbl| tbl.raw)).collect();
+            msg_void_ptr_range(
+                self.raw,
+                sel(b"setFragmentIntersectionFunctionTables:withBufferRange:\0"),
+                raw_tables.as_ptr(),
+                range,
+            );
+        }
+    }
+
+    pub fn set_tile_visible_function_tables(&self, tables: &[Option<&VisibleFunctionTable>], range: Range) {
+        unsafe {
+            let raw_tables: Vec<id> = tables.iter().map(|t| t.map_or(NIL, |tbl| tbl.raw)).collect();
+            msg_void_ptr_range(
+                self.raw,
+                sel(b"setTileVisibleFunctionTables:withBufferRange:\0"),
+                raw_tables.as_ptr(),
+                range,
+            );
+        }
+    }
+
+    pub fn set_tile_intersection_function_tables(&self, tables: &[Option<&IntersectionFunctionTable>], range: Range) {
+        unsafe {
+            let raw_tables: Vec<id> = tables.iter().map(|t| t.map_or(NIL, |tbl| tbl.raw)).collect();
+            msg_void_ptr_range(
+                self.raw,
+                sel(b"setTileIntersectionFunctionTables:withBufferRange:\0"),
+                raw_tables.as_ptr(),
                 range,
             );
         }
@@ -427,6 +936,85 @@ impl ComputeCommandEncoder {
                 self.raw,
                 sel(b"executeCommandsInBuffer:withRange:\0"),
                 buffer.raw,
+                range,
+            );
+        }
+    }
+
+    pub fn set_acceleration_structure(&self, structure: &AccelerationStructure, index: usize) {
+        unsafe {
+            msg_void_id_usize(self.raw, sel(b"setAccelerationStructure:atBufferIndex:\0"), structure.raw, index);
+        }
+    }
+
+    pub fn set_visible_function_table(&self, table: &VisibleFunctionTable, index: usize) {
+        unsafe {
+            msg_void_id_usize(self.raw, sel(b"setVisibleFunctionTable:atBufferIndex:\0"), table.raw, index);
+        }
+    }
+
+    pub fn set_intersection_function_table(&self, table: &IntersectionFunctionTable, index: usize) {
+        unsafe {
+            msg_void_id_usize(self.raw, sel(b"setIntersectionFunctionTable:atBufferIndex:\0"), table.raw, index);
+        }
+    }
+
+    pub fn set_buffers(&self, buffers: &[Option<&Buffer>], offsets: &[usize], range: Range) {
+        unsafe {
+            let raw_buffers: Vec<id> = buffers.iter().map(|b| b.map_or(NIL, |buf| buf.raw)).collect();
+            msg_void_ptr_ptr_range(
+                self.raw,
+                sel(b"setBuffers:offsets:withRange:\0"),
+                raw_buffers.as_ptr(),
+                offsets.as_ptr(),
+                range,
+            );
+        }
+    }
+
+    pub fn set_textures(&self, textures: &[Option<&Texture>], range: Range) {
+        unsafe {
+            let raw_textures: Vec<id> = textures.iter().map(|t| t.map_or(NIL, |tex| tex.raw)).collect();
+            msg_void_ptr_range(
+                self.raw,
+                sel(b"setTextures:withRange:\0"),
+                raw_textures.as_ptr(),
+                range,
+            );
+        }
+    }
+
+    pub fn set_sampler_states(&self, samplers: &[Option<&SamplerState>], range: Range) {
+        unsafe {
+            let raw_samplers: Vec<id> = samplers.iter().map(|s| s.map_or(NIL, |sm| sm.raw)).collect();
+            msg_void_ptr_range(
+                self.raw,
+                sel(b"setSamplerStates:withRange:\0"),
+                raw_samplers.as_ptr(),
+                range,
+            );
+        }
+    }
+
+    pub fn set_visible_function_tables(&self, tables: &[Option<&VisibleFunctionTable>], range: Range) {
+        unsafe {
+            let raw_tables: Vec<id> = tables.iter().map(|t| t.map_or(NIL, |tbl| tbl.raw)).collect();
+            msg_void_ptr_range(
+                self.raw,
+                sel(b"setVisibleFunctionTables:withBufferRange:\0"),
+                raw_tables.as_ptr(),
+                range,
+            );
+        }
+    }
+
+    pub fn set_intersection_function_tables(&self, tables: &[Option<&IntersectionFunctionTable>], range: Range) {
+        unsafe {
+            let raw_tables: Vec<id> = tables.iter().map(|t| t.map_or(NIL, |tbl| tbl.raw)).collect();
+            msg_void_ptr_range(
+                self.raw,
+                sel(b"setIntersectionFunctionTables:withBufferRange:\0"),
+                raw_tables.as_ptr(),
                 range,
             );
         }

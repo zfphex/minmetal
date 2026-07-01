@@ -65,6 +65,28 @@ impl Buffer {
             );
         }
     }
+
+    pub fn label(&self) -> Option<String> {
+        unsafe { ns_string_to_string(msg_id(self.raw, sel(b"label\0"))) }
+    }
+
+    pub fn set_label(&self, label: &str) {
+        unsafe {
+            let ns_label = NSString::new(label);
+            msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        }
+    }
+
+    pub fn gpu_address(&self) -> Result<u64, MetalError> {
+        unsafe {
+            let selector = sel(b"gpuAddress\0");
+            if responds_to_selector(self.raw, selector) {
+                Ok(msg_u64(self.raw, selector))
+            } else {
+                Err(MetalError::new("gpuAddress not supported on this Buffer"))
+            }
+        }
+    }
 }
 
 impl Drop for Buffer {
@@ -286,6 +308,28 @@ impl Texture {
     pub fn pixel_format(&self) -> usize {
         unsafe { msg_usize(self.raw, sel(b"pixelFormat\0")) }
     }
+
+    pub fn label(&self) -> Option<String> {
+        unsafe { ns_string_to_string(msg_id(self.raw, sel(b"label\0"))) }
+    }
+
+    pub fn set_label(&self, label: &str) {
+        unsafe {
+            let ns_label = NSString::new(label);
+            msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        }
+    }
+
+    pub fn gpu_resource_id(&self) -> Result<ResourceID, MetalError> {
+        unsafe {
+            let selector = sel(b"gpuResourceID\0");
+            if responds_to_selector(self.raw, selector) {
+                Ok(msg_resource_id(self.raw, selector))
+            } else {
+                Err(MetalError::new("gpuResourceID not supported on this Texture"))
+            }
+        }
+    }
 }
 
 impl Drop for Texture {
@@ -459,6 +503,105 @@ impl Heap {
         }
     }
 
+    pub fn new_acceleration_structure(&self, size: usize) -> Result<AccelerationStructure, MetalError> {
+        unsafe {
+            let selector = sel(b"newAccelerationStructureWithSize:\0");
+            if responds_to_selector(self.raw, selector) {
+                let raw = msg_id_usize(self.raw, selector, size);
+                if raw.is_null() {
+                    Err(MetalError::new("failed to create heap acceleration structure"))
+                } else {
+                    Ok(AccelerationStructure { raw })
+                }
+            } else {
+                Err(MetalError::new("newAccelerationStructureWithSize: not supported on this Heap"))
+            }
+        }
+    }
+
+    pub fn new_acceleration_structure_at_offset(&self, size: usize, offset: usize) -> Result<AccelerationStructure, MetalError> {
+        unsafe {
+            let selector = sel(b"newAccelerationStructureWithSize:offset:\0");
+            if responds_to_selector(self.raw, selector) {
+                let f: unsafe extern "C" fn(id, SEL, usize, usize) -> id = transmute(objc_msgSend as *const c_void);
+                let raw = f(self.raw, selector, size, offset);
+                if raw.is_null() {
+                    Err(MetalError::new("failed to create heap placement acceleration structure"))
+                } else {
+                    Ok(AccelerationStructure { raw })
+                }
+            } else {
+                Err(MetalError::new("newAccelerationStructureWithSize:offset: not supported on this Heap"))
+            }
+        }
+    }
+
+    pub fn new_acceleration_structure_with_descriptor(&self, descriptor: &PrimitiveAccelerationStructureDescriptor) -> Result<AccelerationStructure, MetalError> {
+        unsafe {
+            let selector = sel(b"newAccelerationStructureWithDescriptor:\0");
+            if responds_to_selector(self.raw, selector) {
+                let raw = msg_id_id(self.raw, selector, descriptor.raw);
+                if raw.is_null() {
+                    Err(MetalError::new("failed to create heap acceleration structure with descriptor"))
+                } else {
+                    Ok(AccelerationStructure { raw })
+                }
+            } else {
+                Err(MetalError::new("newAccelerationStructureWithDescriptor: not supported on this Heap"))
+            }
+        }
+    }
+
+    pub fn new_acceleration_structure_with_descriptor_at_offset(&self, descriptor: &PrimitiveAccelerationStructureDescriptor, offset: usize) -> Result<AccelerationStructure, MetalError> {
+        unsafe {
+            let selector = sel(b"newAccelerationStructureWithDescriptor:offset:\0");
+            if responds_to_selector(self.raw, selector) {
+                let f: unsafe extern "C" fn(id, SEL, id, usize) -> id = transmute(objc_msgSend as *const c_void);
+                let raw = f(self.raw, selector, descriptor.raw, offset);
+                if raw.is_null() {
+                    Err(MetalError::new("failed to create heap placement acceleration structure with descriptor"))
+                } else {
+                    Ok(AccelerationStructure { raw })
+                }
+            } else {
+                Err(MetalError::new("newAccelerationStructureWithDescriptor:offset: not supported on this Heap"))
+            }
+        }
+    }
+
+    pub fn new_instance_acceleration_structure_with_descriptor(&self, descriptor: &InstanceAccelerationStructureDescriptor) -> Result<AccelerationStructure, MetalError> {
+        unsafe {
+            let selector = sel(b"newAccelerationStructureWithDescriptor:\0");
+            if responds_to_selector(self.raw, selector) {
+                let raw = msg_id_id(self.raw, selector, descriptor.raw);
+                if raw.is_null() {
+                    Err(MetalError::new("failed to create heap instance acceleration structure with descriptor"))
+                } else {
+                    Ok(AccelerationStructure { raw })
+                }
+            } else {
+                Err(MetalError::new("newAccelerationStructureWithDescriptor: not supported on this Heap"))
+            }
+        }
+    }
+
+    pub fn new_instance_acceleration_structure_with_descriptor_at_offset(&self, descriptor: &InstanceAccelerationStructureDescriptor, offset: usize) -> Result<AccelerationStructure, MetalError> {
+        unsafe {
+            let selector = sel(b"newAccelerationStructureWithDescriptor:offset:\0");
+            if responds_to_selector(self.raw, selector) {
+                let f: unsafe extern "C" fn(id, SEL, id, usize) -> id = transmute(objc_msgSend as *const c_void);
+                let raw = f(self.raw, selector, descriptor.raw, offset);
+                if raw.is_null() {
+                    Err(MetalError::new("failed to create heap placement instance acceleration structure with descriptor"))
+                } else {
+                    Ok(AccelerationStructure { raw })
+                }
+            } else {
+                Err(MetalError::new("newAccelerationStructureWithDescriptor:offset: not supported on this Heap"))
+            }
+        }
+    }
+
     pub fn used_size(&self) -> usize {
         unsafe { msg_usize(self.raw, sel(b"usedSize\0")) }
     }
@@ -476,6 +619,17 @@ impl Heap {
                 sel(b"maxAvailableSizeWithAlignment:\0"),
                 alignment,
             )
+        }
+    }
+
+    pub fn label(&self) -> Option<String> {
+        unsafe { ns_string_to_string(msg_id(self.raw, sel(b"label\0"))) }
+    }
+
+    pub fn set_label(&self, label: &str) {
+        unsafe {
+            let ns_label = NSString::new(label);
+            msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
         }
     }
 }
@@ -618,6 +772,116 @@ impl ArgumentEncoder {
                 bytes.len(),
                 index,
             );
+        }
+    }
+
+    pub fn label(&self) -> Option<String> {
+        unsafe { ns_string_to_string(msg_id(self.raw, sel(b"label\0"))) }
+    }
+
+    pub fn set_label(&self, label: &str) {
+        unsafe {
+            let ns_label = NSString::new(label);
+            msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        }
+    }
+
+    pub fn set_buffers(&self, buffers: &[Option<&Buffer>], offsets: &[usize], range: Range) {
+        unsafe {
+            let raw_buffers: Vec<id> = buffers.iter().map(|b| b.map_or(NIL, |buf| buf.raw)).collect();
+            msg_void_ptr_ptr_range(
+                self.raw,
+                sel(b"setBuffers:offsets:withRange:\0"),
+                raw_buffers.as_ptr(),
+                offsets.as_ptr(),
+                range,
+            );
+        }
+    }
+
+    pub fn set_textures(&self, textures: &[Option<&Texture>], range: Range) {
+        unsafe {
+            let raw_textures: Vec<id> = textures.iter().map(|t| t.map_or(NIL, |tex| tex.raw)).collect();
+            msg_void_ptr_range(
+                self.raw,
+                sel(b"setTextures:withRange:\0"),
+                raw_textures.as_ptr(),
+                range,
+            );
+        }
+    }
+
+    pub fn set_sampler_states(&self, samplers: &[Option<&SamplerState>], range: Range) {
+        unsafe {
+            let raw_samplers: Vec<id> = samplers.iter().map(|s| s.map_or(NIL, |sm| sm.raw)).collect();
+            msg_void_ptr_range(
+                self.raw,
+                sel(b"setSamplerStates:withRange:\0"),
+                raw_samplers.as_ptr(),
+                range,
+            );
+        }
+    }
+
+    pub fn set_visible_function_table(&self, table: Option<&VisibleFunctionTable>, index: usize) -> Result<(), MetalError> {
+        unsafe {
+            let selector = sel(b"setVisibleFunctionTable:atIndex:\0");
+            if responds_to_selector(self.raw, selector) {
+                msg_void_id_usize(self.raw, selector, table.map_or(NIL, |t| t.raw), index);
+                Ok(())
+            } else {
+                Err(MetalError::new("setVisibleFunctionTable:atIndex: not supported"))
+            }
+        }
+    }
+
+    pub fn set_visible_function_tables(&self, tables: &[Option<&VisibleFunctionTable>], range: Range) -> Result<(), MetalError> {
+        unsafe {
+            let selector = sel(b"setVisibleFunctionTables:withRange:\0");
+            if responds_to_selector(self.raw, selector) {
+                let raw_tables: Vec<id> = tables.iter().map(|t| t.map_or(NIL, |tbl| tbl.raw)).collect();
+                msg_void_ptr_range(self.raw, selector, raw_tables.as_ptr(), range);
+                Ok(())
+            } else {
+                Err(MetalError::new("setVisibleFunctionTables:withRange: not supported"))
+            }
+        }
+    }
+
+    pub fn set_intersection_function_table(&self, table: Option<&IntersectionFunctionTable>, index: usize) -> Result<(), MetalError> {
+        unsafe {
+            let selector = sel(b"setIntersectionFunctionTable:atIndex:\0");
+            if responds_to_selector(self.raw, selector) {
+                msg_void_id_usize(self.raw, selector, table.map_or(NIL, |t| t.raw), index);
+                Ok(())
+            } else {
+                Err(MetalError::new("setIntersectionFunctionTable:atIndex: not supported"))
+            }
+        }
+    }
+
+    pub fn set_intersection_function_tables(&self, tables: &[Option<&IntersectionFunctionTable>], range: Range) -> Result<(), MetalError> {
+        unsafe {
+            let selector = sel(b"setIntersectionFunctionTables:withRange:\0");
+            if responds_to_selector(self.raw, selector) {
+                let raw_tables: Vec<id> = tables.iter().map(|t| t.map_or(NIL, |tbl| tbl.raw)).collect();
+                msg_void_ptr_range(self.raw, selector, raw_tables.as_ptr(), range);
+                Ok(())
+            } else {
+                Err(MetalError::new("setIntersectionFunctionTables:withRange: not supported"))
+            }
+        }
+    }
+
+    pub fn set_acceleration_structure(&self, structure: Option<&AccelerationStructure>, index: usize) -> Result<(), MetalError> {
+        unsafe {
+            let selector = sel(b"setAccelerationStructure:atIndex:\0");
+            if responds_to_selector(self.raw, selector) {
+                msg_void_id_usize(self.raw, selector, structure.map_or(NIL, |a| a.raw), index);
+                Ok(())
+            } else {
+                Err(MetalError::new("setAccelerationStructure:atIndex: not supported"))
+            }
         }
     }
 }
