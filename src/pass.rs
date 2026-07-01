@@ -386,6 +386,28 @@ impl RenderPassDescriptor {
         let array = msg_id(self.raw, sel(b"sampleBufferAttachments\0"));
         RenderPassSampleBufferAttachmentDescriptorArray { raw: array }
     }
+
+    pub fn rasterization_rate_map(&self) -> Option<RasterizationRateMap> {
+        let selector = sel(b"rasterizationRateMap\0");
+        if !responds_to_selector(self.raw, selector) {
+            return None;
+        }
+        let map = msg_id(self.raw, selector);
+        if map.is_null() {
+            None
+        } else {
+            Some(RasterizationRateMap { raw: retain(map) })
+        }
+    }
+
+    pub fn set_rasterization_rate_map(&self, map: Option<&RasterizationRateMap>) -> Result<(), MetalError> {
+        let selector = sel(b"setRasterizationRateMap:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new("setRasterizationRateMap: is not supported"));
+        }
+        msg_void_id(self.raw, selector, map.map_or(NIL, |m| m.raw));
+        Ok(())
+    }
 }
 
 impl Default for RenderPassDescriptor {

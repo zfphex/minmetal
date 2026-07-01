@@ -8,7 +8,7 @@ This file tracks the status of all Metal framework headers. Statuses can be `Bou
 | `MTLAccelerationStructure.h` | Bound | V6 | Bounding box / instance descriptors, type enum, options |
 | `MTLAccelerationStructureCommandEncoder.h` | Bound | V6 | build, refit, copy, compact, write size, sample counters |
 | `MTLAccelerationStructureTypes.h` | Bound | V6 | MTLPackedFloat3, MTLPackedFloat4x3, AxisAlignedBoundingBox |
-| `MTLAllocation.h` | Skipped | - | Internal/system memory allocation tracking |
+| `MTLAllocation.h` | Skipped | - | Protocol only; represented via `Allocation` wrapper in V7 residency bindings |
 | `MTLArgument.h` | Bound | V3 | Argument descriptors and types |
 | `MTLArgumentEncoder.h` | Bound | V6 | Array/range setters |
 | `MTLBinaryArchive.h` | Bound | V3 | Binary archives configuration and creation |
@@ -36,25 +36,25 @@ This file tracks the status of all Metal framework headers. Statuses can be `Bou
 | `MTLFunctionDescriptor.h` | Bound | V6 | MTLFunctionDescriptor, MTLIntersectionFunctionDescriptor |
 | `MTLFunctionHandle.h` | Bound | V6 | MTLFunctionHandle |
 | `MTLFunctionLog.h` | Bound | V6 | Function log debugging location, logs |
-| `MTLFunctionStitching.h` | Skipped | - | Stitching descriptors (complex runtime graph generation) |
+| `MTLFunctionStitching.h` | Skipped | - | Stitching descriptors (deferred; needs broader Foundation array/object graph helpers) |
 | `MTLHeap.h` | Bound | V6 | Heap allocation for acceleration structures, staged resource use |
 | `MTLIndirectCommandBuffer.h` | Bound | V3 | ICB options, execution |
 | `MTLIndirectCommandEncoder.h` | Bound | V3 | ICB draw / dispatch commands |
 | `MTLIntersectionFunctionTable.h` | Bound | V6 | Intersection function table creation / binding |
-| `MTLIOCommandBuffer.h` | Planned | V7+ | IO/Fast-loading storage queues and command buffers |
-| `MTLIOCommandQueue.h` | Planned | V7+ | IO/Fast-loading queue management |
-| `MTLIOCompressor.h` | Planned | V7+ | File compression helper classes |
+| `MTLIOCommandBuffer.h` | Bound | V7 | IO command buffer load, barrier, enqueue, commit, wait, cancel, events |
+| `MTLIOCommandQueue.h` | Bound | V7 | IO queue descriptor, queue, file handles, device factories |
+| `MTLIOCompressor.h` | Bound | V7 | Compression context C API wrappers |
 | `MTLLibrary.h` | Bound | V6 | Functions, custom constant compilation, logs |
 | `MTLLinkedFunctions.h` | Bound | V6 | Linked functions for dynamic linking |
 | `MTLLogState.h` | Bound | V6 | GPU log state and log level configuration |
 | `MTLParallelRenderCommandEncoder.h` | Bound | V6 | Parallel render passes, child render encoders |
 | `MTLPipeline.h` | Bound | V6 | Pipeline support flags |
 | `MTLPixelFormat.h` | Bound | V2 | Enums for color/depth/stencil textures |
-| `MTLRasterizationRate.h` | Skipped | - | Variable rate shading (VRS) descriptors (highly complex/platform-dependent) |
+| `MTLRasterizationRate.h` | Bound | V7 | Sample arrays, layer/map descriptors (incl. multi-layer factory), map queries, render pass binding |
 | `MTLRenderCommandEncoder.h` | Bound | V6 | indirect draw, range bindings, fences, tile/mesh shaders |
 | `MTLRenderPass.h` | Bound | V6 | RenderPassDescriptor color/depth/stencil store action options |
 | `MTLRenderPipeline.h` | Bound | V6 | RenderPipelineDescriptor linked functions, support flags, max buffers |
-| `MTLResidencySet.h` | Skipped | - | macOS 14+ residency sets (managed heap is preferred) |
+| `MTLResidencySet.h` | Bound | V7 | Residency set descriptor, add/remove/commit, request/end residency |
 | `MTLResource.h` | Bound | V6 | Labels, hazard tracking, storage, options |
 | `MTLResourceStateCommandEncoder.h` | Bound | V6 | Update texture mapping, staged fence updates/waits |
 | `MTLResourceStatePass.h` | Bound | V6 | MTLResourceStatePassDescriptor |

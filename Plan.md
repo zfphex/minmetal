@@ -417,6 +417,7 @@ V5 expands `minmetal` with support for advanced, raw Metal systems: capture tool
 V6 shifts `minmetal` from milestone-driven feature slices toward systematic Metal API coverage. The crate remains a safe, zero-dependency, macro-free Metal binding library, not a renderer and not a renderer framework.
 
 ### V6 Decisions
+
 - Maintain a flat structure in `src/` and public `minmetal::*` exports.
 - Use Apple SDK headers as the source of truth for selectors, enum values, struct layouts, and ownership.
 - Prefer safe fallible wrappers (nil object creation returns `MetalError`, unavailable selectors return `MetalError`, owned objects release in `Drop`, borrowed objects are not retained/released unless explicitly converted).
@@ -464,9 +465,58 @@ V6 shifts `minmetal` from milestone-driven feature slices toward systematic Meta
   - argument descriptor fields including constant block alignment/data size where supported.
 
 ### V6 Smoke Examples
+
 - `examples/pass_descriptors.rs`
 - `examples/parallel_render.rs`
 - `examples/function_tables.rs`
 - `examples/raytracing_instances.rs`
 - `examples/indirect_draw.rs`
 
+## V7 MetalIO, Residency, and Rasterization-Rate Bindings
+
+V7 closes important Metal coverage gaps while keeping `minmetal` a safe bindings library, not a renderer. The focus is asset streaming and residency control first, plus variable rasterization-rate descriptors.
+
+### V7 Decisions
+
+- Remain macOS-only by assumption with no `#[cfg(target_os = "macos")]` gates.
+- Keep the API zero-dependency, macro-free, and publicly exported through `minmetal::*`.
+- Runtime availability still matters: MetalIO is macOS 13+, newer IO file handles are macOS 14+ (with legacy selector fallback), and residency sets are macOS 15+.
+- V7 does not implement a renderer, streaming system, asset format, VRS renderer, or resource manager.
+- Function stitching remains deferred to a later focused phase.
+
+### V7 Binding Additions
+
+- **MetalIO** (`src/io.rs`):
+  - `MTLIOCommandQueueDescriptor`, `MTLIOCommandQueue`, `MTLIOCommandBuffer`, `MTLIOFileHandle`.
+  - `IOPriority`, `IOCommandQueueType`, `IOStatus`, `IOError`, `IOCompressionStatus`, `IOCompressionMethod`.
+  - Device methods: `new_io_command_queue`, `new_io_file_handle`, `new_io_file_handle_compressed` (with legacy selector fallback).
+  - IO command buffer methods: load into raw memory, buffers, and textures; status copy; barriers; enqueue/commit/wait/cancel; labels; errors; shared event wait/signal.
+  - `MTLIOCompressor` C API wrappers: default chunk size, context creation, append data, flush/destroy.
+
+- **Residency Sets** (`src/residency.rs`):
+  - `MTLResidencySetDescriptor`, `MTLResidencySet`, and `Allocation` protocol handle.
+  - Device `new_residency_set`.
+  - Add/remove allocation APIs, allocation count, allocated size, contains checks, request/end residency, and commit.
+
+- **Rasterization Rate** (`src/rasterization_rate.rs`):
+  - `MTLRasterizationRateSampleArray`, `MTLRasterizationRateLayerDescriptor`, `MTLRasterizationRateLayerArray`, `MTLRasterizationRateMapDescriptor`, `MTLRasterizationRateMap`.
+  - Device support query and map creation.
+  - `RenderPassDescriptor` rasterization rate map setter/getter.
+  - Map queries: screen size, physical granularity, layer count, parameter buffer size/alignment, physical size, coordinate mapping, parameter buffer copy.
+
+### V7 Smoke Examples
+
+- `examples/io_buffer.rs`
+- `examples/io_texture.rs`
+- `examples/io_compression.rs`
+- `examples/residency_set.rs`
+- `examples/rasterization_rate.rs`
+
+### V7 Validation
+
+- `cargo check --all-targets`
+- `cargo test` with real Metal runtime
+- Run existing non-interactive examples plus new V7 examples
+- Unsupported OS/API selectors return `MetalError` or graceful skip instead of crashing
+- Fallible Objective-C creation methods propagate readable `NSError` descriptions
+- Newly owned Objective-C objects release through existing `Drop` wrappers

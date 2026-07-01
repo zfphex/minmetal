@@ -6,10 +6,13 @@ mod device;
 mod encoder;
 mod ffi;
 mod indirect;
+mod io;
 mod layer;
 mod pass;
 mod pipeline;
+mod rasterization_rate;
 mod raytracing;
+mod residency;
 mod resource;
 mod sparse;
 mod types;
@@ -20,10 +23,13 @@ pub use device::*;
 pub use encoder::*;
 pub use ffi::*;
 pub use indirect::*;
+pub use io::*;
 pub use layer::*;
 pub use pass::*;
 pub use pipeline::*;
+pub use rasterization_rate::*;
 pub use raytracing::*;
+pub use residency::*;
 pub use resource::*;
 pub use sparse::*;
 pub use types::*;
@@ -151,5 +157,19 @@ mod tests {
         drop(desc7);
         let desc8 = LinkedFunctions::new();
         drop(desc8);
+        let desc9 = IOCommandQueueDescriptor::new();
+        drop(desc9);
+        if let Ok(ctx) =
+            IOCompressionContext::new("/dev/null", IOCompressionMethod::Lzfse, 4096)
+        {
+            drop(ctx);
+        }
+        if let Ok(desc10) = ResidencySetDescriptor::new() {
+            drop(desc10);
+        }
+        let layer = RasterizationRateLayerDescriptor::new(Size::new(2, 2, 0));
+        drop(layer);
+        let map_desc = RasterizationRateMapDescriptor::with_screen_size(Size::new(64, 64, 0));
+        drop(map_desc);
     }
 }
