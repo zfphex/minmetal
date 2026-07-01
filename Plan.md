@@ -321,3 +321,50 @@ V3 adds GPU-driven Metal features needed by scalable Forward+ renderer architect
 - `examples/resource_state.rs`
 - `examples/argument_buffer.rs`
 - `examples/indirect_commands.rs`
+
+## V4 Stabilized Metal Binding Core
+
+V4 stabilizes the existing V1-V3 binding surface to make the current framebuffer, renderer-core, and GPU-driven APIs safer to use, harder to misconfigure, and easier to validate.
+
+### V4 Decisions
+
+- Keep the current flat `src/` layout; no nested files, selective per-file imports, or conditional compilation constraints.
+- Focus on correctness, ownership, error handling, FFI struct alignment, and API consistency rather than adding renderer features.
+- Eliminate Objective-C reference leaks from double-retains on `new` prefix methods (e.g., `new_argument_encoder` and `new_texture_view`).
+- Ensure all FFI structs use `#[repr(C)]` and match Apple headers exactly.
+
+### V4 Binding Additions and Adjustments
+
+- Device convenience:
+  - `Device::required_system_default() -> Result<Device, MetalError>`
+- Typed accessors:
+  - `CommandBufferStatus` (enum representing `MTLCommandBufferStatus`)
+  - `CommandBuffer::status() -> CommandBufferStatus`
+  - `CommandBuffer::error() -> Option<MetalError>`
+- Nil-safety:
+  - Changed `Drawable::texture()` from direct wrapper return to `Result<Texture, MetalError>`
+- Safe helper wrappers for FFI calls to eliminate redundant raw transmutes:
+  - `msg_id_id_err`
+  - `msg_bool_id_err`
+  - `msg_void_id_usize_usize`
+  - `msg_void_id_usize`
+  - `msg_void_ptr_usize_usize`
+  - `msg_void_id_range`
+  - `msg_void_range`
+  - `msg_void_size_size`
+  - `msg_void_id_u64`
+- Buffer reading/writing helper methods:
+  - `Buffer::write<T: Copy>(&self, value: &T)` (added validation checking if `contents()` is null)
+  - `Buffer::write_slice<T: Copy>(&self, data: &[T])` (added validation checking if `contents()` is null)
+  - `Buffer::read_slice<T: Copy>(&self, out: &mut [T])` (added validation checking if `contents()` is null)
+
+### V4 Validation
+
+- Added unit tests in `src/lib.rs` covering error-reporting and invalid cases:
+  - Tests check for the presence of a system default Metal device and skip gracefully in headless or CI environments without panic.
+  - Invalid shader compilation returns `MetalError` with translated details.
+  - Requesting a missing function name returns `MetalError` specifying the name.
+  - Invalid render pipeline descriptors return `MetalError` instead of crashing.
+  - Nil indirect command buffer accesses safely return `MetalError` rather than causing a segmentation fault.
+- Refactored all existing examples (`compute`, `depth_triangle`, `function_constants`, `heap_resources`, `resource_state`, `argument_buffer`, `indirect_commands`) to align with the new safe methods and design guidelines.
+

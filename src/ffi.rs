@@ -266,3 +266,67 @@ impl Drop for AutoreleasePool {
         unsafe { msg_void(self.raw, sel(b"drain\0")) };
     }
 }
+
+pub unsafe fn msg_id_id_err(obj: id, selector: SEL, arg: id, err: *mut id) -> id {
+    unsafe {
+        let f: unsafe extern "C" fn(id, SEL, id, *mut id) -> id = transmute(objc_msgSend as *const c_void);
+        f(obj, selector, arg, err)
+    }
+}
+
+pub unsafe fn msg_bool_id_err(obj: id, selector: SEL, arg: id, err: *mut id) -> BOOL {
+    unsafe {
+        let f: unsafe extern "C" fn(id, SEL, id, *mut id) -> BOOL = transmute(objc_msgSend as *const c_void);
+        f(obj, selector, arg, err)
+    }
+}
+
+pub unsafe fn msg_void_id_usize_usize(obj: id, selector: SEL, arg1: id, arg2: usize, arg3: usize) {
+    unsafe {
+        let f: unsafe extern "C" fn(id, SEL, id, usize, usize) = transmute(objc_msgSend as *const c_void);
+        f(obj, selector, arg1, arg2, arg3);
+    }
+}
+
+pub unsafe fn msg_void_id_usize(obj: id, selector: SEL, arg1: id, arg2: usize) {
+    unsafe {
+        let f: unsafe extern "C" fn(id, SEL, id, usize) = transmute(objc_msgSend as *const c_void);
+        f(obj, selector, arg1, arg2);
+    }
+}
+
+pub unsafe fn msg_void_ptr_usize_usize(obj: id, selector: SEL, arg1: *const c_void, arg2: usize, arg3: usize) {
+    unsafe {
+        let f: unsafe extern "C" fn(id, SEL, *const c_void, usize, usize) = transmute(objc_msgSend as *const c_void);
+        f(obj, selector, arg1, arg2, arg3);
+    }
+}
+
+pub unsafe fn msg_void_id_range(obj: id, selector: SEL, arg1: id, arg2: Range) {
+    unsafe {
+        let f: unsafe extern "C" fn(id, SEL, id, Range) = transmute(objc_msgSend as *const c_void);
+        f(obj, selector, arg1, arg2);
+    }
+}
+
+pub unsafe fn msg_void_range(obj: id, selector: SEL, arg: Range) {
+    unsafe {
+        let f: unsafe extern "C" fn(id, SEL, Range) = transmute(objc_msgSend as *const c_void);
+        f(obj, selector, arg);
+    }
+}
+
+pub unsafe fn msg_void_size_size(obj: id, selector: SEL, arg1: Size, arg2: Size) {
+    unsafe {
+        let f: unsafe extern "C" fn(id, SEL, Size, Size) = transmute(objc_msgSend as *const c_void);
+        f(obj, selector, arg1, arg2);
+    }
+}
+
+pub unsafe fn msg_void_id_u64(obj: id, selector: SEL, arg1: id, arg2: u64) {
+    unsafe {
+        let f: unsafe extern "C" fn(id, SEL, id, u64) = transmute(objc_msgSend as *const c_void);
+        f(obj, selector, arg1, arg2);
+    }
+}
+

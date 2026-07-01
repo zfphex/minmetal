@@ -23,18 +23,44 @@ impl Buffer {
 
     pub fn did_modify_range(&self, range: Range) {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, Range) = transmute(objc_msgSend as *const c_void);
-            f(self.raw, sel(b"didModifyRange:\0"), range);
+            msg_void_range(self.raw, sel(b"didModifyRange:\0"), range);
         }
     }
 
     pub fn write<T: Copy>(&self, value: &T) {
         let size = std::mem::size_of::<T>();
         assert!(size <= self.len());
+        assert!(!self.contents().is_null(), "cannot write to a private or non-CPU-visible buffer on the CPU");
         unsafe {
             ptr::copy_nonoverlapping(
                 value as *const T as *const u8,
                 self.contents() as *mut u8,
+                size,
+            );
+        }
+    }
+
+    pub fn write_slice<T: Copy>(&self, data: &[T]) {
+        let size = std::mem::size_of_val(data);
+        assert!(size <= self.len());
+        assert!(!self.contents().is_null(), "cannot write to a private or non-CPU-visible buffer on the CPU");
+        unsafe {
+            ptr::copy_nonoverlapping(
+                data.as_ptr() as *const u8,
+                self.contents() as *mut u8,
+                size,
+            );
+        }
+    }
+
+    pub fn read_slice<T: Copy>(&self, out: &mut [T]) {
+        let size = std::mem::size_of_val(out);
+        assert!(size <= self.len());
+        assert!(!self.contents().is_null(), "cannot read from a private or non-CPU-visible buffer on the CPU");
+        unsafe {
+            ptr::copy_nonoverlapping(
+                self.contents() as *const u8,
+                out.as_mut_ptr() as *mut u8,
                 size,
             );
         }
@@ -236,11 +262,11 @@ impl Texture {
 
     pub fn new_texture_view(&self, pixel_format: PixelFormat) -> Result<Texture, MetalError> {
         unsafe {
-            let raw = retain(msg_id_usize(
+            let raw = msg_id_usize(
                 self.raw,
                 sel(b"newTextureViewWithPixelFormat:\0"),
                 pixel_format.as_raw(),
-            ));
+            );
             if raw.is_null() {
                 Err(MetalError::new("failed to create Metal texture view"))
             } else {

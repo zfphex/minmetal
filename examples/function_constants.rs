@@ -13,7 +13,7 @@ kernel void constant_kernel(device uint* values [[buffer(0)]],
 "#;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let device = Device::system_default().ok_or("no Metal device is available")?;
+    let device = Device::required_system_default()?;
     let library = device.new_library_with_source(SHADER)?;
 
     let constants = FunctionConstantValues::new();

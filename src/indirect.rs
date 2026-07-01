@@ -85,8 +85,7 @@ pub struct IndirectCommandBuffer {
 impl IndirectCommandBuffer {
     pub fn reset(&self, range: Range) {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, Range) = transmute(objc_msgSend as *const c_void);
-            f(self.raw, sel(b"resetWithRange:\0"), range);
+            msg_void_range(self.raw, sel(b"resetWithRange:\0"), range);
         }
     }
 
@@ -137,9 +136,7 @@ impl IndirectRenderCommand {
 
     pub fn set_vertex_buffer(&self, index: usize, buffer: &Buffer, offset: usize) {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, id, usize, usize) =
-                transmute(objc_msgSend as *const c_void);
-            f(
+            msg_void_id_usize_usize(
                 self.raw,
                 sel(b"setVertexBuffer:offset:atIndex:\0"),
                 buffer.raw,
@@ -230,9 +227,7 @@ impl IndirectComputeCommand {
 
     pub fn set_kernel_buffer(&self, index: usize, buffer: &Buffer, offset: usize) {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, id, usize, usize) =
-                transmute(objc_msgSend as *const c_void);
-            f(
+            msg_void_id_usize_usize(
                 self.raw,
                 sel(b"setKernelBuffer:offset:atIndex:\0"),
                 buffer.raw,
@@ -244,9 +239,7 @@ impl IndirectComputeCommand {
 
     pub fn dispatch_threadgroups(&self, threadgroups: Size, threads_per_threadgroup: Size) {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, Size, Size) =
-                transmute(objc_msgSend as *const c_void);
-            f(
+            msg_void_size_size(
                 self.raw,
                 sel(b"concurrentDispatchThreadgroups:threadsPerThreadgroup:\0"),
                 threadgroups,
@@ -257,9 +250,7 @@ impl IndirectComputeCommand {
 
     pub fn dispatch_threads(&self, threads: Size, threads_per_threadgroup: Size) {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, Size, Size) =
-                transmute(objc_msgSend as *const c_void);
-            f(
+            msg_void_size_size(
                 self.raw,
                 sel(b"concurrentDispatchThreads:threadsPerThreadgroup:\0"),
                 threads,

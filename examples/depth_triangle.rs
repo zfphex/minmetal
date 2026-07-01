@@ -36,7 +36,7 @@ fragment float4 fragment_main(VertexOut in [[stage_in]]) {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut window = create_window("Depth Triangle", None, 800, 600, WindowStyle::Standard);
 
-    let device = Device::system_default().ok_or("no Metal device is available")?;
+    let device = Device::required_system_default()?;
     let queue = device.new_command_queue()?;
     let library = device.new_library_with_source(SHADER)?;
     let vertex_function = library.function("vertex_main")?;
@@ -122,7 +122,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let Some(drawable) = layer.next_drawable() else {
                 return;
             };
-            let color_texture = drawable.texture();
+            let Ok(color_texture) = drawable.texture() else {
+                return;
+            };
 
             let pass = RenderPassDescriptor::new();
             pass.set_color_attachment(

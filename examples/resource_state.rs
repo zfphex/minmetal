@@ -1,7 +1,7 @@
 use minmetal::*;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let device = Device::system_default().ok_or("no Metal device is available")?;
+    let device = Device::required_system_default()?;
     let queue = device.new_command_queue()?;
     let fence = device.new_fence()?;
 

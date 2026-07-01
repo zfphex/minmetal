@@ -55,7 +55,7 @@ fragment float4 gradient_fragment(VertexOut in [[stage_in]],
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut window = create_window("Metal Demo", None, 800, 600, WindowStyle::Standard);
 
-    let device = Device::system_default().ok_or("no Metal device is available")?;
+    let device = Device::required_system_default()?;
     eprintln!("Using {}", device.name());
 
     let command_queue = device.new_command_queue()?;
@@ -114,7 +114,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             };
             uniform_buffer.write(&uniforms);
 
-            let texture = drawable.texture();
+            let Ok(texture) = drawable.texture() else {
+                return;
+            };
             let pass = RenderPassDescriptor::new();
             pass.set_color_attachment(
                 0,

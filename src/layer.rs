@@ -109,10 +109,13 @@ pub struct Drawable {
 }
 
 impl Drawable {
-    pub fn texture(&self) -> Texture {
+    pub fn texture(&self) -> Result<Texture, MetalError> {
         unsafe {
-            Texture {
-                raw: retain(msg_id(self.raw, sel(b"texture\0"))),
+            let raw = retain(msg_id(self.raw, sel(b"texture\0")));
+            if raw.is_null() {
+                Err(MetalError::new("failed to get texture from Metal drawable"))
+            } else {
+                Ok(Texture { raw })
             }
         }
     }

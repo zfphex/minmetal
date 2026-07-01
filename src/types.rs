@@ -600,3 +600,15 @@ impl std::fmt::Display for MetalError {
 }
 
 impl std::error::Error for MetalError {}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(usize)]
+pub enum CommandBufferStatus {
+    NotEnqueued = 0,
+    Enqueued = 1,
+    Committed = 2,
+    Scheduled = 3,
+    Completed = 4,
+    Error = 5,
+}
+

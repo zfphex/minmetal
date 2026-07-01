@@ -16,9 +16,7 @@ impl RenderCommandEncoder {
 
     pub fn set_vertex_buffer(&self, index: usize, buffer: &Buffer, offset: usize) {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, id, usize, usize) =
-                transmute(objc_msgSend as *const c_void);
-            f(
+            msg_void_id_usize_usize(
                 self.raw,
                 sel(b"setVertexBuffer:offset:atIndex:\0"),
                 buffer.raw,
@@ -30,9 +28,7 @@ impl RenderCommandEncoder {
 
     pub fn set_vertex_texture(&self, index: usize, texture: &Texture) {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, id, usize) =
-                transmute(objc_msgSend as *const c_void);
-            f(
+            msg_void_id_usize(
                 self.raw,
                 sel(b"setVertexTexture:atIndex:\0"),
                 texture.raw,
@@ -43,9 +39,7 @@ impl RenderCommandEncoder {
 
     pub fn set_vertex_sampler_state(&self, index: usize, sampler: &SamplerState) {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, id, usize) =
-                transmute(objc_msgSend as *const c_void);
-            f(
+            msg_void_id_usize(
                 self.raw,
                 sel(b"setVertexSamplerState:atIndex:\0"),
                 sampler.raw,
@@ -56,9 +50,7 @@ impl RenderCommandEncoder {
 
     pub fn set_vertex_bytes<T>(&self, index: usize, value: &T) {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, *const c_void, usize, usize) =
-                transmute(objc_msgSend as *const c_void);
-            f(
+            msg_void_ptr_usize_usize(
                 self.raw,
                 sel(b"setVertexBytes:length:atIndex:\0"),
                 value as *const T as *const c_void,
@@ -70,9 +62,7 @@ impl RenderCommandEncoder {
 
     pub fn set_fragment_buffer(&self, index: usize, buffer: &Buffer, offset: usize) {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, id, usize, usize) =
-                transmute(objc_msgSend as *const c_void);
-            f(
+            msg_void_id_usize_usize(
                 self.raw,
                 sel(b"setFragmentBuffer:offset:atIndex:\0"),
                 buffer.raw,
@@ -84,9 +74,7 @@ impl RenderCommandEncoder {
 
     pub fn set_fragment_texture(&self, index: usize, texture: &Texture) {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, id, usize) =
-                transmute(objc_msgSend as *const c_void);
-            f(
+            msg_void_id_usize(
                 self.raw,
                 sel(b"setFragmentTexture:atIndex:\0"),
                 texture.raw,
@@ -97,9 +85,7 @@ impl RenderCommandEncoder {
 
     pub fn set_fragment_sampler_state(&self, index: usize, sampler: &SamplerState) {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, id, usize) =
-                transmute(objc_msgSend as *const c_void);
-            f(
+            msg_void_id_usize(
                 self.raw,
                 sel(b"setFragmentSamplerState:atIndex:\0"),
                 sampler.raw,
@@ -110,9 +96,7 @@ impl RenderCommandEncoder {
 
     pub fn set_fragment_bytes<T>(&self, index: usize, value: &T) {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, *const c_void, usize, usize) =
-                transmute(objc_msgSend as *const c_void);
-            f(
+            msg_void_ptr_usize_usize(
                 self.raw,
                 sel(b"setFragmentBytes:length:atIndex:\0"),
                 value as *const T as *const c_void,
@@ -274,9 +258,7 @@ impl RenderCommandEncoder {
 
     pub fn use_buffer(&self, buffer: &Buffer, usage: ResourceUsage) {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, id, usize) =
-                transmute(objc_msgSend as *const c_void);
-            f(
+            msg_void_id_usize(
                 self.raw,
                 sel(b"useResource:usage:\0"),
                 buffer.raw,
@@ -287,9 +269,7 @@ impl RenderCommandEncoder {
 
     pub fn use_texture(&self, texture: &Texture, usage: ResourceUsage) {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, id, usize) =
-                transmute(objc_msgSend as *const c_void);
-            f(
+            msg_void_id_usize(
                 self.raw,
                 sel(b"useResource:usage:\0"),
                 texture.raw,
@@ -306,9 +286,7 @@ impl RenderCommandEncoder {
 
     pub fn execute_commands_in_buffer(&self, buffer: &IndirectCommandBuffer, range: Range) {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, id, Range) =
-                transmute(objc_msgSend as *const c_void);
-            f(
+            msg_void_id_range(
                 self.raw,
                 sel(b"executeCommandsInBuffer:withRange:\0"),
                 buffer.raw,
@@ -342,9 +320,7 @@ impl ComputeCommandEncoder {
 
     pub fn set_buffer(&self, index: usize, buffer: &Buffer, offset: usize) {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, id, usize, usize) =
-                transmute(objc_msgSend as *const c_void);
-            f(
+            msg_void_id_usize_usize(
                 self.raw,
                 sel(b"setBuffer:offset:atIndex:\0"),
                 buffer.raw,
@@ -356,17 +332,13 @@ impl ComputeCommandEncoder {
 
     pub fn set_texture(&self, index: usize, texture: &Texture) {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, id, usize) =
-                transmute(objc_msgSend as *const c_void);
-            f(self.raw, sel(b"setTexture:atIndex:\0"), texture.raw, index);
+            msg_void_id_usize(self.raw, sel(b"setTexture:atIndex:\0"), texture.raw, index);
         }
     }
 
     pub fn set_sampler_state(&self, index: usize, sampler: &SamplerState) {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, id, usize) =
-                transmute(objc_msgSend as *const c_void);
-            f(
+            msg_void_id_usize(
                 self.raw,
                 sel(b"setSamplerState:atIndex:\0"),
                 sampler.raw,
@@ -377,9 +349,7 @@ impl ComputeCommandEncoder {
 
     pub fn set_bytes<T>(&self, index: usize, value: &T) {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, *const c_void, usize, usize) =
-                transmute(objc_msgSend as *const c_void);
-            f(
+            msg_void_ptr_usize_usize(
                 self.raw,
                 sel(b"setBytes:length:atIndex:\0"),
                 value as *const T as *const c_void,
@@ -391,9 +361,7 @@ impl ComputeCommandEncoder {
 
     pub fn dispatch_threadgroups(&self, threadgroups: Size, threads_per_threadgroup: Size) {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, Size, Size) =
-                transmute(objc_msgSend as *const c_void);
-            f(
+            msg_void_size_size(
                 self.raw,
                 sel(b"dispatchThreadgroups:threadsPerThreadgroup:\0"),
                 threadgroups,
@@ -404,9 +372,7 @@ impl ComputeCommandEncoder {
 
     pub fn dispatch_threads(&self, threads: Size, threads_per_threadgroup: Size) {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, Size, Size) =
-                transmute(objc_msgSend as *const c_void);
-            f(
+            msg_void_size_size(
                 self.raw,
                 sel(b"dispatchThreads:threadsPerThreadgroup:\0"),
                 threads,
@@ -429,9 +395,7 @@ impl ComputeCommandEncoder {
 
     pub fn use_buffer(&self, buffer: &Buffer, usage: ResourceUsage) {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, id, usize) =
-                transmute(objc_msgSend as *const c_void);
-            f(
+            msg_void_id_usize(
                 self.raw,
                 sel(b"useResource:usage:\0"),
                 buffer.raw,
@@ -442,9 +406,7 @@ impl ComputeCommandEncoder {
 
     pub fn use_texture(&self, texture: &Texture, usage: ResourceUsage) {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, id, usize) =
-                transmute(objc_msgSend as *const c_void);
-            f(
+            msg_void_id_usize(
                 self.raw,
                 sel(b"useResource:usage:\0"),
                 texture.raw,
@@ -461,9 +423,7 @@ impl ComputeCommandEncoder {
 
     pub fn execute_commands_in_buffer(&self, buffer: &IndirectCommandBuffer, range: Range) {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, id, Range) =
-                transmute(objc_msgSend as *const c_void);
-            f(
+            msg_void_id_range(
                 self.raw,
                 sel(b"executeCommandsInBuffer:withRange:\0"),
                 buffer.raw,

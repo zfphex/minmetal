@@ -16,6 +16,11 @@ impl Device {
         }
     }
 
+    pub fn required_system_default() -> Result<Self, MetalError> {
+        Self::system_default().ok_or_else(|| MetalError::new("no system default Metal device found"))
+    }
+
+
     pub fn name(&self) -> String {
         unsafe {
             ns_string_to_string(msg_id(self.raw, sel(b"name\0")))
@@ -64,9 +69,7 @@ impl Device {
     ) -> Result<RenderPipelineState, MetalError> {
         unsafe {
             let mut error = NIL;
-            let f: unsafe extern "C" fn(id, SEL, id, *mut id) -> id =
-                transmute(objc_msgSend as *const c_void);
-            let raw = f(
+            let raw = msg_id_id_err(
                 self.raw,
                 sel(b"newRenderPipelineStateWithDescriptor:error:\0"),
                 descriptor.raw,
@@ -89,9 +92,7 @@ impl Device {
     ) -> Result<ComputePipelineState, MetalError> {
         unsafe {
             let mut error = NIL;
-            let f: unsafe extern "C" fn(id, SEL, id, *mut id) -> id =
-                transmute(objc_msgSend as *const c_void);
-            let raw = f(
+            let raw = msg_id_id_err(
                 self.raw,
                 sel(b"newComputePipelineStateWithFunction:error:\0"),
                 function.raw,
@@ -100,7 +101,7 @@ impl Device {
             if raw.is_null() {
                 Err(MetalError::new(error_message(
                     error,
-                    "failed to create Metal compute pipeline state",
+                    "failed to create Metal compute pipeline state with function",
                 )))
             } else {
                 Ok(ComputePipelineState { raw })
@@ -127,7 +128,7 @@ impl Device {
             if raw.is_null() {
                 Err(MetalError::new(error_message(
                     error,
-                    "failed to create Metal compute pipeline state",
+                    "failed to create Metal compute pipeline state with descriptor",
                 )))
             } else {
                 Ok(ComputePipelineState { raw })
@@ -227,9 +228,7 @@ impl Device {
     ) -> Result<BinaryArchive, MetalError> {
         unsafe {
             let mut error = NIL;
-            let f: unsafe extern "C" fn(id, SEL, id, *mut id) -> id =
-                transmute(objc_msgSend as *const c_void);
-            let raw = f(
+            let raw = msg_id_id_err(
                 self.raw,
                 sel(b"newBinaryArchiveWithDescriptor:error:\0"),
                 descriptor.raw,
@@ -318,11 +317,11 @@ impl Device {
                 .map(|descriptor| descriptor.raw)
                 .collect();
             let array = ns_array_from_ids(&raw_descriptors);
-            let raw = retain(msg_id_id(
+            let raw = msg_id_id(
                 self.raw,
                 sel(b"newArgumentEncoderWithArguments:\0"),
                 array,
-            ));
+            );
             if raw.is_null() {
                 Err(MetalError::new("failed to create Metal argument encoder"))
             } else {
@@ -508,14 +507,27 @@ impl CommandBuffer {
         unsafe { msg_void(self.raw, sel(b"waitUntilCompleted\0")) };
     }
 
-    pub fn status(&self) -> usize {
-        unsafe { msg_usize(self.raw, sel(b"status\0")) }
+    pub fn status(&self) -> CommandBufferStatus {
+        let status = unsafe { msg_usize(self.raw, sel(b"status\0")) };
+        match status {
+            0 => CommandBufferStatus::NotEnqueued,
+            1 => CommandBufferStatus::Enqueued,
+            2 => CommandBufferStatus::Committed,
+            3 => CommandBufferStatus::Scheduled,
+            4 => CommandBufferStatus::Completed,
+            5 => CommandBufferStatus::Error,
+            _ => CommandBufferStatus::Error,
+        }
     }
 
-    pub fn error(&self) -> Option<String> {
+    pub fn error(&self) -> Option<MetalError> {
         unsafe {
             let error = msg_id(self.raw, sel(b"error\0"));
-            (!error.is_null()).then(|| error_message(error, "Metal command buffer failed"))
+            if error.is_null() {
+                None
+            } else {
+                Some(MetalError::new(error_message(error, "Metal command buffer failed")))
+            }
         }
     }
 }
@@ -534,10 +546,10 @@ pub struct Library {
 impl Library {
     pub fn function(&self, name: &str) -> Result<Function, MetalError> {
         unsafe {
-            let name = NSString::new(name);
-            let raw = msg_id_id(self.raw, sel(b"newFunctionWithName:\0"), name.raw());
+            let ns_name = NSString::new(name);
+            let raw = msg_id_id(self.raw, sel(b"newFunctionWithName:\0"), ns_name.raw());
             if raw.is_null() {
-                Err(MetalError::new("failed to load Metal function"))
+                Err(MetalError::new(format!("failed to load Metal function '{}': not found in library", name)))
             } else {
                 Ok(Function { raw })
             }
@@ -550,21 +562,21 @@ impl Library {
         constants: &FunctionConstantValues,
     ) -> Result<Function, MetalError> {
         unsafe {
-            let name = NSString::new(name);
+            let ns_name = NSString::new(name);
             let mut error = NIL;
             let f: unsafe extern "C" fn(id, SEL, id, id, *mut id) -> id =
                 transmute(objc_msgSend as *const c_void);
             let raw = f(
                 self.raw,
                 sel(b"newFunctionWithName:constantValues:error:\0"),
-                name.raw(),
+                ns_name.raw(),
                 constants.raw,
                 &mut error,
             );
             if raw.is_null() {
                 Err(MetalError::new(error_message(
                     error,
-                    "failed to specialize Metal function with constants",
+                    &format!("failed to specialize Metal function '{}' with constants", name),
                 )))
             } else {
                 Ok(Function { raw })

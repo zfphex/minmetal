@@ -9,7 +9,7 @@ fn align_up(value: usize, alignment: usize) -> usize {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let device = Device::system_default().ok_or("no Metal device is available")?;
+    let device = Device::required_system_default()?;
 
     let texture_descriptor = TextureDescriptor::texture_2d(PixelFormat::Rgba8Unorm, 64, 64, false);
     texture_descriptor.set_usage(TextureUsage::SHADER_READ | TextureUsage::SHADER_WRITE);
