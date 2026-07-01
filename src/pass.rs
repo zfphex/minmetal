@@ -83,10 +83,8 @@ impl RenderPassAttachmentDescriptor {
     }
 
     pub fn load_action(&self) -> LoadAction {
-        unsafe {
-            let val = msg_usize(self.raw, sel(b"loadAction\0"));
-            std::mem::transmute(val)
-        }
+        let val = msg_usize(self.raw, sel(b"loadAction\0"));
+        LoadAction::from_raw(val).expect("invalid MTLLoadAction value from Metal")
     }
 
     pub fn set_load_action(&self, load_action: LoadAction) {
@@ -94,10 +92,8 @@ impl RenderPassAttachmentDescriptor {
     }
 
     pub fn store_action(&self) -> StoreAction {
-        unsafe {
-            let val = msg_usize(self.raw, sel(b"storeAction\0"));
-            std::mem::transmute(val)
-        }
+        let val = msg_usize(self.raw, sel(b"storeAction\0"));
+        StoreAction::from_raw(val).expect("invalid MTLStoreAction value from Metal")
     }
 
     pub fn set_store_action(&self, store_action: StoreAction) {

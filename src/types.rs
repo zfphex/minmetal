@@ -312,12 +312,40 @@ pub enum LoadAction {
     Clear = 2,
 }
 
+impl LoadAction {
+    pub fn from_raw(raw: usize) -> Option<Self> {
+        match raw {
+            0 => Some(Self::DontCare),
+            1 => Some(Self::Load),
+            2 => Some(Self::Clear),
+            _ => None,
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(usize)]
 pub enum StoreAction {
     DontCare = 0,
     Store = 1,
     MultisampleResolve = 2,
+    StoreAndMultisampleResolve = 3,
+    Unknown = 4,
+    CustomSampleDepthStore = 5,
+}
+
+impl StoreAction {
+    pub fn from_raw(raw: usize) -> Option<Self> {
+        match raw {
+            0 => Some(Self::DontCare),
+            1 => Some(Self::Store),
+            2 => Some(Self::MultisampleResolve),
+            3 => Some(Self::StoreAndMultisampleResolve),
+            4 => Some(Self::Unknown),
+            5 => Some(Self::CustomSampleDepthStore),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

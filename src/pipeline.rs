@@ -326,7 +326,7 @@ impl ComputePipelineState {
     ) -> Result<VisibleFunctionTable, MetalError> {
         let selector = sel(b"newVisibleFunctionTableWithDescriptor:\0");
         if responds_to_selector(self.raw, selector) {
-            let raw = retain(msg_id_id(self.raw, selector, descriptor.raw));
+            let raw = msg_id_id(self.raw, selector, descriptor.raw);
             if raw.is_null() {
                 Err(MetalError::new("failed to create visible function table"))
             } else {
@@ -345,7 +345,7 @@ impl ComputePipelineState {
     ) -> Result<IntersectionFunctionTable, MetalError> {
         let selector = sel(b"newIntersectionFunctionTableWithDescriptor:\0");
         if responds_to_selector(self.raw, selector) {
-            let raw = retain(msg_id_id(self.raw, selector, descriptor.raw));
+            let raw = msg_id_id(self.raw, selector, descriptor.raw);
             if raw.is_null() {
                 Err(MetalError::new(
                     "failed to create intersection function table",
@@ -728,7 +728,7 @@ impl RenderPipelineState {
     ) -> Result<VisibleFunctionTable, MetalError> {
         let selector = sel(b"newVisibleFunctionTableWithDescriptor:stage:\0");
         if responds_to_selector(self.raw, selector) {
-            let raw = retain(msg_id_id_usize(self.raw, selector, descriptor.raw, stage.0));
+            let raw = msg_id_id_usize(self.raw, selector, descriptor.raw, stage.0);
             if raw.is_null() {
                 Err(MetalError::new("failed to create visible function table"))
             } else {
@@ -748,7 +748,7 @@ impl RenderPipelineState {
     ) -> Result<IntersectionFunctionTable, MetalError> {
         let selector = sel(b"newIntersectionFunctionTableWithDescriptor:stage:\0");
         if responds_to_selector(self.raw, selector) {
-            let raw = retain(msg_id_id_usize(self.raw, selector, descriptor.raw, stage.0));
+            let raw = msg_id_id_usize(self.raw, selector, descriptor.raw, stage.0);
             if raw.is_null() {
                 Err(MetalError::new(
                     "failed to create intersection function table",
