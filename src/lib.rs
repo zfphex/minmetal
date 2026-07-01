@@ -9,6 +9,10 @@ mod pass;
 mod pipeline;
 mod resource;
 mod types;
+mod capture;
+mod counters;
+mod sparse;
+mod raytracing;
 
 pub use device::*;
 pub use encoder::*;
@@ -19,6 +23,10 @@ pub use pass::*;
 pub use pipeline::*;
 pub use resource::*;
 pub use types::*;
+pub use capture::*;
+pub use counters::*;
+pub use sparse::*;
+pub use raytracing::*;
 
 #[cfg(test)]
 mod tests {
@@ -76,6 +84,41 @@ mod tests {
         let icb = IndirectCommandBuffer { raw: std::ptr::null_mut() };
         let result = icb.render_command(0);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_selector_availability_helper() {
+        unsafe {
+            let cls = class(b"NSString\0");
+            assert!(responds_to_selector(cls, sel(b"alloc\0")));
+            assert!(!responds_to_selector(cls, sel(b"someFakeSelectorThatDoesNotExist\0")));
+        }
+    }
+
+    #[test]
+    fn test_unsupported_api_paths_returning_metal_error() {
+        let encoder = BlitCommandEncoder { raw: std::ptr::null_mut() };
+        let sample_buf = CounterSampleBuffer { raw: std::ptr::null_mut() };
+        let result = encoder.sample_counters_in_buffer(&sample_buf, 0, false);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("not supported"));
+    }
+
+    #[test]
+    fn test_nil_object_creation_paths() {
+        let device = Device { raw: std::ptr::null_mut() };
+        let result = device.counter_sets();
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_wrapper_drop_coverage() {
+        let desc = CaptureDescriptor::new();
+        drop(desc);
+        let desc2 = CounterSampleBufferDescriptor::new();
+        drop(desc2);
+        let desc3 = PrimitiveAccelerationStructureDescriptor::new();
+        drop(desc3);
     }
 }
 

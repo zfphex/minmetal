@@ -330,3 +330,12 @@ pub unsafe fn msg_void_id_u64(obj: id, selector: SEL, arg1: id, arg2: u64) {
     }
 }
 
+pub unsafe fn responds_to_selector(obj: id, selector: SEL) -> bool {
+    if obj.is_null() {
+        return false;
+    }
+    unsafe {
+        let f: unsafe extern "C" fn(id, SEL, SEL) -> BOOL = transmute(objc_msgSend as *const c_void);
+        f(obj, sel(b"respondsToSelector:\0"), selector) != NO
+    }
+}

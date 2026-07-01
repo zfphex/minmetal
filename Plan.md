@@ -368,3 +368,46 @@ V4 stabilizes the existing V1-V3 binding surface to make the current framebuffer
   - Nil indirect command buffer accesses safely return `MetalError` rather than causing a segmentation fault.
 - Refactored all existing examples (`compute`, `depth_triangle`, `function_constants`, `heap_resources`, `resource_state`, `argument_buffer`, `indirect_commands`) to align with the new safe methods and design guidelines.
 
+## V5 Advanced Metal Systems Bindings
+
+V5 expands `minmetal` with support for advanced, raw Metal systems: capture tooling, performance counters, sparse resource mapping, and hardware ray tracing. This remains a bindings-only phase: no high-level frameworks or automatic setups.
+
+### V5 Decisions
+
+- Maintain a flat structure in `src/` by adding focused files: `capture.rs`, `counters.rs`, `sparse.rs`, and `raytracing.rs`.
+- Expose all modules through `src/lib.rs` and make them publicly accessible.
+- Ensure OS/device-unsupported APIs fail gracefully by returning `Result::Err(MetalError)` instead of crash or abort, using selector-safety queries via `respondsToSelector:`.
+
+### V5 Binding Additions
+
+- **Capture Tooling**:
+  - `CaptureDestination` (enum representing `MTLCaptureDestination`)
+  - `CaptureDescriptor` (wraps `MTLCaptureDescriptor`)
+  - `CaptureManager` (wraps `MTLCaptureManager`) with `shared()`, `supports_destination()`, `start_capture()`, `stop_capture()`, and `is_capturing()`
+- **Counters**:
+  - `CounterSet` and `Counter` discovery and querying APIs
+  - `CounterSampleBufferDescriptor` and `CounterSampleBuffer` creation
+  - `supports_counter_sampling()` query on `Device`
+  - `sample_counters_in_buffer()` on render, compute, and blit encoders, and `resolve_counters()` on blit encoders
+- **Sparse Resources**:
+  - `supports_sparse_textures()` and `sparse_tile_size()` query on `Device`
+  - `SparseTextureMappingMode` mapping enum (`Map`, `Unmap`)
+  - `update_texture_mapping()` mapping commands on `ResourceStateCommandEncoder`
+- **Ray Tracing**:
+  - `supports_raytracing()` query on `Device`
+  - `AccelerationStructureSizes` query logic
+  - `AccelerationStructureTriangleGeometryDescriptor` and `PrimitiveAccelerationStructureDescriptor` configuration
+  - `new_acceleration_structure()` allocation and `acceleration_structure_command_encoder()` commands for building structures
+
+### V5 Validation
+
+- Added unit tests in `src/lib.rs` covering V5 systems:
+  - `test_selector_availability_helper` to verify selector-safety logic works.
+  - `test_unsupported_api_paths_returning_metal_error` to verify that unsupported API calls return clean `MetalError` results instead of crashes.
+  - `test_nil_object_creation_paths` to check handling of dummy/nil Handles.
+  - `test_wrapper_drop_coverage` to check destructor behaviors.
+- Added four smoke examples:
+  - `examples/capture.rs`
+  - `examples/counters.rs`
+  - `examples/sparse_resources.rs`
+  - `examples/raytracing.rs`

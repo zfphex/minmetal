@@ -199,7 +199,17 @@ pub enum StorageMode {
 pub enum HeapType {
     Automatic = 0,
     Placement = 1,
+    Sparse = 2,
 }
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(usize)]
+pub enum SparsePageSize {
+    Size16 = 101,
+    Size64 = 102,
+    Size256 = 103,
+}
+
 
 impl StorageMode {
     const fn as_resource_bits(self) -> usize {

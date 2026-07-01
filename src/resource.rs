@@ -346,6 +346,12 @@ impl HeapDescriptor {
             msg_void_usize(self.raw, sel(b"setSize:\0"), size);
         }
     }
+
+    pub fn set_sparse_page_size(&self, size: SparsePageSize) {
+        unsafe {
+            msg_void_usize(self.raw, sel(b"setSparsePageSize:\0"), size as usize);
+        }
+    }
 }
 
 impl Default for HeapDescriptor {
