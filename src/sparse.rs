@@ -11,10 +11,8 @@ pub enum SparseTextureMappingMode {
 
 impl Device {
     pub fn supports_sparse_textures(&self) -> bool {
-        unsafe {
-            let selector = sel(b"sparseTileSizeWithTextureType:pixelFormat:sampleCount:\0");
-            responds_to_selector(self.raw, selector)
-        }
+        let selector = sel(b"sparseTileSizeWithTextureType:pixelFormat:sampleCount:\0");
+        responds_to_selector(self.raw, selector)
     }
 
     pub fn sparse_tile_size(
@@ -28,8 +26,15 @@ impl Device {
             if !responds_to_selector(self.raw, selector) {
                 return Size::new(0, 0, 0);
             }
-            let f: unsafe extern "C" fn(id, SEL, usize, usize, usize) -> Size = transmute(objc_msgSend as *const c_void);
-            f(self.raw, selector, texture_type as usize, pixel_format.as_raw(), sample_count)
+            let f: unsafe extern "C" fn(id, SEL, usize, usize, usize) -> Size =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                selector,
+                texture_type as usize,
+                pixel_format.as_raw(),
+                sample_count,
+            )
         }
     }
 }
@@ -47,7 +52,7 @@ impl ResourceStateCommandEncoder {
             let selector = sel(b"updateTextureMapping:mode:region:mipLevel:slice:\0");
             if !responds_to_selector(self.raw, selector) {
                 return Err(MetalError::new(
-                    "updateTextureMapping:mode:region:mipLevel:slice: not supported on this ResourceStateCommandEncoder"
+                    "updateTextureMapping:mode:region:mipLevel:slice: not supported on this ResourceStateCommandEncoder",
                 ));
             }
             let f: unsafe extern "C" fn(id, SEL, id, usize, Region, usize, usize) =
@@ -65,4 +70,3 @@ impl ResourceStateCommandEncoder {
         }
     }
 }
-

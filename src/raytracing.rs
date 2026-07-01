@@ -34,7 +34,7 @@ pub struct AccelerationStructureGeometryDescriptor {
 
 impl Drop for AccelerationStructureGeometryDescriptor {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
@@ -45,69 +45,53 @@ pub struct AccelerationStructureTriangleGeometryDescriptor {
 
 impl AccelerationStructureTriangleGeometryDescriptor {
     pub fn new() -> Self {
-        unsafe {
-            let allocated = msg_id(
-                class(b"MTLAccelerationStructureTriangleGeometryDescriptor\0"),
-                sel(b"alloc\0"),
-            );
-            Self {
-                raw: msg_id(allocated, sel(b"init\0")),
-            }
+        let allocated = msg_id(
+            class(b"MTLAccelerationStructureTriangleGeometryDescriptor\0"),
+            sel(b"alloc\0"),
+        );
+        Self {
+            raw: msg_id(allocated, sel(b"init\0")),
         }
     }
 
     pub fn set_vertex_buffer(&self, buffer: &Buffer) {
-        unsafe {
-            msg_void_id(self.raw, sel(b"setVertexBuffer:\0"), buffer.raw);
-        }
+        msg_void_id(self.raw, sel(b"setVertexBuffer:\0"), buffer.raw);
     }
 
     pub fn set_vertex_buffer_offset(&self, offset: usize) {
-        unsafe {
-            msg_void_usize(self.raw, sel(b"setVertexBufferOffset:\0"), offset);
-        }
+        msg_void_usize(self.raw, sel(b"setVertexBufferOffset:\0"), offset);
     }
 
     pub fn set_vertex_stride(&self, stride: usize) {
-        unsafe {
-            msg_void_usize(self.raw, sel(b"setVertexStride:\0"), stride);
-        }
+        msg_void_usize(self.raw, sel(b"setVertexStride:\0"), stride);
     }
 
     pub fn set_vertex_format(&self, format: VertexFormat) {
-        unsafe {
-            msg_void_usize(self.raw, sel(b"setVertexFormat:\0"), format as usize);
-        }
+        msg_void_usize(self.raw, sel(b"setVertexFormat:\0"), format as usize);
     }
 
     pub fn set_index_buffer(&self, buffer: &Buffer) {
-        unsafe {
-            msg_void_id(self.raw, sel(b"setIndexBuffer:\0"), buffer.raw);
-        }
+        msg_void_id(self.raw, sel(b"setIndexBuffer:\0"), buffer.raw);
     }
 
     pub fn set_index_buffer_offset(&self, offset: usize) {
-        unsafe {
-            msg_void_usize(self.raw, sel(b"setIndexBufferOffset:\0"), offset);
-        }
+        msg_void_usize(self.raw, sel(b"setIndexBufferOffset:\0"), offset);
     }
 
     pub fn set_index_type(&self, index_type: IndexType) {
-        unsafe {
-            msg_void_usize(self.raw, sel(b"setIndexType:\0"), index_type as usize);
-        }
+        msg_void_usize(self.raw, sel(b"setIndexType:\0"), index_type as usize);
     }
 
     pub fn set_triangle_count(&self, count: usize) {
-        unsafe {
-            msg_void_usize(self.raw, sel(b"setTriangleCount:\0"), count);
-        }
+        msg_void_usize(self.raw, sel(b"setTriangleCount:\0"), count);
     }
 
     pub fn set_opaque(&self, opaque: bool) {
-        unsafe {
-            msg_void_bool(self.raw, sel(b"setOpaque:\0"), if opaque { YES } else { NO });
-        }
+        msg_void_bool(
+            self.raw,
+            sel(b"setOpaque:\0"),
+            if opaque { YES } else { NO },
+        );
     }
 }
 
@@ -119,7 +103,7 @@ impl Default for AccelerationStructureTriangleGeometryDescriptor {
 
 impl Drop for AccelerationStructureTriangleGeometryDescriptor {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
@@ -130,45 +114,37 @@ pub struct AccelerationStructureBoundingBoxGeometryDescriptor {
 
 impl AccelerationStructureBoundingBoxGeometryDescriptor {
     pub fn new() -> Self {
-        unsafe {
-            let allocated = msg_id(
-                class(b"MTLAccelerationStructureBoundingBoxGeometryDescriptor\0"),
-                sel(b"alloc\0"),
-            );
-            Self {
-                raw: msg_id(allocated, sel(b"init\0")),
-            }
+        let allocated = msg_id(
+            class(b"MTLAccelerationStructureBoundingBoxGeometryDescriptor\0"),
+            sel(b"alloc\0"),
+        );
+        Self {
+            raw: msg_id(allocated, sel(b"init\0")),
         }
     }
 
     pub fn set_bounding_box_buffer(&self, buffer: &Buffer) {
-        unsafe {
-            msg_void_id(self.raw, sel(b"setBoundingBoxBuffer:\0"), buffer.raw);
-        }
+        msg_void_id(self.raw, sel(b"setBoundingBoxBuffer:\0"), buffer.raw);
     }
 
     pub fn set_bounding_box_buffer_offset(&self, offset: usize) {
-        unsafe {
-            msg_void_usize(self.raw, sel(b"setBoundingBoxBufferOffset:\0"), offset);
-        }
+        msg_void_usize(self.raw, sel(b"setBoundingBoxBufferOffset:\0"), offset);
     }
 
     pub fn set_bounding_box_stride(&self, stride: usize) {
-        unsafe {
-            msg_void_usize(self.raw, sel(b"setBoundingBoxStride:\0"), stride);
-        }
+        msg_void_usize(self.raw, sel(b"setBoundingBoxStride:\0"), stride);
     }
 
     pub fn set_bounding_box_count(&self, count: usize) {
-        unsafe {
-            msg_void_usize(self.raw, sel(b"setBoundingBoxCount:\0"), count);
-        }
+        msg_void_usize(self.raw, sel(b"setBoundingBoxCount:\0"), count);
     }
 
     pub fn set_opaque(&self, opaque: bool) {
-        unsafe {
-            msg_void_bool(self.raw, sel(b"setOpaque:\0"), if opaque { YES } else { NO });
-        }
+        msg_void_bool(
+            self.raw,
+            sel(b"setOpaque:\0"),
+            if opaque { YES } else { NO },
+        );
     }
 }
 
@@ -180,7 +156,7 @@ impl Default for AccelerationStructureBoundingBoxGeometryDescriptor {
 
 impl Drop for AccelerationStructureBoundingBoxGeometryDescriptor {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
@@ -191,14 +167,12 @@ pub struct PrimitiveAccelerationStructureDescriptor {
 
 impl PrimitiveAccelerationStructureDescriptor {
     pub fn new() -> Self {
-        unsafe {
-            let allocated = msg_id(
-                class(b"MTLPrimitiveAccelerationStructureDescriptor\0"),
-                sel(b"alloc\0"),
-            );
-            Self {
-                raw: msg_id(allocated, sel(b"init\0")),
-            }
+        let allocated = msg_id(
+            class(b"MTLPrimitiveAccelerationStructureDescriptor\0"),
+            sel(b"alloc\0"),
+        );
+        Self {
+            raw: msg_id(allocated, sel(b"init\0")),
         }
     }
 
@@ -206,22 +180,18 @@ impl PrimitiveAccelerationStructureDescriptor {
         &self,
         descriptors: &[&AccelerationStructureTriangleGeometryDescriptor],
     ) {
-        unsafe {
-            let raw_descriptors: Vec<id> = descriptors.iter().map(|d| d.raw).collect();
-            let array = ns_array_from_ids(&raw_descriptors);
-            msg_void_id(self.raw, sel(b"setGeometryDescriptors:\0"), array);
-        }
+        let raw_descriptors: Vec<id> = descriptors.iter().map(|d| d.raw).collect();
+        let array = ns_array_from_ids(&raw_descriptors);
+        msg_void_id(self.raw, sel(b"setGeometryDescriptors:\0"), array);
     }
 
     pub fn set_bounding_box_geometry_descriptors(
         &self,
         descriptors: &[&AccelerationStructureBoundingBoxGeometryDescriptor],
     ) {
-        unsafe {
-            let raw_descriptors: Vec<id> = descriptors.iter().map(|d| d.raw).collect();
-            let array = ns_array_from_ids(&raw_descriptors);
-            msg_void_id(self.raw, sel(b"setGeometryDescriptors:\0"), array);
-        }
+        let raw_descriptors: Vec<id> = descriptors.iter().map(|d| d.raw).collect();
+        let array = ns_array_from_ids(&raw_descriptors);
+        msg_void_id(self.raw, sel(b"setGeometryDescriptors:\0"), array);
     }
 }
 
@@ -233,7 +203,7 @@ impl Default for PrimitiveAccelerationStructureDescriptor {
 
 impl Drop for PrimitiveAccelerationStructureDescriptor {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
@@ -244,47 +214,43 @@ pub struct InstanceAccelerationStructureDescriptor {
 
 impl InstanceAccelerationStructureDescriptor {
     pub fn new() -> Self {
-        unsafe {
-            let allocated = msg_id(
-                class(b"MTLInstanceAccelerationStructureDescriptor\0"),
-                sel(b"alloc\0"),
-            );
-            Self {
-                raw: msg_id(allocated, sel(b"init\0")),
-            }
+        let allocated = msg_id(
+            class(b"MTLInstanceAccelerationStructureDescriptor\0"),
+            sel(b"alloc\0"),
+        );
+        Self {
+            raw: msg_id(allocated, sel(b"init\0")),
         }
     }
 
     pub fn set_instance_descriptor_buffer(&self, buffer: &Buffer) {
-        unsafe {
-            msg_void_id(self.raw, sel(b"setInstanceDescriptorBuffer:\0"), buffer.raw);
-        }
+        msg_void_id(self.raw, sel(b"setInstanceDescriptorBuffer:\0"), buffer.raw);
     }
 
     pub fn set_instance_descriptor_buffer_offset(&self, offset: usize) {
-        unsafe {
-            msg_void_usize(self.raw, sel(b"setInstanceDescriptorBufferOffset:\0"), offset);
-        }
+        msg_void_usize(
+            self.raw,
+            sel(b"setInstanceDescriptorBufferOffset:\0"),
+            offset,
+        );
     }
 
     pub fn set_instance_descriptor_stride(&self, stride: usize) {
-        unsafe {
-            msg_void_usize(self.raw, sel(b"setInstanceDescriptorStride:\0"), stride);
-        }
+        msg_void_usize(self.raw, sel(b"setInstanceDescriptorStride:\0"), stride);
     }
 
     pub fn set_instance_count(&self, count: usize) {
-        unsafe {
-            msg_void_usize(self.raw, sel(b"setInstanceCount:\0"), count);
-        }
+        msg_void_usize(self.raw, sel(b"setInstanceCount:\0"), count);
     }
 
     pub fn set_instanced_acceleration_structures(&self, structures: &[&AccelerationStructure]) {
-        unsafe {
-            let raw_structures: Vec<id> = structures.iter().map(|s| s.raw).collect();
-            let array = ns_array_from_ids(&raw_structures);
-            msg_void_id(self.raw, sel(b"setInstancedAccelerationStructures:\0"), array);
-        }
+        let raw_structures: Vec<id> = structures.iter().map(|s| s.raw).collect();
+        let array = ns_array_from_ids(&raw_structures);
+        msg_void_id(
+            self.raw,
+            sel(b"setInstancedAccelerationStructures:\0"),
+            array,
+        );
     }
 }
 
@@ -296,7 +262,7 @@ impl Default for InstanceAccelerationStructureDescriptor {
 
 impl Drop for InstanceAccelerationStructureDescriptor {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
@@ -307,23 +273,23 @@ pub struct AccelerationStructure {
 
 impl Drop for AccelerationStructure {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
 impl AccelerationStructure {
     pub fn size(&self) -> usize {
-        unsafe { msg_usize(self.raw, sel(b"size\0")) }
+        msg_usize(self.raw, sel(b"size\0"))
     }
 
     pub fn gpu_resource_id(&self) -> Result<ResourceID, MetalError> {
-        unsafe {
-            let selector = sel(b"gpuResourceID\0");
-            if responds_to_selector(self.raw, selector) {
-                Ok(msg_resource_id(self.raw, selector))
-            } else {
-                Err(MetalError::new("gpuResourceID not supported on AccelerationStructure"))
-            }
+        let selector = sel(b"gpuResourceID\0");
+        if responds_to_selector(self.raw, selector) {
+            Ok(msg_resource_id(self.raw, selector))
+        } else {
+            Err(MetalError::new(
+                "gpuResourceID not supported on AccelerationStructure",
+            ))
         }
     }
 }
@@ -335,19 +301,17 @@ pub struct AccelerationStructureCommandEncoder {
 
 impl Drop for AccelerationStructureCommandEncoder {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
 impl Device {
     pub fn supports_raytracing(&self) -> bool {
-        unsafe {
-            let selector = sel(b"supportsRaytracing\0");
-            if responds_to_selector(self.raw, selector) {
-                msg_bool(self.raw, selector) != NO
-            } else {
-                false
-            }
+        let selector = sel(b"supportsRaytracing\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_bool(self.raw, selector) != NO
+        } else {
+            false
         }
     }
 
@@ -385,20 +349,21 @@ impl Device {
         }
     }
 
-    pub fn new_acceleration_structure(&self, size: usize) -> Result<AccelerationStructure, MetalError> {
-        unsafe {
-            let selector = sel(b"newAccelerationStructureWithSize:\0");
-            if !responds_to_selector(self.raw, selector) {
-                return Err(MetalError::new(
-                    "newAccelerationStructureWithSize: not supported on this Device",
-                ));
-            }
-            let raw = msg_id_usize(self.raw, selector, size);
-            if raw.is_null() {
-                Err(MetalError::new("failed to create AccelerationStructure"))
-            } else {
-                Ok(AccelerationStructure { raw })
-            }
+    pub fn new_acceleration_structure(
+        &self,
+        size: usize,
+    ) -> Result<AccelerationStructure, MetalError> {
+        let selector = sel(b"newAccelerationStructureWithSize:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "newAccelerationStructureWithSize: not supported on this Device",
+            ));
+        }
+        let raw = msg_id_usize(self.raw, selector, size);
+        if raw.is_null() {
+            Err(MetalError::new("failed to create AccelerationStructure"))
+        } else {
+            Ok(AccelerationStructure { raw })
         }
     }
 }
@@ -407,19 +372,19 @@ impl CommandBuffer {
     pub fn acceleration_structure_command_encoder(
         &self,
     ) -> Result<AccelerationStructureCommandEncoder, MetalError> {
-        unsafe {
-            let selector = sel(b"accelerationStructureCommandEncoder\0");
-            if !responds_to_selector(self.raw, selector) {
-                return Err(MetalError::new(
-                    "accelerationStructureCommandEncoder: not supported on this CommandBuffer",
-                ));
-            }
-            let raw = retain(msg_id(self.raw, selector));
-            if raw.is_null() {
-                Err(MetalError::new("failed to create AccelerationStructureCommandEncoder"))
-            } else {
-                Ok(AccelerationStructureCommandEncoder { raw })
-            }
+        let selector = sel(b"accelerationStructureCommandEncoder\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "accelerationStructureCommandEncoder: not supported on this CommandBuffer",
+            ));
+        }
+        let raw = retain(msg_id(self.raw, selector));
+        if raw.is_null() {
+            Err(MetalError::new(
+                "failed to create AccelerationStructureCommandEncoder",
+            ))
+        } else {
+            Ok(AccelerationStructureCommandEncoder { raw })
         }
     }
 }
@@ -494,9 +459,12 @@ impl AccelerationStructureCommandEncoder {
         unsafe {
             let selector = sel(b"refitAccelerationStructure:descriptor:destination:scratchBuffer:scratchBufferOffset:\0");
             if !responds_to_selector(self.raw, selector) {
-                return Err(MetalError::new("refitAccelerationStructure:... not supported"));
+                return Err(MetalError::new(
+                    "refitAccelerationStructure:... not supported",
+                ));
             }
-            let f: unsafe extern "C" fn(id, SEL, id, id, id, id, usize) = transmute(objc_msgSend as *const c_void);
+            let f: unsafe extern "C" fn(id, SEL, id, id, id, id, usize) =
+                transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
                 selector,
@@ -521,9 +489,12 @@ impl AccelerationStructureCommandEncoder {
         unsafe {
             let selector = sel(b"refitAccelerationStructure:descriptor:destination:scratchBuffer:scratchBufferOffset:\0");
             if !responds_to_selector(self.raw, selector) {
-                return Err(MetalError::new("refitAccelerationStructure:... not supported"));
+                return Err(MetalError::new(
+                    "refitAccelerationStructure:... not supported",
+                ));
             }
-            let f: unsafe extern "C" fn(id, SEL, id, id, id, id, usize) = transmute(objc_msgSend as *const c_void);
+            let f: unsafe extern "C" fn(id, SEL, id, id, id, id, usize) =
+                transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
                 selector,
@@ -545,7 +516,9 @@ impl AccelerationStructureCommandEncoder {
         unsafe {
             let selector = sel(b"copyAccelerationStructure:toAccelerationStructure:\0");
             if !responds_to_selector(self.raw, selector) {
-                return Err(MetalError::new("copyAccelerationStructure:toAccelerationStructure: not supported"));
+                return Err(MetalError::new(
+                    "copyAccelerationStructure:toAccelerationStructure: not supported",
+                ));
             }
             let f: unsafe extern "C" fn(id, SEL, id, id) = transmute(objc_msgSend as *const c_void);
             f(self.raw, selector, source.raw, destination.raw);
@@ -561,7 +534,9 @@ impl AccelerationStructureCommandEncoder {
         unsafe {
             let selector = sel(b"copyAndCompactAccelerationStructure:toAccelerationStructure:\0");
             if !responds_to_selector(self.raw, selector) {
-                return Err(MetalError::new("copyAndCompactAccelerationStructure:toAccelerationStructure: not supported"));
+                return Err(MetalError::new(
+                    "copyAndCompactAccelerationStructure:toAccelerationStructure: not supported",
+                ));
             }
             let f: unsafe extern "C" fn(id, SEL, id, id) = transmute(objc_msgSend as *const c_void);
             f(self.raw, selector, source.raw, destination.raw);
@@ -578,15 +553,18 @@ impl AccelerationStructureCommandEncoder {
         unsafe {
             let selector = sel(b"writeCompactedAccelerationStructureSize:toBuffer:offset:\0");
             if !responds_to_selector(self.raw, selector) {
-                return Err(MetalError::new("writeCompactedAccelerationStructureSize:toBuffer:offset: not supported"));
+                return Err(MetalError::new(
+                    "writeCompactedAccelerationStructureSize:toBuffer:offset: not supported",
+                ));
             }
-            let f: unsafe extern "C" fn(id, SEL, id, id, usize) = transmute(objc_msgSend as *const c_void);
+            let f: unsafe extern "C" fn(id, SEL, id, id, usize) =
+                transmute(objc_msgSend as *const c_void);
             f(self.raw, selector, structure.raw, buffer.raw, offset);
             Ok(())
         }
     }
 
     pub fn end_encoding(&self) {
-        unsafe { msg_void(self.raw, sel(b"endEncoding\0")) };
+        msg_void(self.raw, sel(b"endEncoding\0"));
     }
 }

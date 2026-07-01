@@ -16,32 +16,24 @@ pub struct CaptureDescriptor {
 
 impl CaptureDescriptor {
     pub fn new() -> Self {
-        unsafe {
-            let allocated = msg_id(class(b"MTLCaptureDescriptor\0"), sel(b"alloc\0"));
-            Self {
-                raw: msg_id(allocated, sel(b"init\0")),
-            }
+        let allocated = msg_id(class(b"MTLCaptureDescriptor\0"), sel(b"alloc\0"));
+        Self {
+            raw: msg_id(allocated, sel(b"init\0")),
         }
     }
 
     pub fn set_capture_object(&self, object: id) {
-        unsafe {
-            msg_void_id(self.raw, sel(b"setCaptureObject:\0"), object);
-        }
+        msg_void_id(self.raw, sel(b"setCaptureObject:\0"), object);
     }
 
     pub fn set_destination(&self, destination: CaptureDestination) {
-        unsafe {
-            msg_void_usize(self.raw, sel(b"setDestination:\0"), destination as usize);
-        }
+        msg_void_usize(self.raw, sel(b"setDestination:\0"), destination as usize);
     }
 
     pub fn set_output_url(&self, path: &str) {
-        unsafe {
-            let ns_path = NSString::new(path);
-            let ns_url = msg_id_id(class(b"NSURL\0"), sel(b"fileURLWithPath:\0"), ns_path.raw());
-            msg_void_id(self.raw, sel(b"setOutputURL:\0"), ns_url);
-        }
+        let ns_path = NSString::new(path);
+        let ns_url = msg_id_id(class(b"NSURL\0"), sel(b"fileURLWithPath:\0"), ns_path.raw());
+        msg_void_id(self.raw, sel(b"setOutputURL:\0"), ns_url);
     }
 }
 
@@ -53,7 +45,7 @@ impl Default for CaptureDescriptor {
 
 impl Drop for CaptureDescriptor {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
@@ -64,21 +56,23 @@ pub struct CaptureManager {
 
 impl CaptureManager {
     pub fn shared() -> Result<Self, MetalError> {
-        unsafe {
-            let cls = class(b"MTLCaptureManager\0");
-            if cls.is_null() {
-                return Err(MetalError::new("MTLCaptureManager class not found"));
-            }
-            let selector = sel(b"sharedCaptureManager\0");
-            if !responds_to_selector(cls, selector) {
-                return Err(MetalError::new("MTLCaptureManager does not respond to sharedCaptureManager"));
-            }
-            let raw = retain(msg_id(cls, selector));
-            if raw.is_null() {
-                Err(MetalError::new("MTLCaptureManager.sharedCaptureManager returned nil"))
-            } else {
-                Ok(Self { raw })
-            }
+        let cls = class(b"MTLCaptureManager\0");
+        if cls.is_null() {
+            return Err(MetalError::new("MTLCaptureManager class not found"));
+        }
+        let selector = sel(b"sharedCaptureManager\0");
+        if !responds_to_selector(cls, selector) {
+            return Err(MetalError::new(
+                "MTLCaptureManager does not respond to sharedCaptureManager",
+            ));
+        }
+        let raw = retain(msg_id(cls, selector));
+        if raw.is_null() {
+            Err(MetalError::new(
+                "MTLCaptureManager.sharedCaptureManager returned nil",
+            ))
+        } else {
+            Ok(Self { raw })
         }
     }
 
@@ -88,50 +82,50 @@ impl CaptureManager {
             if !responds_to_selector(self.raw, selector) {
                 return false;
             }
-            let f: unsafe extern "C" fn(id, SEL, usize) -> BOOL = transmute(objc_msgSend as *const c_void);
+            let f: unsafe extern "C" fn(id, SEL, usize) -> BOOL =
+                transmute(objc_msgSend as *const c_void);
             f(self.raw, selector, destination as usize) != NO
         }
     }
 
     pub fn start_capture(&self, descriptor: &CaptureDescriptor) -> Result<(), MetalError> {
-        unsafe {
-            let selector = sel(b"startCaptureWithDescriptor:error:\0");
-            if !responds_to_selector(self.raw, selector) {
-                return Err(MetalError::new("startCaptureWithDescriptor:error: is not supported"));
-            }
-            let mut error = NIL;
-            let ok = msg_bool_id_err(self.raw, selector, descriptor.raw, &mut error);
-            if ok == NO {
-                Err(MetalError::new(error_message(error, "failed to start Metal capture")))
-            } else {
-                Ok(())
-            }
+        let selector = sel(b"startCaptureWithDescriptor:error:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "startCaptureWithDescriptor:error: is not supported",
+            ));
+        }
+        let mut error = NIL;
+        let ok = msg_bool_id_err(self.raw, selector, descriptor.raw, &mut error);
+        if ok == NO {
+            Err(MetalError::new(error_message(
+                error,
+                "failed to start Metal capture",
+            )))
+        } else {
+            Ok(())
         }
     }
 
     pub fn stop_capture(&self) {
-        unsafe {
-            let selector = sel(b"stopCapture\0");
-            if responds_to_selector(self.raw, selector) {
-                msg_void(self.raw, selector);
-            }
+        let selector = sel(b"stopCapture\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void(self.raw, selector);
         }
     }
 
     pub fn is_capturing(&self) -> bool {
-        unsafe {
-            let selector = sel(b"isCapturing\0");
-            if responds_to_selector(self.raw, selector) {
-                msg_bool(self.raw, selector) != NO
-            } else {
-                false
-            }
+        let selector = sel(b"isCapturing\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_bool(self.raw, selector) != NO
+        } else {
+            false
         }
     }
 }
 
 impl Drop for CaptureManager {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }

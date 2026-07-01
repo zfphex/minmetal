@@ -210,7 +210,6 @@ pub enum SparsePageSize {
     Size256 = 103,
 }
 
-
 impl StorageMode {
     const fn as_resource_bits(self) -> usize {
         (self as usize) << 4
@@ -734,4 +733,3 @@ pub struct AccelerationStructureInstanceDescriptor {
     pub intersection_function_table_offset: u32,
     pub acceleration_structure_index: u32,
 }
-

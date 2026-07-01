@@ -1,5 +1,7 @@
 #![allow(non_camel_case_types, non_snake_case)]
 
+mod capture;
+mod counters;
 mod device;
 mod encoder;
 mod ffi;
@@ -7,13 +9,13 @@ mod indirect;
 mod layer;
 mod pass;
 mod pipeline;
-mod resource;
-mod types;
-mod capture;
-mod counters;
-mod sparse;
 mod raytracing;
+mod resource;
+mod sparse;
+mod types;
 
+pub use capture::*;
+pub use counters::*;
 pub use device::*;
 pub use encoder::*;
 pub use ffi::*;
@@ -21,12 +23,10 @@ pub use indirect::*;
 pub use layer::*;
 pub use pass::*;
 pub use pipeline::*;
-pub use resource::*;
-pub use types::*;
-pub use capture::*;
-pub use counters::*;
-pub use sparse::*;
 pub use raytracing::*;
+pub use resource::*;
+pub use sparse::*;
+pub use types::*;
 
 #[cfg(test)]
 mod tests {
@@ -48,14 +48,23 @@ mod tests {
         let Some(device) = Device::system_default() else {
             return;
         };
-        let library = device.new_library_with_source(r#"
+        let library = device
+            .new_library_with_source(
+                r#"
             #include <metal_stdlib>
             using namespace metal;
             kernel void my_kernel() {}
-        "#).unwrap();
+        "#,
+            )
+            .unwrap();
         let result = library.function("non_existent_function");
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("non_existent_function"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("non_existent_function")
+        );
     }
 
     #[test]
@@ -63,12 +72,16 @@ mod tests {
         let Some(device) = Device::system_default() else {
             return;
         };
-        let library = device.new_library_with_source(r#"
+        let library = device
+            .new_library_with_source(
+                r#"
             #include <metal_stdlib>
             using namespace metal;
             vertex float4 vertex_main(uint vid [[vertex_id]]) { return float4(0.0); }
             fragment float4 fragment_main() { return float4(1.0); }
-        "#).unwrap();
+        "#,
+            )
+            .unwrap();
         let vertex = library.function("vertex_main").unwrap();
         let fragment = library.function("fragment_main").unwrap();
         let desc = RenderPipelineDescriptor::new();
@@ -81,24 +94,31 @@ mod tests {
 
     #[test]
     fn test_nil_indirect_command_access() {
-        let icb = IndirectCommandBuffer { raw: std::ptr::null_mut() };
+        let icb = IndirectCommandBuffer {
+            raw: std::ptr::null_mut(),
+        };
         let result = icb.render_command(0);
         assert!(result.is_err());
     }
 
     #[test]
     fn test_selector_availability_helper() {
-        unsafe {
-            let cls = class(b"NSString\0");
-            assert!(responds_to_selector(cls, sel(b"alloc\0")));
-            assert!(!responds_to_selector(cls, sel(b"someFakeSelectorThatDoesNotExist\0")));
-        }
+        let cls = class(b"NSString\0");
+        assert!(responds_to_selector(cls, sel(b"alloc\0")));
+        assert!(!responds_to_selector(
+            cls,
+            sel(b"someFakeSelectorThatDoesNotExist\0")
+        ));
     }
 
     #[test]
     fn test_unsupported_api_paths_returning_metal_error() {
-        let encoder = BlitCommandEncoder { raw: std::ptr::null_mut() };
-        let sample_buf = CounterSampleBuffer { raw: std::ptr::null_mut() };
+        let encoder = BlitCommandEncoder {
+            raw: std::ptr::null_mut(),
+        };
+        let sample_buf = CounterSampleBuffer {
+            raw: std::ptr::null_mut(),
+        };
         let result = encoder.sample_counters_in_buffer(&sample_buf, 0, false);
         assert!(result.is_err());
         assert!(result.unwrap_err().to_string().contains("not supported"));
@@ -106,7 +126,9 @@ mod tests {
 
     #[test]
     fn test_nil_object_creation_paths() {
-        let device = Device { raw: std::ptr::null_mut() };
+        let device = Device {
+            raw: std::ptr::null_mut(),
+        };
         let result = device.counter_sets();
         assert!(result.is_err());
     }
@@ -131,4 +153,3 @@ mod tests {
         drop(desc8);
     }
 }
-

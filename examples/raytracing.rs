@@ -15,11 +15,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Create a simple vertex buffer containing a single triangle
     let vertices = [
-         0.0f32,  0.5f32, 0.0f32,
-        -0.5f32, -0.5f32, 0.0f32,
-         0.5f32, -0.5f32, 0.0f32,
+        0.0f32, 0.5f32, 0.0f32, -0.5f32, -0.5f32, 0.0f32, 0.5f32, -0.5f32, 0.0f32,
     ];
-    let vertex_buffer = device.new_buffer_with_data(&vertices, ResourceOptions::STORAGE_MODE_SHARED)?;
+    let vertex_buffer =
+        device.new_buffer_with_data(&vertices, ResourceOptions::STORAGE_MODE_SHARED)?;
 
     let tri_desc = AccelerationStructureTriangleGeometryDescriptor::new();
     tri_desc.set_vertex_buffer(&vertex_buffer);
@@ -35,13 +34,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let sizes = match device.acceleration_structure_sizes(&prim_desc) {
         Ok(s) => s,
         Err(e) => {
-            println!("Failed to query acceleration structure sizes: {}. Skipping example", e);
+            println!(
+                "Failed to query acceleration structure sizes: {}. Skipping example",
+                e
+            );
             return Ok(());
         }
     };
 
-    println!("Required AS size: {} bytes", sizes.acceleration_structure_size);
-    println!("Build scratch buffer size: {} bytes", sizes.build_scratch_buffer_size);
+    println!(
+        "Required AS size: {} bytes",
+        sizes.acceleration_structure_size
+    );
+    println!(
+        "Build scratch buffer size: {} bytes",
+        sizes.build_scratch_buffer_size
+    );
 
     // Allocate acceleration structure
     let as_structure = device.new_acceleration_structure(sizes.acceleration_structure_size)?;

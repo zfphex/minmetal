@@ -16,13 +16,17 @@ fn main() {
     println!("Got command queue.");
     std::io::stdout().flush().unwrap();
 
-    let cmd_buf = queue.command_buffer().expect("failed to create command buffer");
+    let cmd_buf = queue
+        .command_buffer()
+        .expect("failed to create command buffer");
     println!("Got command buffer.");
     std::io::stdout().flush().unwrap();
 
     // Create a 2D texture to bind to the render pass color attachment
     let texture_desc = TextureDescriptor::texture_2d(PixelFormat::Rgba8Unorm, 128, 128, false);
-    let texture = device.new_texture(&texture_desc).expect("failed to create texture");
+    let texture = device
+        .new_texture(&texture_desc)
+        .expect("failed to create texture");
     println!("Created 128x128 texture.");
     std::io::stdout().flush().unwrap();
 

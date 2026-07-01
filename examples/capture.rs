@@ -37,7 +37,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("Capture finished successfully");
         }
         Err(e) => {
-            println!("Could not start capture: {}. Skipping capture (this is normal if developer tools/profiling is not active)", e);
+            println!(
+                "Could not start capture: {}. Skipping capture (this is normal if developer tools/profiling is not active)",
+                e
+            );
         }
     }
 

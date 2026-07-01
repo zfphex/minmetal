@@ -29,7 +29,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     heap_descriptor.set_sparse_page_size(SparsePageSize::Size64);
     let heap = device.new_heap(&heap_descriptor)?;
 
-    let texture_descriptor = TextureDescriptor::texture_2d(PixelFormat::Rgba8Unorm, 256, 256, false);
+    let texture_descriptor =
+        TextureDescriptor::texture_2d(PixelFormat::Rgba8Unorm, 256, 256, false);
     texture_descriptor.set_storage_mode(StorageMode::Private);
     texture_descriptor.set_usage(TextureUsage::SHADER_READ);
 

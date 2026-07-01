@@ -35,7 +35,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let sample_buffer = match device.new_counter_sample_buffer(&descriptor) {
         Ok(buf) => buf,
         Err(e) => {
-            println!("Failed to create counter sample buffer: {}. Skipping sampling.", e);
+            println!(
+                "Failed to create counter sample buffer: {}. Skipping sampling.",
+                e
+            );
             return Ok(());
         }
     };

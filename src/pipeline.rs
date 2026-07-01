@@ -9,11 +9,9 @@ pub struct FunctionConstantValues {
 
 impl FunctionConstantValues {
     pub fn new() -> Self {
-        unsafe {
-            let allocated = msg_id(class(b"MTLFunctionConstantValues\0"), sel(b"alloc\0"));
-            Self {
-                raw: msg_id(allocated, sel(b"init\0")),
-            }
+        let allocated = msg_id(class(b"MTLFunctionConstantValues\0"), sel(b"alloc\0"));
+        Self {
+            raw: msg_id(allocated, sel(b"init\0")),
         }
     }
 
@@ -69,7 +67,7 @@ impl Default for FunctionConstantValues {
 
 impl Drop for FunctionConstantValues {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
@@ -80,11 +78,9 @@ pub struct BinaryArchiveDescriptor {
 
 impl BinaryArchiveDescriptor {
     pub fn new() -> Self {
-        unsafe {
-            let allocated = msg_id(class(b"MTLBinaryArchiveDescriptor\0"), sel(b"alloc\0"));
-            Self {
-                raw: msg_id(allocated, sel(b"init\0")),
-            }
+        let allocated = msg_id(class(b"MTLBinaryArchiveDescriptor\0"), sel(b"alloc\0"));
+        Self {
+            raw: msg_id(allocated, sel(b"init\0")),
         }
     }
 }
@@ -97,7 +93,7 @@ impl Default for BinaryArchiveDescriptor {
 
 impl Drop for BinaryArchiveDescriptor {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
@@ -160,7 +156,7 @@ impl BinaryArchive {
 
 impl Drop for BinaryArchive {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
@@ -171,87 +167,76 @@ pub struct ComputePipelineDescriptor {
 
 impl ComputePipelineDescriptor {
     pub fn new() -> Self {
-        unsafe {
-            let allocated = msg_id(class(b"MTLComputePipelineDescriptor\0"), sel(b"alloc\0"));
-            Self {
-                raw: msg_id(allocated, sel(b"init\0")),
-            }
+        let allocated = msg_id(class(b"MTLComputePipelineDescriptor\0"), sel(b"alloc\0"));
+        Self {
+            raw: msg_id(allocated, sel(b"init\0")),
         }
     }
 
     pub fn set_compute_function(&self, function: &Function) {
-        unsafe {
-            msg_void_id(self.raw, sel(b"setComputeFunction:\0"), function.raw);
-        }
+        msg_void_id(self.raw, sel(b"setComputeFunction:\0"), function.raw);
     }
 
     pub fn set_binary_archives(&self, archives: &[&BinaryArchive]) {
-        unsafe {
-            let raw: Vec<id> = archives.iter().map(|archive| archive.raw).collect();
-            let array = ns_array_from_ids(&raw);
-            msg_void_id(self.raw, sel(b"setBinaryArchives:\0"), array);
-        }
+        let raw: Vec<id> = archives.iter().map(|archive| archive.raw).collect();
+        let array = ns_array_from_ids(&raw);
+        msg_void_id(self.raw, sel(b"setBinaryArchives:\0"), array);
     }
 
     pub fn set_support_indirect_command_buffers(&self, support: bool) {
-        unsafe {
-            msg_void_bool(
-                self.raw,
-                sel(b"setSupportIndirectCommandBuffers:\0"),
-                if support { YES } else { NO },
-            );
-        }
+        msg_void_bool(
+            self.raw,
+            sel(b"setSupportIndirectCommandBuffers:\0"),
+            if support { YES } else { NO },
+        );
     }
 
     pub fn linked_functions(&self) -> LinkedFunctions {
-        unsafe {
-            let lf = msg_id(self.raw, sel(b"linkedFunctions\0"));
-            LinkedFunctions { raw: retain(lf) }
-        }
+        let lf = msg_id(self.raw, sel(b"linkedFunctions\0"));
+        LinkedFunctions { raw: retain(lf) }
     }
 
     pub fn set_linked_functions(&self, linked_functions: &LinkedFunctions) {
-        unsafe {
-            msg_void_id(self.raw, sel(b"setLinkedFunctions:\0"), linked_functions.raw);
-        }
+        msg_void_id(
+            self.raw,
+            sel(b"setLinkedFunctions:\0"),
+            linked_functions.raw,
+        );
     }
 
     pub fn support_adding_binary_functions(&self) -> bool {
-        unsafe { msg_bool(self.raw, sel(b"supportAddingBinaryFunctions\0")) != NO }
+        msg_bool(self.raw, sel(b"supportAddingBinaryFunctions\0")) != NO
     }
 
     pub fn set_support_adding_binary_functions(&self, support: bool) {
-        unsafe {
-            msg_void_bool(
-                self.raw,
-                sel(b"setSupportAddingBinaryFunctions:\0"),
-                if support { YES } else { NO },
-            );
-        }
+        msg_void_bool(
+            self.raw,
+            sel(b"setSupportAddingBinaryFunctions:\0"),
+            if support { YES } else { NO },
+        );
     }
 
     pub fn max_total_threads_per_threadgroup(&self) -> usize {
-        unsafe { msg_usize(self.raw, sel(b"maxTotalThreadsPerThreadgroup\0")) }
+        msg_usize(self.raw, sel(b"maxTotalThreadsPerThreadgroup\0"))
     }
 
     pub fn set_max_total_threads_per_threadgroup(&self, max: usize) {
-        unsafe {
-            msg_void_usize(self.raw, sel(b"setMaxTotalThreadsPerThreadgroup:\0"), max);
-        }
+        msg_void_usize(self.raw, sel(b"setMaxTotalThreadsPerThreadgroup:\0"), max);
     }
 
     pub fn thread_group_size_is_multiple_of_thread_execution_width(&self) -> bool {
-        unsafe { msg_bool(self.raw, sel(b"threadGroupSizeIsMultipleOfThreadExecutionWidth\0")) != NO }
+        msg_bool(
+            self.raw,
+            sel(b"threadGroupSizeIsMultipleOfThreadExecutionWidth\0"),
+        ) != NO
     }
 
     pub fn set_thread_group_size_is_multiple_of_thread_execution_width(&self, value: bool) {
-        unsafe {
-            msg_void_bool(
-                self.raw,
-                sel(b"setThreadGroupSizeIsMultipleOfThreadExecutionWidth:\0"),
-                if value { YES } else { NO },
-            );
-        }
+        msg_void_bool(
+            self.raw,
+            sel(b"setThreadGroupSizeIsMultipleOfThreadExecutionWidth:\0"),
+            if value { YES } else { NO },
+        );
     }
 }
 
@@ -263,7 +248,7 @@ impl Default for ComputePipelineDescriptor {
 
 impl Drop for ComputePipelineDescriptor {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
@@ -274,97 +259,104 @@ pub struct ComputePipelineState {
 
 impl Drop for ComputePipelineState {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
 impl ComputePipelineState {
     pub fn max_total_threads_per_threadgroup(&self) -> usize {
-        unsafe { msg_usize(self.raw, sel(b"maxTotalThreadsPerThreadgroup\0")) }
+        msg_usize(self.raw, sel(b"maxTotalThreadsPerThreadgroup\0"))
     }
 
     pub fn thread_execution_width(&self) -> usize {
-        unsafe { msg_usize(self.raw, sel(b"threadExecutionWidth\0")) }
+        msg_usize(self.raw, sel(b"threadExecutionWidth\0"))
     }
 
     pub fn static_threadgroup_memory_length(&self) -> usize {
-        unsafe {
-            let selector = sel(b"staticThreadgroupMemoryLength\0");
-            if responds_to_selector(self.raw, selector) {
-                msg_usize(self.raw, selector)
-            } else {
-                0
-            }
+        let selector = sel(b"staticThreadgroupMemoryLength\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_usize(self.raw, selector)
+        } else {
+            0
         }
     }
 
     pub fn support_indirect_command_buffers(&self) -> bool {
-        unsafe {
-            let selector = sel(b"supportIndirectCommandBuffers\0");
-            if responds_to_selector(self.raw, selector) {
-                msg_bool(self.raw, selector) != NO
-            } else {
-                false
-            }
+        let selector = sel(b"supportIndirectCommandBuffers\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_bool(self.raw, selector) != NO
+        } else {
+            false
         }
     }
 
     pub fn gpu_resource_id(&self) -> Result<ResourceID, MetalError> {
-        unsafe {
-            let selector = sel(b"gpuResourceID\0");
-            if responds_to_selector(self.raw, selector) {
-                Ok(msg_resource_id(self.raw, selector))
-            } else {
-                Err(MetalError::new("gpuResourceID not supported on ComputePipelineState"))
-            }
+        let selector = sel(b"gpuResourceID\0");
+        if responds_to_selector(self.raw, selector) {
+            Ok(msg_resource_id(self.raw, selector))
+        } else {
+            Err(MetalError::new(
+                "gpuResourceID not supported on ComputePipelineState",
+            ))
         }
     }
 
-    pub fn function_handle_with_function(&self, function: &Function) -> Result<FunctionHandle, MetalError> {
-        unsafe {
-            let selector = sel(b"functionHandleWithFunction:\0");
-            if responds_to_selector(self.raw, selector) {
-                let raw = retain(msg_id_id(self.raw, selector, function.raw));
-                if raw.is_null() {
-                    Err(MetalError::new("failed to get function handle"))
-                } else {
-                    Ok(FunctionHandle { raw })
-                }
+    pub fn function_handle_with_function(
+        &self,
+        function: &Function,
+    ) -> Result<FunctionHandle, MetalError> {
+        let selector = sel(b"functionHandleWithFunction:\0");
+        if responds_to_selector(self.raw, selector) {
+            let raw = retain(msg_id_id(self.raw, selector, function.raw));
+            if raw.is_null() {
+                Err(MetalError::new("failed to get function handle"))
             } else {
-                Err(MetalError::new("functionHandleWithFunction: not supported on ComputePipelineState"))
+                Ok(FunctionHandle { raw })
             }
+        } else {
+            Err(MetalError::new(
+                "functionHandleWithFunction: not supported on ComputePipelineState",
+            ))
         }
     }
 
-    pub fn new_visible_function_table(&self, descriptor: &VisibleFunctionTableDescriptor) -> Result<VisibleFunctionTable, MetalError> {
-        unsafe {
-            let selector = sel(b"newVisibleFunctionTableWithDescriptor:\0");
-            if responds_to_selector(self.raw, selector) {
-                let raw = retain(msg_id_id(self.raw, selector, descriptor.raw));
-                if raw.is_null() {
-                    Err(MetalError::new("failed to create visible function table"))
-                } else {
-                    Ok(VisibleFunctionTable { raw })
-                }
+    pub fn new_visible_function_table(
+        &self,
+        descriptor: &VisibleFunctionTableDescriptor,
+    ) -> Result<VisibleFunctionTable, MetalError> {
+        let selector = sel(b"newVisibleFunctionTableWithDescriptor:\0");
+        if responds_to_selector(self.raw, selector) {
+            let raw = retain(msg_id_id(self.raw, selector, descriptor.raw));
+            if raw.is_null() {
+                Err(MetalError::new("failed to create visible function table"))
             } else {
-                Err(MetalError::new("newVisibleFunctionTableWithDescriptor: not supported on ComputePipelineState"))
+                Ok(VisibleFunctionTable { raw })
             }
+        } else {
+            Err(MetalError::new(
+                "newVisibleFunctionTableWithDescriptor: not supported on ComputePipelineState",
+            ))
         }
     }
 
-    pub fn new_intersection_function_table(&self, descriptor: &IntersectionFunctionTableDescriptor) -> Result<IntersectionFunctionTable, MetalError> {
-        unsafe {
-            let selector = sel(b"newIntersectionFunctionTableWithDescriptor:\0");
-            if responds_to_selector(self.raw, selector) {
-                let raw = retain(msg_id_id(self.raw, selector, descriptor.raw));
-                if raw.is_null() {
-                    Err(MetalError::new("failed to create intersection function table"))
-                } else {
-                    Ok(IntersectionFunctionTable { raw })
-                }
+    pub fn new_intersection_function_table(
+        &self,
+        descriptor: &IntersectionFunctionTableDescriptor,
+    ) -> Result<IntersectionFunctionTable, MetalError> {
+        let selector = sel(b"newIntersectionFunctionTableWithDescriptor:\0");
+        if responds_to_selector(self.raw, selector) {
+            let raw = retain(msg_id_id(self.raw, selector, descriptor.raw));
+            if raw.is_null() {
+                Err(MetalError::new(
+                    "failed to create intersection function table",
+                ))
             } else {
-                Err(MetalError::new("newIntersectionFunctionTableWithDescriptor: not supported on ComputePipelineState"))
+                Ok(IntersectionFunctionTable { raw })
             }
+        } else {
+            Err(MetalError::new(
+                "newIntersectionFunctionTableWithDescriptor: not supported on ComputePipelineState",
+            ))
         }
     }
 }
@@ -376,13 +368,11 @@ pub struct VertexDescriptor {
 
 impl VertexDescriptor {
     pub fn new() -> Self {
-        unsafe {
-            let raw = retain(msg_id(
-                class(b"MTLVertexDescriptor\0"),
-                sel(b"vertexDescriptor\0"),
-            ));
-            Self { raw }
-        }
+        let raw = retain(msg_id(
+            class(b"MTLVertexDescriptor\0"),
+            sel(b"vertexDescriptor\0"),
+        ));
+        Self { raw }
     }
 
     pub fn set_attribute(
@@ -392,13 +382,11 @@ impl VertexDescriptor {
         offset: usize,
         buffer_index: usize,
     ) {
-        unsafe {
-            let attributes = msg_id(self.raw, sel(b"attributes\0"));
-            let attribute = msg_id_usize(attributes, sel(b"objectAtIndexedSubscript:\0"), index);
-            msg_void_usize(attribute, sel(b"setFormat:\0"), format as usize);
-            msg_void_usize(attribute, sel(b"setOffset:\0"), offset);
-            msg_void_usize(attribute, sel(b"setBufferIndex:\0"), buffer_index);
-        }
+        let attributes = msg_id(self.raw, sel(b"attributes\0"));
+        let attribute = msg_id_usize(attributes, sel(b"objectAtIndexedSubscript:\0"), index);
+        msg_void_usize(attribute, sel(b"setFormat:\0"), format as usize);
+        msg_void_usize(attribute, sel(b"setOffset:\0"), offset);
+        msg_void_usize(attribute, sel(b"setBufferIndex:\0"), buffer_index);
     }
 
     pub fn set_layout(
@@ -408,13 +396,11 @@ impl VertexDescriptor {
         step_function: VertexStepFunction,
         step_rate: usize,
     ) {
-        unsafe {
-            let layouts = msg_id(self.raw, sel(b"layouts\0"));
-            let layout = msg_id_usize(layouts, sel(b"objectAtIndexedSubscript:\0"), index);
-            msg_void_usize(layout, sel(b"setStride:\0"), stride);
-            msg_void_usize(layout, sel(b"setStepFunction:\0"), step_function as usize);
-            msg_void_usize(layout, sel(b"setStepRate:\0"), step_rate);
-        }
+        let layouts = msg_id(self.raw, sel(b"layouts\0"));
+        let layout = msg_id_usize(layouts, sel(b"objectAtIndexedSubscript:\0"), index);
+        msg_void_usize(layout, sel(b"setStride:\0"), stride);
+        msg_void_usize(layout, sel(b"setStepFunction:\0"), step_function as usize);
+        msg_void_usize(layout, sel(b"setStepRate:\0"), step_rate);
     }
 }
 
@@ -426,7 +412,7 @@ impl Default for VertexDescriptor {
 
 impl Drop for VertexDescriptor {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
@@ -437,88 +423,68 @@ pub struct RenderPipelineDescriptor {
 
 impl RenderPipelineDescriptor {
     pub fn new() -> Self {
-        unsafe {
-            let allocated = msg_id(class(b"MTLRenderPipelineDescriptor\0"), sel(b"alloc\0"));
-            Self {
-                raw: msg_id(allocated, sel(b"init\0")),
-            }
+        let allocated = msg_id(class(b"MTLRenderPipelineDescriptor\0"), sel(b"alloc\0"));
+        Self {
+            raw: msg_id(allocated, sel(b"init\0")),
         }
     }
 
     pub fn set_vertex_function(&self, function: &Function) {
-        unsafe {
-            msg_void_id(self.raw, sel(b"setVertexFunction:\0"), function.raw);
-        }
+        msg_void_id(self.raw, sel(b"setVertexFunction:\0"), function.raw);
     }
 
     pub fn set_fragment_function(&self, function: &Function) {
-        unsafe {
-            msg_void_id(self.raw, sel(b"setFragmentFunction:\0"), function.raw);
-        }
+        msg_void_id(self.raw, sel(b"setFragmentFunction:\0"), function.raw);
     }
 
     pub fn set_color_attachment_pixel_format(&self, index: usize, pixel_format: PixelFormat) {
-        unsafe {
-            let attachments = msg_id(self.raw, sel(b"colorAttachments\0"));
-            let attachment = msg_id_usize(attachments, sel(b"objectAtIndexedSubscript:\0"), index);
-            msg_void_usize(attachment, sel(b"setPixelFormat:\0"), pixel_format.as_raw());
-        }
+        let attachments = msg_id(self.raw, sel(b"colorAttachments\0"));
+        let attachment = msg_id_usize(attachments, sel(b"objectAtIndexedSubscript:\0"), index);
+        msg_void_usize(attachment, sel(b"setPixelFormat:\0"), pixel_format.as_raw());
     }
 
     pub fn set_vertex_descriptor(&self, vertex_descriptor: &VertexDescriptor) {
-        unsafe {
-            msg_void_id(
-                self.raw,
-                sel(b"setVertexDescriptor:\0"),
-                vertex_descriptor.raw,
-            );
-        }
+        msg_void_id(
+            self.raw,
+            sel(b"setVertexDescriptor:\0"),
+            vertex_descriptor.raw,
+        );
     }
 
     pub fn set_sample_count(&self, sample_count: usize) {
-        unsafe {
-            msg_void_usize(self.raw, sel(b"setSampleCount:\0"), sample_count);
-        }
+        msg_void_usize(self.raw, sel(b"setSampleCount:\0"), sample_count);
     }
 
     pub fn set_raster_sample_count(&self, raster_sample_count: usize) {
-        unsafe {
-            msg_void_usize(
-                self.raw,
-                sel(b"setRasterSampleCount:\0"),
-                raster_sample_count,
-            );
-        }
+        msg_void_usize(
+            self.raw,
+            sel(b"setRasterSampleCount:\0"),
+            raster_sample_count,
+        );
     }
 
     pub fn set_depth_attachment_pixel_format(&self, pixel_format: PixelFormat) {
-        unsafe {
-            msg_void_usize(
-                self.raw,
-                sel(b"setDepthAttachmentPixelFormat:\0"),
-                pixel_format.as_raw(),
-            );
-        }
+        msg_void_usize(
+            self.raw,
+            sel(b"setDepthAttachmentPixelFormat:\0"),
+            pixel_format.as_raw(),
+        );
     }
 
     pub fn set_stencil_attachment_pixel_format(&self, pixel_format: PixelFormat) {
-        unsafe {
-            msg_void_usize(
-                self.raw,
-                sel(b"setStencilAttachmentPixelFormat:\0"),
-                pixel_format.as_raw(),
-            );
-        }
+        msg_void_usize(
+            self.raw,
+            sel(b"setStencilAttachmentPixelFormat:\0"),
+            pixel_format.as_raw(),
+        );
     }
 
     pub fn set_alpha_to_coverage_enabled(&self, enabled: bool) {
-        unsafe {
-            msg_void_bool(
-                self.raw,
-                sel(b"setAlphaToCoverageEnabled:\0"),
-                if enabled { YES } else { NO },
-            );
-        }
+        msg_void_bool(
+            self.raw,
+            sel(b"setAlphaToCoverageEnabled:\0"),
+            if enabled { YES } else { NO },
+        );
     }
 
     pub fn set_color_attachment_blending(
@@ -532,123 +498,107 @@ impl RenderPipelineDescriptor {
         destination_alpha: BlendFactor,
         alpha_operation: BlendOperation,
     ) {
-        unsafe {
-            let attachments = msg_id(self.raw, sel(b"colorAttachments\0"));
-            let attachment = msg_id_usize(attachments, sel(b"objectAtIndexedSubscript:\0"), index);
-            msg_void_bool(
-                attachment,
-                sel(b"setBlendingEnabled:\0"),
-                if enabled { YES } else { NO },
-            );
-            msg_void_usize(
-                attachment,
-                sel(b"setSourceRGBBlendFactor:\0"),
-                source_rgb as usize,
-            );
-            msg_void_usize(
-                attachment,
-                sel(b"setDestinationRGBBlendFactor:\0"),
-                destination_rgb as usize,
-            );
-            msg_void_usize(
-                attachment,
-                sel(b"setRgbBlendOperation:\0"),
-                rgb_operation as usize,
-            );
-            msg_void_usize(
-                attachment,
-                sel(b"setSourceAlphaBlendFactor:\0"),
-                source_alpha as usize,
-            );
-            msg_void_usize(
-                attachment,
-                sel(b"setDestinationAlphaBlendFactor:\0"),
-                destination_alpha as usize,
-            );
-            msg_void_usize(
-                attachment,
-                sel(b"setAlphaBlendOperation:\0"),
-                alpha_operation as usize,
-            );
-        }
+        let attachments = msg_id(self.raw, sel(b"colorAttachments\0"));
+        let attachment = msg_id_usize(attachments, sel(b"objectAtIndexedSubscript:\0"), index);
+        msg_void_bool(
+            attachment,
+            sel(b"setBlendingEnabled:\0"),
+            if enabled { YES } else { NO },
+        );
+        msg_void_usize(
+            attachment,
+            sel(b"setSourceRGBBlendFactor:\0"),
+            source_rgb as usize,
+        );
+        msg_void_usize(
+            attachment,
+            sel(b"setDestinationRGBBlendFactor:\0"),
+            destination_rgb as usize,
+        );
+        msg_void_usize(
+            attachment,
+            sel(b"setRgbBlendOperation:\0"),
+            rgb_operation as usize,
+        );
+        msg_void_usize(
+            attachment,
+            sel(b"setSourceAlphaBlendFactor:\0"),
+            source_alpha as usize,
+        );
+        msg_void_usize(
+            attachment,
+            sel(b"setDestinationAlphaBlendFactor:\0"),
+            destination_alpha as usize,
+        );
+        msg_void_usize(
+            attachment,
+            sel(b"setAlphaBlendOperation:\0"),
+            alpha_operation as usize,
+        );
     }
 
     pub fn set_color_attachment_write_mask(&self, index: usize, mask: ColorWriteMask) {
-        unsafe {
-            let attachments = msg_id(self.raw, sel(b"colorAttachments\0"));
-            let attachment = msg_id_usize(attachments, sel(b"objectAtIndexedSubscript:\0"), index);
-            msg_void_usize(attachment, sel(b"setWriteMask:\0"), mask.as_raw());
-        }
+        let attachments = msg_id(self.raw, sel(b"colorAttachments\0"));
+        let attachment = msg_id_usize(attachments, sel(b"objectAtIndexedSubscript:\0"), index);
+        msg_void_usize(attachment, sel(b"setWriteMask:\0"), mask.as_raw());
     }
 
     pub fn set_binary_archives(&self, archives: &[&BinaryArchive]) {
-        unsafe {
-            let raw: Vec<id> = archives.iter().map(|archive| archive.raw).collect();
-            let array = ns_array_from_ids(&raw);
-            msg_void_id(self.raw, sel(b"setBinaryArchives:\0"), array);
-        }
+        let raw: Vec<id> = archives.iter().map(|archive| archive.raw).collect();
+        let array = ns_array_from_ids(&raw);
+        msg_void_id(self.raw, sel(b"setBinaryArchives:\0"), array);
     }
 
     pub fn set_support_indirect_command_buffers(&self, support: bool) {
-        unsafe {
-            msg_void_bool(
-                self.raw,
-                sel(b"setSupportIndirectCommandBuffers:\0"),
-                if support { YES } else { NO },
-            );
-        }
+        msg_void_bool(
+            self.raw,
+            sel(b"setSupportIndirectCommandBuffers:\0"),
+            if support { YES } else { NO },
+        );
     }
 
     pub fn linked_functions(&self) -> LinkedFunctions {
-        unsafe {
-            let lf = msg_id(self.raw, sel(b"linkedFunctions\0"));
-            LinkedFunctions { raw: retain(lf) }
-        }
+        let lf = msg_id(self.raw, sel(b"linkedFunctions\0"));
+        LinkedFunctions { raw: retain(lf) }
     }
 
     pub fn set_linked_functions(&self, linked_functions: &LinkedFunctions) {
-        unsafe {
-            msg_void_id(self.raw, sel(b"setLinkedFunctions:\0"), linked_functions.raw);
-        }
+        msg_void_id(
+            self.raw,
+            sel(b"setLinkedFunctions:\0"),
+            linked_functions.raw,
+        );
     }
 
     pub fn support_adding_binary_functions(&self) -> bool {
-        unsafe {
-            let selector = sel(b"supportAddingBinaryFunctions\0");
-            if responds_to_selector(self.raw, selector) {
-                msg_bool(self.raw, selector) != NO
-            } else {
-                false
-            }
+        let selector = sel(b"supportAddingBinaryFunctions\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_bool(self.raw, selector) != NO
+        } else {
+            false
         }
     }
 
     pub fn set_support_adding_binary_functions(&self, support: bool) {
-        unsafe {
-            let selector = sel(b"setSupportAddingBinaryFunctions:\0");
-            if responds_to_selector(self.raw, selector) {
-                msg_void_bool(self.raw, selector, if support { YES } else { NO });
-            }
+        let selector = sel(b"setSupportAddingBinaryFunctions:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_bool(self.raw, selector, if support { YES } else { NO });
         }
     }
 
     pub fn max_call_stack_depth(&self) -> usize {
-        unsafe {
-            let selector = sel(b"maxCallStackDepth\0");
-            if responds_to_selector(self.raw, selector) {
-                msg_usize(self.raw, selector)
-            } else {
-                0
-            }
+        let selector = sel(b"maxCallStackDepth\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_usize(self.raw, selector)
+        } else {
+            0
         }
     }
 
     pub fn set_max_call_stack_depth(&self, depth: usize) {
-        unsafe {
-            let selector = sel(b"setMaxCallStackDepth:\0");
-            if responds_to_selector(self.raw, selector) {
-                msg_void_usize(self.raw, selector, depth);
-            }
+        let selector = sel(b"setMaxCallStackDepth:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_usize(self.raw, selector, depth);
         }
     }
 }
@@ -661,7 +611,7 @@ impl Default for RenderPipelineDescriptor {
 
 impl Drop for RenderPipelineDescriptor {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
@@ -672,147 +622,144 @@ pub struct RenderPipelineState {
 
 impl Drop for RenderPipelineState {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
 impl RenderPipelineState {
     pub fn max_total_threads_per_threadgroup(&self) -> usize {
-        unsafe {
-            let selector = sel(b"maxTotalThreadsPerThreadgroup\0");
-            if responds_to_selector(self.raw, selector) {
-                msg_usize(self.raw, selector)
-            } else {
-                0
-            }
+        let selector = sel(b"maxTotalThreadsPerThreadgroup\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_usize(self.raw, selector)
+        } else {
+            0
         }
     }
 
     pub fn threadgroup_size_matches_tile_size(&self) -> bool {
-        unsafe {
-            let selector = sel(b"threadgroupSizeMatchesTileSize\0");
-            if responds_to_selector(self.raw, selector) {
-                msg_bool(self.raw, selector) != NO
-            } else {
-                false
-            }
+        let selector = sel(b"threadgroupSizeMatchesTileSize\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_bool(self.raw, selector) != NO
+        } else {
+            false
         }
     }
 
     pub fn max_total_threads_per_object_threadgroup(&self) -> usize {
-        unsafe {
-            let selector = sel(b"maxTotalThreadsPerObjectThreadgroup\0");
-            if responds_to_selector(self.raw, selector) {
-                msg_usize(self.raw, selector)
-            } else {
-                0
-            }
+        let selector = sel(b"maxTotalThreadsPerObjectThreadgroup\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_usize(self.raw, selector)
+        } else {
+            0
         }
     }
 
     pub fn max_total_threads_per_mesh_threadgroup(&self) -> usize {
-        unsafe {
-            let selector = sel(b"maxTotalThreadsPerMeshThreadgroup\0");
-            if responds_to_selector(self.raw, selector) {
-                msg_usize(self.raw, selector)
-            } else {
-                0
-            }
+        let selector = sel(b"maxTotalThreadsPerMeshThreadgroup\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_usize(self.raw, selector)
+        } else {
+            0
         }
     }
 
     pub fn object_thread_execution_width(&self) -> usize {
-        unsafe {
-            let selector = sel(b"objectThreadExecutionWidth\0");
-            if responds_to_selector(self.raw, selector) {
-                msg_usize(self.raw, selector)
-            } else {
-                0
-            }
+        let selector = sel(b"objectThreadExecutionWidth\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_usize(self.raw, selector)
+        } else {
+            0
         }
     }
 
     pub fn mesh_thread_execution_width(&self) -> usize {
-        unsafe {
-            let selector = sel(b"meshThreadExecutionWidth\0");
-            if responds_to_selector(self.raw, selector) {
-                msg_usize(self.raw, selector)
-            } else {
-                0
-            }
+        let selector = sel(b"meshThreadExecutionWidth\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_usize(self.raw, selector)
+        } else {
+            0
         }
     }
 
     pub fn max_total_threadgroups_per_mesh_grid(&self) -> usize {
-        unsafe {
-            let selector = sel(b"maxTotalThreadgroupsPerMeshGrid\0");
-            if responds_to_selector(self.raw, selector) {
-                msg_usize(self.raw, selector)
-            } else {
-                0
-            }
+        let selector = sel(b"maxTotalThreadgroupsPerMeshGrid\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_usize(self.raw, selector)
+        } else {
+            0
         }
     }
 
     pub fn gpu_resource_id(&self) -> Result<ResourceID, MetalError> {
-        unsafe {
-            let selector = sel(b"gpuResourceID\0");
-            if responds_to_selector(self.raw, selector) {
-                Ok(msg_resource_id(self.raw, selector))
-            } else {
-                Err(MetalError::new("gpuResourceID not supported on RenderPipelineState"))
-            }
+        let selector = sel(b"gpuResourceID\0");
+        if responds_to_selector(self.raw, selector) {
+            Ok(msg_resource_id(self.raw, selector))
+        } else {
+            Err(MetalError::new(
+                "gpuResourceID not supported on RenderPipelineState",
+            ))
         }
     }
 
-    pub fn function_handle_with_function(&self, function: &Function, stage: RenderStages) -> Result<FunctionHandle, MetalError> {
-        unsafe {
-            let selector = sel(b"functionHandleWithFunction:stage:\0");
-            if responds_to_selector(self.raw, selector) {
-                let f: unsafe extern "C" fn(id, SEL, id, usize) -> id = transmute(objc_msgSend as *const c_void);
-                let raw = retain(f(self.raw, selector, function.raw, stage.0));
-                if raw.is_null() {
-                    Err(MetalError::new("failed to get function handle"))
-                } else {
-                    Ok(FunctionHandle { raw })
-                }
+    pub fn function_handle_with_function(
+        &self,
+        function: &Function,
+        stage: RenderStages,
+    ) -> Result<FunctionHandle, MetalError> {
+        let selector = sel(b"functionHandleWithFunction:stage:\0");
+        if responds_to_selector(self.raw, selector) {
+            let raw = retain(msg_id_id_usize(self.raw, selector, function.raw, stage.0));
+            if raw.is_null() {
+                Err(MetalError::new("failed to get function handle"))
             } else {
-                Err(MetalError::new("functionHandleWithFunction:stage: not supported on RenderPipelineState"))
+                Ok(FunctionHandle { raw })
             }
+        } else {
+            Err(MetalError::new(
+                "functionHandleWithFunction:stage: not supported on RenderPipelineState",
+            ))
         }
     }
 
-    pub fn new_visible_function_table(&self, descriptor: &VisibleFunctionTableDescriptor, stage: RenderStages) -> Result<VisibleFunctionTable, MetalError> {
-        unsafe {
-            let selector = sel(b"newVisibleFunctionTableWithDescriptor:stage:\0");
-            if responds_to_selector(self.raw, selector) {
-                let f: unsafe extern "C" fn(id, SEL, id, usize) -> id = transmute(objc_msgSend as *const c_void);
-                let raw = retain(f(self.raw, selector, descriptor.raw, stage.0));
-                if raw.is_null() {
-                    Err(MetalError::new("failed to create visible function table"))
-                } else {
-                    Ok(VisibleFunctionTable { raw })
-                }
+    pub fn new_visible_function_table(
+        &self,
+        descriptor: &VisibleFunctionTableDescriptor,
+        stage: RenderStages,
+    ) -> Result<VisibleFunctionTable, MetalError> {
+        let selector = sel(b"newVisibleFunctionTableWithDescriptor:stage:\0");
+        if responds_to_selector(self.raw, selector) {
+            let raw = retain(msg_id_id_usize(self.raw, selector, descriptor.raw, stage.0));
+            if raw.is_null() {
+                Err(MetalError::new("failed to create visible function table"))
             } else {
-                Err(MetalError::new("newVisibleFunctionTableWithDescriptor:stage: not supported on RenderPipelineState"))
+                Ok(VisibleFunctionTable { raw })
             }
+        } else {
+            Err(MetalError::new(
+                "newVisibleFunctionTableWithDescriptor:stage: not supported on RenderPipelineState",
+            ))
         }
     }
 
-    pub fn new_intersection_function_table(&self, descriptor: &IntersectionFunctionTableDescriptor, stage: RenderStages) -> Result<IntersectionFunctionTable, MetalError> {
-        unsafe {
-            let selector = sel(b"newIntersectionFunctionTableWithDescriptor:stage:\0");
-            if responds_to_selector(self.raw, selector) {
-                let f: unsafe extern "C" fn(id, SEL, id, usize) -> id = transmute(objc_msgSend as *const c_void);
-                let raw = retain(f(self.raw, selector, descriptor.raw, stage.0));
-                if raw.is_null() {
-                    Err(MetalError::new("failed to create intersection function table"))
-                } else {
-                    Ok(IntersectionFunctionTable { raw })
-                }
+    pub fn new_intersection_function_table(
+        &self,
+        descriptor: &IntersectionFunctionTableDescriptor,
+        stage: RenderStages,
+    ) -> Result<IntersectionFunctionTable, MetalError> {
+        let selector = sel(b"newIntersectionFunctionTableWithDescriptor:stage:\0");
+        if responds_to_selector(self.raw, selector) {
+            let raw = retain(msg_id_id_usize(self.raw, selector, descriptor.raw, stage.0));
+            if raw.is_null() {
+                Err(MetalError::new(
+                    "failed to create intersection function table",
+                ))
             } else {
-                Err(MetalError::new("newIntersectionFunctionTableWithDescriptor:stage: not supported on RenderPipelineState"))
+                Ok(IntersectionFunctionTable { raw })
             }
+        } else {
+            Err(MetalError::new(
+                "newIntersectionFunctionTableWithDescriptor:stage: not supported on RenderPipelineState",
+            ))
         }
     }
 }
@@ -828,55 +775,43 @@ impl StencilDescriptor {
     }
 
     pub fn set_stencil_compare_function(&self, compare_function: CompareFunction) {
-        unsafe {
-            msg_void_usize(
-                self.raw,
-                sel(b"setStencilCompareFunction:\0"),
-                compare_function as usize,
-            );
-        }
+        msg_void_usize(
+            self.raw,
+            sel(b"setStencilCompareFunction:\0"),
+            compare_function as usize,
+        );
     }
 
     pub fn set_stencil_failure_operation(&self, operation: StencilOperation) {
-        unsafe {
-            msg_void_usize(
-                self.raw,
-                sel(b"setStencilFailureOperation:\0"),
-                operation as usize,
-            );
-        }
+        msg_void_usize(
+            self.raw,
+            sel(b"setStencilFailureOperation:\0"),
+            operation as usize,
+        );
     }
 
     pub fn set_depth_failure_operation(&self, operation: StencilOperation) {
-        unsafe {
-            msg_void_usize(
-                self.raw,
-                sel(b"setDepthFailureOperation:\0"),
-                operation as usize,
-            );
-        }
+        msg_void_usize(
+            self.raw,
+            sel(b"setDepthFailureOperation:\0"),
+            operation as usize,
+        );
     }
 
     pub fn set_depth_stencil_pass_operation(&self, operation: StencilOperation) {
-        unsafe {
-            msg_void_usize(
-                self.raw,
-                sel(b"setDepthStencilPassOperation:\0"),
-                operation as usize,
-            );
-        }
+        msg_void_usize(
+            self.raw,
+            sel(b"setDepthStencilPassOperation:\0"),
+            operation as usize,
+        );
     }
 
     pub fn set_read_mask(&self, mask: u32) {
-        unsafe {
-            msg_void_usize(self.raw, sel(b"setReadMask:\0"), mask as usize);
-        }
+        msg_void_usize(self.raw, sel(b"setReadMask:\0"), mask as usize);
     }
 
     pub fn set_write_mask(&self, mask: u32) {
-        unsafe {
-            msg_void_usize(self.raw, sel(b"setWriteMask:\0"), mask as usize);
-        }
+        msg_void_usize(self.raw, sel(b"setWriteMask:\0"), mask as usize);
     }
 }
 
@@ -887,40 +822,34 @@ pub struct DepthStencilDescriptor {
 
 impl DepthStencilDescriptor {
     pub fn new() -> Self {
-        unsafe {
-            let allocated = msg_id(class(b"MTLDepthStencilDescriptor\0"), sel(b"alloc\0"));
-            Self {
-                raw: msg_id(allocated, sel(b"init\0")),
-            }
+        let allocated = msg_id(class(b"MTLDepthStencilDescriptor\0"), sel(b"alloc\0"));
+        Self {
+            raw: msg_id(allocated, sel(b"init\0")),
         }
     }
 
     pub fn set_depth_compare_function(&self, compare_function: CompareFunction) {
-        unsafe {
-            msg_void_usize(
-                self.raw,
-                sel(b"setDepthCompareFunction:\0"),
-                compare_function as usize,
-            );
-        }
+        msg_void_usize(
+            self.raw,
+            sel(b"setDepthCompareFunction:\0"),
+            compare_function as usize,
+        );
     }
 
     pub fn set_depth_write_enabled(&self, enabled: bool) {
-        unsafe {
-            msg_void_bool(
-                self.raw,
-                sel(b"setDepthWriteEnabled:\0"),
-                if enabled { YES } else { NO },
-            );
-        }
+        msg_void_bool(
+            self.raw,
+            sel(b"setDepthWriteEnabled:\0"),
+            if enabled { YES } else { NO },
+        );
     }
 
     pub fn front_face_stencil(&self) -> StencilDescriptor {
-        unsafe { StencilDescriptor::borrowed(msg_id(self.raw, sel(b"frontFaceStencil\0"))) }
+        StencilDescriptor::borrowed(msg_id(self.raw, sel(b"frontFaceStencil\0")))
     }
 
     pub fn back_face_stencil(&self) -> StencilDescriptor {
-        unsafe { StencilDescriptor::borrowed(msg_id(self.raw, sel(b"backFaceStencil\0"))) }
+        StencilDescriptor::borrowed(msg_id(self.raw, sel(b"backFaceStencil\0")))
     }
 }
 
@@ -932,7 +861,7 @@ impl Default for DepthStencilDescriptor {
 
 impl Drop for DepthStencilDescriptor {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
@@ -943,7 +872,7 @@ pub struct DepthStencilState {
 
 impl Drop for DepthStencilState {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
@@ -954,30 +883,22 @@ pub struct SamplerDescriptor {
 
 impl SamplerDescriptor {
     pub fn new() -> Self {
-        unsafe {
-            let allocated = msg_id(class(b"MTLSamplerDescriptor\0"), sel(b"alloc\0"));
-            Self {
-                raw: msg_id(allocated, sel(b"init\0")),
-            }
+        let allocated = msg_id(class(b"MTLSamplerDescriptor\0"), sel(b"alloc\0"));
+        Self {
+            raw: msg_id(allocated, sel(b"init\0")),
         }
     }
 
     pub fn set_min_filter(&self, filter: SamplerMinMagFilter) {
-        unsafe {
-            msg_void_usize(self.raw, sel(b"setMinFilter:\0"), filter as usize);
-        }
+        msg_void_usize(self.raw, sel(b"setMinFilter:\0"), filter as usize);
     }
 
     pub fn set_mag_filter(&self, filter: SamplerMinMagFilter) {
-        unsafe {
-            msg_void_usize(self.raw, sel(b"setMagFilter:\0"), filter as usize);
-        }
+        msg_void_usize(self.raw, sel(b"setMagFilter:\0"), filter as usize);
     }
 
     pub fn set_mip_filter(&self, filter: SamplerMipFilter) {
-        unsafe {
-            msg_void_usize(self.raw, sel(b"setMipFilter:\0"), filter as usize);
-        }
+        msg_void_usize(self.raw, sel(b"setMipFilter:\0"), filter as usize);
     }
 
     pub fn set_address_mode(&self, mode: SamplerAddressMode) {
@@ -987,49 +908,35 @@ impl SamplerDescriptor {
     }
 
     pub fn set_s_address_mode(&self, mode: SamplerAddressMode) {
-        unsafe {
-            msg_void_usize(self.raw, sel(b"setSAddressMode:\0"), mode as usize);
-        }
+        msg_void_usize(self.raw, sel(b"setSAddressMode:\0"), mode as usize);
     }
 
     pub fn set_t_address_mode(&self, mode: SamplerAddressMode) {
-        unsafe {
-            msg_void_usize(self.raw, sel(b"setTAddressMode:\0"), mode as usize);
-        }
+        msg_void_usize(self.raw, sel(b"setTAddressMode:\0"), mode as usize);
     }
 
     pub fn set_r_address_mode(&self, mode: SamplerAddressMode) {
-        unsafe {
-            msg_void_usize(self.raw, sel(b"setRAddressMode:\0"), mode as usize);
-        }
+        msg_void_usize(self.raw, sel(b"setRAddressMode:\0"), mode as usize);
     }
 
     pub fn set_compare_function(&self, compare_function: CompareFunction) {
-        unsafe {
-            msg_void_usize(
-                self.raw,
-                sel(b"setCompareFunction:\0"),
-                compare_function as usize,
-            );
-        }
+        msg_void_usize(
+            self.raw,
+            sel(b"setCompareFunction:\0"),
+            compare_function as usize,
+        );
     }
 
     pub fn set_max_anisotropy(&self, max_anisotropy: usize) {
-        unsafe {
-            msg_void_usize(self.raw, sel(b"setMaxAnisotropy:\0"), max_anisotropy);
-        }
+        msg_void_usize(self.raw, sel(b"setMaxAnisotropy:\0"), max_anisotropy);
     }
 
     pub fn set_lod_min_clamp(&self, value: f64) {
-        unsafe {
-            msg_void_f64(self.raw, sel(b"setLodMinClamp:\0"), value);
-        }
+        msg_void_f64(self.raw, sel(b"setLodMinClamp:\0"), value);
     }
 
     pub fn set_lod_max_clamp(&self, value: f64) {
-        unsafe {
-            msg_void_f64(self.raw, sel(b"setLodMaxClamp:\0"), value);
-        }
+        msg_void_f64(self.raw, sel(b"setLodMaxClamp:\0"), value);
     }
 }
 
@@ -1041,7 +948,7 @@ impl Default for SamplerDescriptor {
 
 impl Drop for SamplerDescriptor {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
@@ -1052,30 +959,28 @@ pub struct SamplerState {
 
 impl Drop for SamplerState {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
 impl SamplerState {
     pub fn label(&self) -> Option<String> {
-        unsafe { ns_string_to_string(msg_id(self.raw, sel(b"label\0"))) }
+        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
     }
 
     pub fn set_label(&self, label: &str) {
-        unsafe {
-            let ns_label = NSString::new(label);
-            msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
-        }
+        let ns_label = NSString::new(label);
+        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
     }
 
     pub fn gpu_resource_id(&self) -> Result<ResourceID, MetalError> {
-        unsafe {
-            let selector = sel(b"gpuResourceID\0");
-            if responds_to_selector(self.raw, selector) {
-                Ok(msg_resource_id(self.raw, selector))
-            } else {
-                Err(MetalError::new("gpuResourceID not supported on this SamplerState"))
-            }
+        let selector = sel(b"gpuResourceID\0");
+        if responds_to_selector(self.raw, selector) {
+            Ok(msg_resource_id(self.raw, selector))
+        } else {
+            Err(MetalError::new(
+                "gpuResourceID not supported on this SamplerState",
+            ))
         }
     }
 }
@@ -1087,7 +992,7 @@ pub struct Fence {
 
 impl Drop for Fence {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
@@ -1098,68 +1003,62 @@ pub struct FunctionDescriptor {
 
 impl FunctionDescriptor {
     pub fn new() -> Self {
-        unsafe {
-            let allocated = msg_id(class(b"MTLFunctionDescriptor\0"), sel(b"alloc\0"));
-            Self {
-                raw: msg_id(allocated, sel(b"init\0")),
-            }
+        let allocated = msg_id(class(b"MTLFunctionDescriptor\0"), sel(b"alloc\0"));
+        Self {
+            raw: msg_id(allocated, sel(b"init\0")),
         }
     }
 
     pub fn name(&self) -> Option<String> {
-        unsafe { ns_string_to_string(msg_id(self.raw, sel(b"name\0"))) }
+        ns_string_to_string(msg_id(self.raw, sel(b"name\0")))
     }
 
     pub fn set_name(&self, name: &str) {
-        unsafe {
-            let ns_name = NSString::new(name);
-            msg_void_id(self.raw, sel(b"setName:\0"), ns_name.raw());
-        }
+        let ns_name = NSString::new(name);
+        msg_void_id(self.raw, sel(b"setName:\0"), ns_name.raw());
     }
 
     pub fn specialized_name(&self) -> Option<String> {
-        unsafe { ns_string_to_string(msg_id(self.raw, sel(b"specializedName\0"))) }
+        ns_string_to_string(msg_id(self.raw, sel(b"specializedName\0")))
     }
 
     pub fn set_specialized_name(&self, name: &str) {
-        unsafe {
-            let ns_name = NSString::new(name);
-            msg_void_id(self.raw, sel(b"setSpecializedName:\0"), ns_name.raw());
-        }
+        let ns_name = NSString::new(name);
+        msg_void_id(self.raw, sel(b"setSpecializedName:\0"), ns_name.raw());
     }
 
     pub fn constant_values(&self) -> Option<FunctionConstantValues> {
-        unsafe {
-            let cv = msg_id(self.raw, sel(b"constantValues\0"));
-            (!cv.is_null()).then_some(FunctionConstantValues { raw: retain(cv) })
-        }
+        let cv = msg_id(self.raw, sel(b"constantValues\0"));
+        (!cv.is_null()).then_some(FunctionConstantValues { raw: retain(cv) })
     }
 
     pub fn set_constant_values(&self, constant_values: Option<&FunctionConstantValues>) {
-        unsafe {
-            msg_void_id(self.raw, sel(b"setConstantValues:\0"), constant_values.map_or(NIL, |cv| cv.raw));
-        }
+        msg_void_id(
+            self.raw,
+            sel(b"setConstantValues:\0"),
+            constant_values.map_or(NIL, |cv| cv.raw),
+        );
     }
 
     pub fn options(&self) -> FunctionOptions {
-        unsafe { FunctionOptions(msg_usize(self.raw, sel(b"options\0"))) }
+        FunctionOptions(msg_usize(self.raw, sel(b"options\0")))
     }
 
     pub fn set_options(&self, options: FunctionOptions) {
-        unsafe { msg_void_usize(self.raw, sel(b"setOptions:\0"), options.0); }
+        msg_void_usize(self.raw, sel(b"setOptions:\0"), options.0);
     }
 
     pub fn set_binary_archives(&self, archives: &[&BinaryArchive]) -> Result<(), MetalError> {
-        unsafe {
-            let selector = sel(b"setBinaryArchives:\0");
-            if responds_to_selector(self.raw, selector) {
-                let raw_archives: Vec<id> = archives.iter().map(|a| a.raw).collect();
-                let array = ns_array_from_ids(&raw_archives);
-                msg_void_id(self.raw, selector, array);
-                Ok(())
-            } else {
-                Err(MetalError::new("setBinaryArchives: not supported on FunctionDescriptor"))
-            }
+        let selector = sel(b"setBinaryArchives:\0");
+        if responds_to_selector(self.raw, selector) {
+            let raw_archives: Vec<id> = archives.iter().map(|a| a.raw).collect();
+            let array = ns_array_from_ids(&raw_archives);
+            msg_void_id(self.raw, selector, array);
+            Ok(())
+        } else {
+            Err(MetalError::new(
+                "setBinaryArchives: not supported on FunctionDescriptor",
+            ))
         }
     }
 }
@@ -1172,7 +1071,7 @@ impl Default for FunctionDescriptor {
 
 impl Drop for FunctionDescriptor {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
@@ -1183,11 +1082,12 @@ pub struct IntersectionFunctionDescriptor {
 
 impl IntersectionFunctionDescriptor {
     pub fn new() -> Self {
-        unsafe {
-            let allocated = msg_id(class(b"MTLIntersectionFunctionDescriptor\0"), sel(b"alloc\0"));
-            Self {
-                raw: msg_id(allocated, sel(b"init\0")),
-            }
+        let allocated = msg_id(
+            class(b"MTLIntersectionFunctionDescriptor\0"),
+            sel(b"alloc\0"),
+        );
+        Self {
+            raw: msg_id(allocated, sel(b"init\0")),
         }
     }
 
@@ -1204,7 +1104,7 @@ impl Default for IntersectionFunctionDescriptor {
 
 impl Drop for IntersectionFunctionDescriptor {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
@@ -1215,38 +1115,30 @@ pub struct LinkedFunctions {
 
 impl LinkedFunctions {
     pub fn new() -> Self {
-        unsafe {
-            let allocated = msg_id(class(b"MTLLinkedFunctions\0"), sel(b"alloc\0"));
-            Self {
-                raw: msg_id(allocated, sel(b"init\0")),
-            }
+        let allocated = msg_id(class(b"MTLLinkedFunctions\0"), sel(b"alloc\0"));
+        Self {
+            raw: msg_id(allocated, sel(b"init\0")),
         }
     }
 
     pub fn set_functions(&self, functions: &[&Function]) {
-        unsafe {
-            let raw_functions: Vec<id> = functions.iter().map(|f| f.raw).collect();
-            let array = ns_array_from_ids(&raw_functions);
-            msg_void_id(self.raw, sel(b"setFunctions:\0"), array);
-        }
+        let raw_functions: Vec<id> = functions.iter().map(|f| f.raw).collect();
+        let array = ns_array_from_ids(&raw_functions);
+        msg_void_id(self.raw, sel(b"setFunctions:\0"), array);
     }
 
     pub fn set_binary_functions(&self, functions: &[&Function]) {
-        unsafe {
-            let raw_functions: Vec<id> = functions.iter().map(|f| f.raw).collect();
-            let array = ns_array_from_ids(&raw_functions);
-            msg_void_id(self.raw, sel(b"setBinaryFunctions:\0"), array);
-        }
+        let raw_functions: Vec<id> = functions.iter().map(|f| f.raw).collect();
+        let array = ns_array_from_ids(&raw_functions);
+        msg_void_id(self.raw, sel(b"setBinaryFunctions:\0"), array);
     }
 
     pub fn set_private_functions(&self, functions: &[&Function]) {
-        unsafe {
-            let selector = sel(b"setPrivateFunctions:\0");
-            if responds_to_selector(self.raw, selector) {
-                let raw_functions: Vec<id> = functions.iter().map(|f| f.raw).collect();
-                let array = ns_array_from_ids(&raw_functions);
-                msg_void_id(self.raw, selector, array);
-            }
+        let selector = sel(b"setPrivateFunctions:\0");
+        if responds_to_selector(self.raw, selector) {
+            let raw_functions: Vec<id> = functions.iter().map(|f| f.raw).collect();
+            let array = ns_array_from_ids(&raw_functions);
+            msg_void_id(self.raw, selector, array);
         }
     }
 }
@@ -1259,7 +1151,7 @@ impl Default for LinkedFunctions {
 
 impl Drop for LinkedFunctions {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
@@ -1270,18 +1162,16 @@ pub struct DynamicLibrary {
 
 impl DynamicLibrary {
     pub fn label(&self) -> Option<String> {
-        unsafe { ns_string_to_string(msg_id(self.raw, sel(b"label\0"))) }
+        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
     }
 
     pub fn set_label(&self, label: &str) {
-        unsafe {
-            let ns_label = NSString::new(label);
-            msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
-        }
+        let ns_label = NSString::new(label);
+        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
     }
 
     pub fn install_name(&self) -> Option<String> {
-        unsafe { ns_string_to_string(msg_id(self.raw, sel(b"installName\0"))) }
+        ns_string_to_string(msg_id(self.raw, sel(b"installName\0")))
     }
 
     pub fn serialize_to_url(&self, url_path: &str) -> Result<(), MetalError> {
@@ -1290,10 +1180,14 @@ impl DynamicLibrary {
             let ns_url_class = class(b"NSURL\0");
             let url = msg_id_id(ns_url_class, sel(b"fileURLWithPath:\0"), ns_url_path.raw());
             let mut error = NIL;
-            let f: unsafe extern "C" fn(id, SEL, id, *mut id) -> BOOL = transmute(objc_msgSend as *const c_void);
+            let f: unsafe extern "C" fn(id, SEL, id, *mut id) -> BOOL =
+                transmute(objc_msgSend as *const c_void);
             let ok = f(self.raw, sel(b"serializeToURL:error:\0"), url, &mut error);
             if ok == NO {
-                Err(MetalError::new(error_message(error, "failed to serialize dynamic library")))
+                Err(MetalError::new(error_message(
+                    error,
+                    "failed to serialize dynamic library",
+                )))
             } else {
                 Ok(())
             }
@@ -1303,7 +1197,7 @@ impl DynamicLibrary {
 
 impl Drop for DynamicLibrary {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
@@ -1314,13 +1208,13 @@ pub struct FunctionHandle {
 
 impl FunctionHandle {
     pub fn name(&self) -> Option<String> {
-        unsafe { ns_string_to_string(msg_id(self.raw, sel(b"name\0"))) }
+        ns_string_to_string(msg_id(self.raw, sel(b"name\0")))
     }
 }
 
 impl Drop for FunctionHandle {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
@@ -1331,32 +1225,30 @@ pub struct FunctionLogDebugLocation {
 
 impl FunctionLogDebugLocation {
     pub fn function_name(&self) -> Option<String> {
-        unsafe { ns_string_to_string(msg_id(self.raw, sel(b"functionName\0"))) }
+        ns_string_to_string(msg_id(self.raw, sel(b"functionName\0")))
     }
 
     pub fn url_path(&self) -> Option<String> {
-        unsafe {
-            let url = msg_id(self.raw, sel(b"URL\0"));
-            if url.is_null() {
-                None
-            } else {
-                ns_string_to_string(msg_id(url, sel(b"path\0")))
-            }
+        let url = msg_id(self.raw, sel(b"URL\0"));
+        if url.is_null() {
+            None
+        } else {
+            ns_string_to_string(msg_id(url, sel(b"path\0")))
         }
     }
 
     pub fn line(&self) -> usize {
-        unsafe { msg_usize(self.raw, sel(b"line\0")) }
+        msg_usize(self.raw, sel(b"line\0"))
     }
 
     pub fn column(&self) -> usize {
-        unsafe { msg_usize(self.raw, sel(b"column\0")) }
+        msg_usize(self.raw, sel(b"column\0"))
     }
 }
 
 impl Drop for FunctionLogDebugLocation {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
@@ -1367,31 +1259,27 @@ pub struct FunctionLog {
 
 impl FunctionLog {
     pub fn log_type(&self) -> usize {
-        unsafe { msg_usize(self.raw, sel(b"type\0")) }
+        msg_usize(self.raw, sel(b"type\0"))
     }
 
     pub fn encoder_label(&self) -> Option<String> {
-        unsafe { ns_string_to_string(msg_id(self.raw, sel(b"encoderLabel\0"))) }
+        ns_string_to_string(msg_id(self.raw, sel(b"encoderLabel\0")))
     }
 
     pub fn function(&self) -> Option<Function> {
-        unsafe {
-            let f = msg_id(self.raw, sel(b"function\0"));
-            (!f.is_null()).then_some(Function { raw: retain(f) })
-        }
+        let f = msg_id(self.raw, sel(b"function\0"));
+        (!f.is_null()).then_some(Function { raw: retain(f) })
     }
 
     pub fn debug_location(&self) -> Option<FunctionLogDebugLocation> {
-        unsafe {
-            let loc = msg_id(self.raw, sel(b"debugLocation\0"));
-            (!loc.is_null()).then_some(FunctionLogDebugLocation { raw: retain(loc) })
-        }
+        let loc = msg_id(self.raw, sel(b"debugLocation\0"));
+        (!loc.is_null()).then_some(FunctionLogDebugLocation { raw: retain(loc) })
     }
 }
 
 impl Drop for FunctionLog {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
@@ -1402,18 +1290,18 @@ pub struct LogStateDescriptor {
 
 impl LogStateDescriptor {
     pub fn new() -> Result<Self, MetalError> {
-        unsafe {
-            let class_ptr = class(b"MTLLogStateDescriptor\0");
-            if class_ptr.is_null() {
-                return Err(MetalError::new("MTLLogStateDescriptor is not available"));
-            }
-            let raw = retain(msg_id(class_ptr, sel(b"alloc\0")));
-            let init_raw = msg_id(raw, sel(b"init\0"));
-            if init_raw.is_null() {
-                Err(MetalError::new("failed to initialize MTLLogStateDescriptor"))
-            } else {
-                Ok(Self { raw: init_raw })
-            }
+        let class_ptr = class(b"MTLLogStateDescriptor\0");
+        if class_ptr.is_null() {
+            return Err(MetalError::new("MTLLogStateDescriptor is not available"));
+        }
+        let raw = retain(msg_id(class_ptr, sel(b"alloc\0")));
+        let init_raw = msg_id(raw, sel(b"init\0"));
+        if init_raw.is_null() {
+            Err(MetalError::new(
+                "failed to initialize MTLLogStateDescriptor",
+            ))
+        } else {
+            Ok(Self { raw: init_raw })
         }
     }
 
@@ -1422,21 +1310,21 @@ impl LogStateDescriptor {
     }
 
     pub fn set_level(&self, level: LogLevel) {
-        unsafe { msg_void_usize(self.raw, sel(b"setLevel:\0"), level as usize); }
+        msg_void_usize(self.raw, sel(b"setLevel:\0"), level as usize);
     }
 
     pub fn buffer_size(&self) -> usize {
-        unsafe { msg_usize(self.raw, sel(b"bufferSize\0")) }
+        msg_usize(self.raw, sel(b"bufferSize\0"))
     }
 
     pub fn set_buffer_size(&self, size: usize) {
-        unsafe { msg_void_usize(self.raw, sel(b"setBufferSize:\0"), size); }
+        msg_void_usize(self.raw, sel(b"setBufferSize:\0"), size);
     }
 }
 
 impl Drop for LogStateDescriptor {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
@@ -1447,7 +1335,7 @@ pub struct LogState {
 
 impl Drop for LogState {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
@@ -1458,20 +1346,21 @@ pub struct VisibleFunctionTableDescriptor {
 
 impl VisibleFunctionTableDescriptor {
     pub fn new() -> Self {
-        unsafe {
-            let allocated = msg_id(class(b"MTLVisibleFunctionTableDescriptor\0"), sel(b"alloc\0"));
-            Self {
-                raw: msg_id(allocated, sel(b"init\0")),
-            }
+        let allocated = msg_id(
+            class(b"MTLVisibleFunctionTableDescriptor\0"),
+            sel(b"alloc\0"),
+        );
+        Self {
+            raw: msg_id(allocated, sel(b"init\0")),
         }
     }
 
     pub fn function_count(&self) -> usize {
-        unsafe { msg_usize(self.raw, sel(b"functionCount\0")) }
+        msg_usize(self.raw, sel(b"functionCount\0"))
     }
 
     pub fn set_function_count(&self, count: usize) {
-        unsafe { msg_void_usize(self.raw, sel(b"setFunctionCount:\0"), count); }
+        msg_void_usize(self.raw, sel(b"setFunctionCount:\0"), count);
     }
 }
 
@@ -1483,7 +1372,7 @@ impl Default for VisibleFunctionTableDescriptor {
 
 impl Drop for VisibleFunctionTableDescriptor {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
@@ -1494,43 +1383,37 @@ pub struct VisibleFunctionTable {
 
 impl VisibleFunctionTable {
     pub fn gpu_resource_id(&self) -> Result<ResourceID, MetalError> {
-        unsafe {
-            let selector = sel(b"gpuResourceID\0");
-            if responds_to_selector(self.raw, selector) {
-                Ok(msg_resource_id(self.raw, selector))
-            } else {
-                Err(MetalError::new("gpuResourceID not supported"))
-            }
+        let selector = sel(b"gpuResourceID\0");
+        if responds_to_selector(self.raw, selector) {
+            Ok(msg_resource_id(self.raw, selector))
+        } else {
+            Err(MetalError::new("gpuResourceID not supported"))
         }
     }
 
     pub fn set_function(&self, function: Option<&FunctionHandle>, index: usize) {
-        unsafe {
-            msg_void_id_usize(
-                self.raw,
-                sel(b"setFunction:atIndex:\0"),
-                function.map_or(NIL, |f| f.raw),
-                index,
-            );
-        }
+        msg_void_id_usize(
+            self.raw,
+            sel(b"setFunction:atIndex:\0"),
+            function.map_or(NIL, |f| f.raw),
+            index,
+        );
     }
 
     pub fn set_functions(&self, functions: &[Option<&FunctionHandle>], range: Range) {
-        unsafe {
-            let raw_functions: Vec<id> = functions.iter().map(|f| f.map_or(NIL, |h| h.raw)).collect();
-            msg_void_ptr_range(
-                self.raw,
-                sel(b"setFunctions:withRange:\0"),
-                raw_functions.as_ptr(),
-                range,
-            );
-        }
+        let raw_functions: Vec<id> = functions.iter().map(|f| f.map_or(NIL, |h| h.raw)).collect();
+        msg_void_ptr_range(
+            self.raw,
+            sel(b"setFunctions:withRange:\0"),
+            raw_functions.as_ptr(),
+            range,
+        );
     }
 }
 
 impl Drop for VisibleFunctionTable {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
@@ -1541,20 +1424,21 @@ pub struct IntersectionFunctionTableDescriptor {
 
 impl IntersectionFunctionTableDescriptor {
     pub fn new() -> Self {
-        unsafe {
-            let allocated = msg_id(class(b"MTLIntersectionFunctionTableDescriptor\0"), sel(b"alloc\0"));
-            Self {
-                raw: msg_id(allocated, sel(b"init\0")),
-            }
+        let allocated = msg_id(
+            class(b"MTLIntersectionFunctionTableDescriptor\0"),
+            sel(b"alloc\0"),
+        );
+        Self {
+            raw: msg_id(allocated, sel(b"init\0")),
         }
     }
 
     pub fn function_count(&self) -> usize {
-        unsafe { msg_usize(self.raw, sel(b"functionCount\0")) }
+        msg_usize(self.raw, sel(b"functionCount\0"))
     }
 
     pub fn set_function_count(&self, count: usize) {
-        unsafe { msg_void_usize(self.raw, sel(b"setFunctionCount:\0"), count); }
+        msg_void_usize(self.raw, sel(b"setFunctionCount:\0"), count);
     }
 }
 
@@ -1566,7 +1450,7 @@ impl Default for IntersectionFunctionTableDescriptor {
 
 impl Drop for IntersectionFunctionTableDescriptor {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
 
@@ -1577,67 +1461,65 @@ pub struct IntersectionFunctionTable {
 
 impl IntersectionFunctionTable {
     pub fn gpu_resource_id(&self) -> Result<ResourceID, MetalError> {
-        unsafe {
-            let selector = sel(b"gpuResourceID\0");
-            if responds_to_selector(self.raw, selector) {
-                Ok(msg_resource_id(self.raw, selector))
-            } else {
-                Err(MetalError::new("gpuResourceID not supported"))
-            }
+        let selector = sel(b"gpuResourceID\0");
+        if responds_to_selector(self.raw, selector) {
+            Ok(msg_resource_id(self.raw, selector))
+        } else {
+            Err(MetalError::new("gpuResourceID not supported"))
         }
     }
 
     pub fn set_function(&self, function: Option<&FunctionHandle>, index: usize) {
-        unsafe {
-            msg_void_id_usize(
-                self.raw,
-                sel(b"setFunction:atIndex:\0"),
-                function.map_or(NIL, |f| f.raw),
-                index,
-            );
-        }
+        msg_void_id_usize(
+            self.raw,
+            sel(b"setFunction:atIndex:\0"),
+            function.map_or(NIL, |f| f.raw),
+            index,
+        );
     }
 
     pub fn set_functions(&self, functions: &[Option<&FunctionHandle>], range: Range) {
-        unsafe {
-            let raw_functions: Vec<id> = functions.iter().map(|f| f.map_or(NIL, |h| h.raw)).collect();
-            msg_void_ptr_range(
-                self.raw,
-                sel(b"setFunctions:withRange:\0"),
-                raw_functions.as_ptr(),
-                range,
-            );
-        }
+        let raw_functions: Vec<id> = functions.iter().map(|f| f.map_or(NIL, |h| h.raw)).collect();
+        msg_void_ptr_range(
+            self.raw,
+            sel(b"setFunctions:withRange:\0"),
+            raw_functions.as_ptr(),
+            range,
+        );
     }
 
     pub fn set_buffer(&self, buffer: Option<&Buffer>, offset: usize, index: usize) {
-        unsafe {
-            msg_void_id_usize_usize(
-                self.raw,
-                sel(b"setBuffer:offset:atIndex:\0"),
-                buffer.map_or(NIL, |b| b.raw),
-                offset,
-                index,
-            );
-        }
+        msg_void_id_usize_usize(
+            self.raw,
+            sel(b"setBuffer:offset:atIndex:\0"),
+            buffer.map_or(NIL, |b| b.raw),
+            offset,
+            index,
+        );
     }
 
     pub fn set_buffers(&self, buffers: &[Option<&Buffer>], offsets: &[usize], range: Range) {
-        unsafe {
-            let raw_buffers: Vec<id> = buffers.iter().map(|b| b.map_or(NIL, |buf| buf.raw)).collect();
-            msg_void_ptr_ptr_range(
-                self.raw,
-                sel(b"setBuffers:offsets:withRange:\0"),
-                raw_buffers.as_ptr(),
-                offsets.as_ptr(),
-                range,
-            );
-        }
+        let raw_buffers: Vec<id> = buffers
+            .iter()
+            .map(|b| b.map_or(NIL, |buf| buf.raw))
+            .collect();
+        msg_void_ptr_ptr_range(
+            self.raw,
+            sel(b"setBuffers:offsets:withRange:\0"),
+            raw_buffers.as_ptr(),
+            offsets.as_ptr(),
+            range,
+        );
     }
 
-    pub fn set_opaque_triangle_intersection_function(&self, signature: IntersectionFunctionSignature, index: usize) {
+    pub fn set_opaque_triangle_intersection_function(
+        &self,
+        signature: IntersectionFunctionSignature,
+        index: usize,
+    ) {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, usize, usize) = transmute(objc_msgSend as *const c_void);
+            let f: unsafe extern "C" fn(id, SEL, usize, usize) =
+                transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
                 sel(b"setOpaqueTriangleIntersectionFunctionWithSignature:atIndex:\0"),
@@ -1647,9 +1529,14 @@ impl IntersectionFunctionTable {
         }
     }
 
-    pub fn set_opaque_triangle_intersection_functions(&self, signature: IntersectionFunctionSignature, range: Range) {
+    pub fn set_opaque_triangle_intersection_functions(
+        &self,
+        signature: IntersectionFunctionSignature,
+        range: Range,
+    ) {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, usize, Range) = transmute(objc_msgSend as *const c_void);
+            let f: unsafe extern "C" fn(id, SEL, usize, Range) =
+                transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
                 sel(b"setOpaqueTriangleIntersectionFunctionWithSignature:withRange:\0"),
@@ -1659,9 +1546,14 @@ impl IntersectionFunctionTable {
         }
     }
 
-    pub fn set_opaque_curve_intersection_function(&self, signature: IntersectionFunctionSignature, index: usize) {
+    pub fn set_opaque_curve_intersection_function(
+        &self,
+        signature: IntersectionFunctionSignature,
+        index: usize,
+    ) {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, usize, usize) = transmute(objc_msgSend as *const c_void);
+            let f: unsafe extern "C" fn(id, SEL, usize, usize) =
+                transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
                 sel(b"setOpaqueCurveIntersectionFunctionWithSignature:atIndex:\0"),
@@ -1671,9 +1563,14 @@ impl IntersectionFunctionTable {
         }
     }
 
-    pub fn set_opaque_curve_intersection_functions(&self, signature: IntersectionFunctionSignature, range: Range) {
+    pub fn set_opaque_curve_intersection_functions(
+        &self,
+        signature: IntersectionFunctionSignature,
+        range: Range,
+    ) {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, usize, Range) = transmute(objc_msgSend as *const c_void);
+            let f: unsafe extern "C" fn(id, SEL, usize, Range) =
+                transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
                 sel(b"setOpaqueCurveIntersectionFunctionWithSignature:withRange:\0"),
@@ -1683,33 +1580,39 @@ impl IntersectionFunctionTable {
         }
     }
 
-    pub fn set_visible_function_table(&self, table: Option<&VisibleFunctionTable>, buffer_index: usize) {
-        unsafe {
-            msg_void_id_usize(
-                self.raw,
-                sel(b"setVisibleFunctionTable:atBufferIndex:\0"),
-                table.map_or(NIL, |t| t.raw),
-                buffer_index,
-            );
-        }
+    pub fn set_visible_function_table(
+        &self,
+        table: Option<&VisibleFunctionTable>,
+        buffer_index: usize,
+    ) {
+        msg_void_id_usize(
+            self.raw,
+            sel(b"setVisibleFunctionTable:atBufferIndex:\0"),
+            table.map_or(NIL, |t| t.raw),
+            buffer_index,
+        );
     }
 
-    pub fn set_visible_function_tables(&self, tables: &[Option<&VisibleFunctionTable>], range: Range) {
-        unsafe {
-            let raw_tables: Vec<id> = tables.iter().map(|t| t.map_or(NIL, |tbl| tbl.raw)).collect();
-            msg_void_ptr_range(
-                self.raw,
-                sel(b"setVisibleFunctionTables:withBufferRange:\0"),
-                raw_tables.as_ptr(),
-                range,
-            );
-        }
+    pub fn set_visible_function_tables(
+        &self,
+        tables: &[Option<&VisibleFunctionTable>],
+        range: Range,
+    ) {
+        let raw_tables: Vec<id> = tables
+            .iter()
+            .map(|t| t.map_or(NIL, |tbl| tbl.raw))
+            .collect();
+        msg_void_ptr_range(
+            self.raw,
+            sel(b"setVisibleFunctionTables:withBufferRange:\0"),
+            raw_tables.as_ptr(),
+            range,
+        );
     }
 }
 
 impl Drop for IntersectionFunctionTable {
     fn drop(&mut self) {
-        unsafe { release(self.raw) };
+        release(self.raw);
     }
 }
-
