@@ -22,7 +22,11 @@ pub use capture::*;
 pub use counters::*;
 pub use device::*;
 pub use encoder::*;
-pub use ffi::*;
+pub(crate) use ffi::*;
+pub use ffi::{
+    AutoreleasePool, BOOL, Class, NIL, NO, NSString, SEL, YES, class, id, ns_string_to_string,
+    ns_url_from_path, release, responds_to_selector, retain, sel,
+};
 pub use indirect::*;
 pub use io::*;
 pub use layer::*;
@@ -183,5 +187,31 @@ mod tests {
         let err_msg = result.unwrap_err().to_string();
         println!("Actual error message: {}", err_msg);
         assert!(!err_msg.is_empty());
+    }
+
+    #[test]
+    fn test_enum_discriminants() {
+        assert_eq!(PixelFormat::Invalid as usize, 0);
+        assert_eq!(PixelFormat::Rgba8Unorm as usize, 70);
+        assert_eq!(StorageMode::Shared as usize, 0);
+        assert_eq!(StorageMode::Managed as usize, 1);
+        assert_eq!(StorageMode::Private as usize, 2);
+        assert_eq!(LoadAction::DontCare as usize, 0);
+        assert_eq!(LoadAction::Load as usize, 1);
+        assert_eq!(LoadAction::Clear as usize, 2);
+        assert_eq!(StoreAction::DontCare as usize, 0);
+        assert_eq!(StoreAction::Store as usize, 1);
+        assert_eq!(LogLevel::Undefined as isize, -1);
+        assert_eq!(LogLevel::Debug as isize, 0);
+        assert_eq!(DispatchType::Serial as usize, 0);
+        assert_eq!(DispatchType::Concurrent as usize, 1);
+        assert_eq!(CommandBufferStatus::NotEnqueued as usize, 0);
+        assert_eq!(CommandBufferStatus::Completed as usize, 4);
+        assert_eq!(LibraryType::Executable as usize, 0);
+        assert_eq!(LibraryType::Dynamic as usize, 1);
+        assert_eq!(LibraryOptimizationLevel::Default as isize, 0);
+        assert_eq!(LibraryOptimizationLevel::Size as isize, 1);
+        assert_eq!(LibraryError::Unsupported as usize, 1);
+        assert_eq!(LibraryError::FileNotFound as usize, 6);
     }
 }

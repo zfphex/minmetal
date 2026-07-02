@@ -690,14 +690,8 @@ impl Library {
         let selector = sel(b"type\0");
         if responds_to_selector(self.raw, selector) {
             let raw_type = msg_usize(self.raw, selector);
-            match raw_type {
-                0 => Ok(LibraryType::Executable),
-                1 => Ok(LibraryType::Dynamic),
-                _ => Err(MetalError::new(format!(
-                    "unknown MTLLibraryType: {}",
-                    raw_type
-                ))),
-            }
+            LibraryType::from_raw(raw_type)
+                .ok_or_else(|| MetalError::new(format!("unknown MTLLibraryType: {}", raw_type)))
         } else {
             Err(MetalError::new(
                 "type is not supported on this macOS version",
@@ -772,11 +766,7 @@ impl CompileOptions {
         let selector = sel(b"libraryType\0");
         if responds_to_selector(self.raw, selector) {
             let raw_type = msg_usize(self.raw, selector);
-            match raw_type {
-                0 => Some(LibraryType::Executable),
-                1 => Some(LibraryType::Dynamic),
-                _ => None,
-            }
+            LibraryType::from_raw(raw_type)
         } else {
             None
         }
@@ -803,11 +793,7 @@ impl CompileOptions {
         let selector = sel(b"optimizationLevel\0");
         if responds_to_selector(self.raw, selector) {
             let raw_val = msg_usize(self.raw, selector);
-            match raw_val as isize {
-                0 => Some(LibraryOptimizationLevel::Default),
-                1 => Some(LibraryOptimizationLevel::Size),
-                _ => None,
-            }
+            LibraryOptimizationLevel::from_raw(raw_val as isize)
         } else {
             None
         }

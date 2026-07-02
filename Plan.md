@@ -609,3 +609,56 @@ V9 adds first-class support for loading precompiled .metallib shader libraries. 
 - Compile the library manually with:
   `xcrun -sdk macosx metal -c examples/shaders/precompiled_basic.metal -o /tmp/minmetal_precompiled_basic.air`
   `xcrun -sdk macosx metallib /tmp/minmetal_precompiled_basic.air -o examples/shaders/precompiled_basic.metallib`
+
+## V10 Binding Hardening And FFI Cleanup
+
+V10 hardens the now-broad Metal binding surface without adding new renderer features, dependencies, macros, shader tooling, or documentation sections. The focus is consistency, fewer accidental panics, safer enum decoding, cleaner examples, and a smaller public FFI helper surface.
+
+### V10 Decisions
+
+- Keep the crate bindings-only.
+- Keep typed Objective-C message-send helpers as safe internal helpers.
+- Do not expose every `msg_*` helper through `minmetal::*`.
+- Keep public raw interop limited to types and helpers users reasonably need.
+- Skip broader docs additions for this phase.
+
+### V10 Binding Hardening
+
+- **FFI Visibility** (`src/ffi.rs`, `src/lib.rs`):
+  - Make typed `msg_*`, NSArray helpers, and `error_message` `pub(crate)`.
+  - Re-export only the intended public FFI surface: raw Objective-C types/constants, `class`, `sel`, `responds_to_selector`, retain/release, `NSString`, `AutoreleasePool`, string conversion, and URL creation.
+  - Keep internal modules able to glob import crate internals through crate-private re-exports.
+
+- **Enum Decoding**:
+  - Replace panic/transmute-style enum getters with `from_raw` conversion paths.
+  - Return `MetalError` for unknown Metal enum values where the public method is fallible.
+  - Harden load/store action, log level, library type, compile option, and related getter paths.
+  - Add enum discriminant tests for SDK-copied values.
+
+- **Example Cleanup**:
+  - Convert older smoke examples away from avoidable `unwrap` / `expect`.
+  - Keep examples `Result`-returning where practical.
+  - Preserve graceful no-device or unsupported-feature exits.
+  - Update indirect draw, parallel render, pass descriptor, and raytracing instance examples.
+
+### V10 Validation
+
+- `cargo check --all-targets`
+- `cargo test` with real Metal runtime access
+- `git diff --check`
+- Run core smoke examples:
+  - `compute`
+  - `depth_triangle`
+  - `load_metallib`
+  - `function_constants`
+  - `function_stitching`
+  - `heap_resources`
+  - `sparse_resources`
+  - `raytracing`
+  - `io_buffer`
+  - `residency_set`
+- Run changed examples:
+  - `indirect_draw`
+  - `parallel_render`
+  - `pass_descriptors`
+  - `raytracing_instances`

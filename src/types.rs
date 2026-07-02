@@ -649,6 +649,20 @@ pub enum CommandBufferStatus {
     Error = 5,
 }
 
+impl CommandBufferStatus {
+    pub fn from_raw(raw: usize) -> Option<Self> {
+        match raw {
+            0 => Some(Self::NotEnqueued),
+            1 => Some(Self::Enqueued),
+            2 => Some(Self::Committed),
+            3 => Some(Self::Scheduled),
+            4 => Some(Self::Completed),
+            5 => Some(Self::Error),
+            _ => None,
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct StoreActionOptions(pub usize);
 impl StoreActionOptions {
@@ -661,6 +675,16 @@ impl StoreActionOptions {
 pub enum DispatchType {
     Serial = 0,
     Concurrent = 1,
+}
+
+impl DispatchType {
+    pub fn from_raw(raw: usize) -> Option<Self> {
+        match raw {
+            0 => Some(Self::Serial),
+            1 => Some(Self::Concurrent),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -696,6 +720,20 @@ pub enum LogLevel {
     Fault = 4,
 }
 
+impl LogLevel {
+    pub fn from_raw(raw: isize) -> Option<Self> {
+        match raw {
+            -1 => Some(Self::Undefined),
+            0 => Some(Self::Debug),
+            1 => Some(Self::Info),
+            2 => Some(Self::Notice),
+            3 => Some(Self::Error),
+            4 => Some(Self::Fault),
+            _ => None,
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct RenderStages(pub usize);
 impl RenderStages {
@@ -729,11 +767,31 @@ pub enum LibraryType {
     Dynamic = 1,
 }
 
+impl LibraryType {
+    pub fn from_raw(raw: usize) -> Option<Self> {
+        match raw {
+            0 => Some(Self::Executable),
+            1 => Some(Self::Dynamic),
+            _ => None,
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(isize)]
 pub enum LibraryOptimizationLevel {
     Default = 0,
     Size = 1,
+}
+
+impl LibraryOptimizationLevel {
+    pub fn from_raw(raw: isize) -> Option<Self> {
+        match raw {
+            0 => Some(Self::Default),
+            1 => Some(Self::Size),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

@@ -31,70 +31,70 @@ pub fn sel(name: &[u8]) -> SEL {
     unsafe { sel_registerName(name.as_ptr() as *const c_char) }
 }
 
-pub fn msg_id(obj: id, selector: SEL) -> id {
+pub(crate) fn msg_id(obj: id, selector: SEL) -> id {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL) -> id = transmute(objc_msgSend as *const c_void);
         f(obj, selector)
     }
 }
 
-pub fn msg_id_id(obj: id, selector: SEL, arg: id) -> id {
+pub(crate) fn msg_id_id(obj: id, selector: SEL, arg: id) -> id {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL, id) -> id = transmute(objc_msgSend as *const c_void);
         f(obj, selector, arg)
     }
 }
 
-pub fn msg_void(obj: id, selector: SEL) {
+pub(crate) fn msg_void(obj: id, selector: SEL) {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL) = transmute(objc_msgSend as *const c_void);
         f(obj, selector);
     }
 }
 
-pub fn msg_void_id(obj: id, selector: SEL, arg: id) {
+pub(crate) fn msg_void_id(obj: id, selector: SEL, arg: id) {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL, id) = transmute(objc_msgSend as *const c_void);
         f(obj, selector, arg);
     }
 }
 
-pub fn msg_void_bool(obj: id, selector: SEL, arg: BOOL) {
+pub(crate) fn msg_void_bool(obj: id, selector: SEL, arg: BOOL) {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL, BOOL) = transmute(objc_msgSend as *const c_void);
         f(obj, selector, arg);
     }
 }
 
-pub fn msg_void_usize(obj: id, selector: SEL, arg: usize) {
+pub(crate) fn msg_void_usize(obj: id, selector: SEL, arg: usize) {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL, usize) = transmute(objc_msgSend as *const c_void);
         f(obj, selector, arg);
     }
 }
 
-pub fn msg_void_u64(obj: id, selector: SEL, arg: u64) {
+pub(crate) fn msg_void_u64(obj: id, selector: SEL, arg: u64) {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL, u64) = transmute(objc_msgSend as *const c_void);
         f(obj, selector, arg);
     }
 }
 
-pub fn msg_void_f64(obj: id, selector: SEL, arg: f64) {
+pub(crate) fn msg_void_f64(obj: id, selector: SEL, arg: f64) {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL, f64) = transmute(objc_msgSend as *const c_void);
         f(obj, selector, arg);
     }
 }
 
-pub fn msg_usize(obj: id, selector: SEL) -> usize {
+pub(crate) fn msg_usize(obj: id, selector: SEL) -> usize {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL) -> usize = transmute(objc_msgSend as *const c_void);
         f(obj, selector)
     }
 }
 
-pub fn msg_u64(obj: id, selector: SEL) -> u64 {
+pub(crate) fn msg_u64(obj: id, selector: SEL) -> u64 {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL) -> u64 = transmute(objc_msgSend as *const c_void);
         f(obj, selector)
@@ -102,7 +102,7 @@ pub fn msg_u64(obj: id, selector: SEL) -> u64 {
 }
 
 #[allow(dead_code)]
-pub fn msg_bool(obj: id, selector: SEL) -> BOOL {
+pub(crate) fn msg_bool(obj: id, selector: SEL) -> BOOL {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL) -> BOOL = transmute(objc_msgSend as *const c_void);
         f(obj, selector)
@@ -110,35 +110,35 @@ pub fn msg_bool(obj: id, selector: SEL) -> BOOL {
 }
 
 #[allow(dead_code)]
-pub fn msg_f64(obj: id, selector: SEL) -> f64 {
+pub(crate) fn msg_f64(obj: id, selector: SEL) -> f64 {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL) -> f64 = transmute(objc_msgSend as *const c_void);
         f(obj, selector)
     }
 }
 
-pub fn msg_void_size(obj: id, selector: SEL, arg: CGSize) {
+pub(crate) fn msg_void_size(obj: id, selector: SEL, arg: CGSize) {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL, CGSize) = transmute(objc_msgSend as *const c_void);
         f(obj, selector, arg);
     }
 }
 
-pub fn msg_void_clear_color(obj: id, selector: SEL, arg: ClearColor) {
+pub(crate) fn msg_void_clear_color(obj: id, selector: SEL, arg: ClearColor) {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL, ClearColor) = transmute(objc_msgSend as *const c_void);
         f(obj, selector, arg);
     }
 }
 
-pub fn msg_void_viewport(obj: id, selector: SEL, arg: Viewport) {
+pub(crate) fn msg_void_viewport(obj: id, selector: SEL, arg: Viewport) {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL, Viewport) = transmute(objc_msgSend as *const c_void);
         f(obj, selector, arg);
     }
 }
 
-pub fn msg_void_scissor_rect(obj: id, selector: SEL, arg: ScissorRect) {
+pub(crate) fn msg_void_scissor_rect(obj: id, selector: SEL, arg: ScissorRect) {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL, ScissorRect) =
             transmute(objc_msgSend as *const c_void);
@@ -146,7 +146,7 @@ pub fn msg_void_scissor_rect(obj: id, selector: SEL, arg: ScissorRect) {
     }
 }
 
-pub fn msg_id_usize(obj: id, selector: SEL, arg: usize) -> id {
+pub(crate) fn msg_id_usize(obj: id, selector: SEL, arg: usize) -> id {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL, usize) -> id =
             transmute(objc_msgSend as *const c_void);
@@ -154,7 +154,7 @@ pub fn msg_id_usize(obj: id, selector: SEL, arg: usize) -> id {
     }
 }
 
-pub fn msg_id_usize_usize(obj: id, selector: SEL, arg1: usize, arg2: usize) -> id {
+pub(crate) fn msg_id_usize_usize(obj: id, selector: SEL, arg1: usize, arg2: usize) -> id {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL, usize, usize) -> id =
             transmute(objc_msgSend as *const c_void);
@@ -162,7 +162,7 @@ pub fn msg_id_usize_usize(obj: id, selector: SEL, arg1: usize, arg2: usize) -> i
     }
 }
 
-pub fn msg_id_id_usize(obj: id, selector: SEL, arg1: id, arg2: usize) -> id {
+pub(crate) fn msg_id_id_usize(obj: id, selector: SEL, arg1: id, arg2: usize) -> id {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL, id, usize) -> id =
             transmute(objc_msgSend as *const c_void);
@@ -170,7 +170,7 @@ pub fn msg_id_id_usize(obj: id, selector: SEL, arg1: id, arg2: usize) -> id {
     }
 }
 
-pub fn msg_id_ptr_usize_usize(
+pub(crate) fn msg_id_ptr_usize_usize(
     obj: id,
     selector: SEL,
     arg1: *const c_void,
@@ -184,7 +184,7 @@ pub fn msg_id_ptr_usize_usize(
     }
 }
 
-pub fn ns_array_from_ids(objects: &[id]) -> id {
+pub(crate) fn ns_array_from_ids(objects: &[id]) -> id {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL, *const id, usize) -> id =
             transmute(objc_msgSend as *const c_void);
@@ -197,7 +197,7 @@ pub fn ns_array_from_ids(objects: &[id]) -> id {
     }
 }
 
-pub fn ns_array_count(array: id) -> usize {
+pub(crate) fn ns_array_count(array: id) -> usize {
     if array.is_null() {
         0
     } else {
@@ -205,7 +205,7 @@ pub fn ns_array_count(array: id) -> usize {
     }
 }
 
-pub fn ns_array_object_at_index(array: id, index: usize) -> id {
+pub(crate) fn ns_array_object_at_index(array: id, index: usize) -> id {
     if array.is_null() {
         ptr::null_mut()
     } else {
@@ -213,7 +213,7 @@ pub fn ns_array_object_at_index(array: id, index: usize) -> id {
     }
 }
 
-pub fn ns_array_to_vec(array: id) -> Vec<id> {
+pub(crate) fn ns_array_to_vec(array: id) -> Vec<id> {
     let count = ns_array_count(array);
     let mut vec = Vec::with_capacity(count);
     for i in 0..count {
@@ -284,7 +284,7 @@ pub fn ns_string_to_string(raw: id) -> Option<String> {
     }
 }
 
-pub fn error_message(error: id, fallback: &str) -> String {
+pub(crate) fn error_message(error: id, fallback: &str) -> String {
     if error.is_null() {
         return fallback.to_string();
     }
@@ -318,7 +318,7 @@ impl Drop for AutoreleasePool {
     }
 }
 
-pub fn msg_id_id_err(obj: id, selector: SEL, arg: id, err: *mut id) -> id {
+pub(crate) fn msg_id_id_err(obj: id, selector: SEL, arg: id, err: *mut id) -> id {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL, id, *mut id) -> id =
             transmute(objc_msgSend as *const c_void);
@@ -326,7 +326,7 @@ pub fn msg_id_id_err(obj: id, selector: SEL, arg: id, err: *mut id) -> id {
     }
 }
 
-pub fn msg_bool_id_err(obj: id, selector: SEL, arg: id, err: *mut id) -> BOOL {
+pub(crate) fn msg_bool_id_err(obj: id, selector: SEL, arg: id, err: *mut id) -> BOOL {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL, id, *mut id) -> BOOL =
             transmute(objc_msgSend as *const c_void);
@@ -334,7 +334,7 @@ pub fn msg_bool_id_err(obj: id, selector: SEL, arg: id, err: *mut id) -> BOOL {
     }
 }
 
-pub fn msg_void_id_usize_usize(obj: id, selector: SEL, arg1: id, arg2: usize, arg3: usize) {
+pub(crate) fn msg_void_id_usize_usize(obj: id, selector: SEL, arg1: id, arg2: usize, arg3: usize) {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL, id, usize, usize) =
             transmute(objc_msgSend as *const c_void);
@@ -342,14 +342,14 @@ pub fn msg_void_id_usize_usize(obj: id, selector: SEL, arg1: id, arg2: usize, ar
     }
 }
 
-pub fn msg_void_id_usize(obj: id, selector: SEL, arg1: id, arg2: usize) {
+pub(crate) fn msg_void_id_usize(obj: id, selector: SEL, arg1: id, arg2: usize) {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL, id, usize) = transmute(objc_msgSend as *const c_void);
         f(obj, selector, arg1, arg2);
     }
 }
 
-pub fn msg_void_ptr_usize_usize(
+pub(crate) fn msg_void_ptr_usize_usize(
     obj: id,
     selector: SEL,
     arg1: *const c_void,
@@ -363,28 +363,28 @@ pub fn msg_void_ptr_usize_usize(
     }
 }
 
-pub fn msg_void_id_range(obj: id, selector: SEL, arg1: id, arg2: Range) {
+pub(crate) fn msg_void_id_range(obj: id, selector: SEL, arg1: id, arg2: Range) {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL, id, Range) = transmute(objc_msgSend as *const c_void);
         f(obj, selector, arg1, arg2);
     }
 }
 
-pub fn msg_void_range(obj: id, selector: SEL, arg: Range) {
+pub(crate) fn msg_void_range(obj: id, selector: SEL, arg: Range) {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL, Range) = transmute(objc_msgSend as *const c_void);
         f(obj, selector, arg);
     }
 }
 
-pub fn msg_void_size_size(obj: id, selector: SEL, arg1: Size, arg2: Size) {
+pub(crate) fn msg_void_size_size(obj: id, selector: SEL, arg1: Size, arg2: Size) {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL, Size, Size) = transmute(objc_msgSend as *const c_void);
         f(obj, selector, arg1, arg2);
     }
 }
 
-pub fn msg_void_id_u64(obj: id, selector: SEL, arg1: id, arg2: u64) {
+pub(crate) fn msg_void_id_u64(obj: id, selector: SEL, arg1: id, arg2: u64) {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL, id, u64) = transmute(objc_msgSend as *const c_void);
         f(obj, selector, arg1, arg2);
@@ -402,7 +402,7 @@ pub fn responds_to_selector(obj: id, selector: SEL) -> bool {
     }
 }
 
-pub fn msg_resource_id(obj: id, selector: SEL) -> ResourceID {
+pub(crate) fn msg_resource_id(obj: id, selector: SEL) -> ResourceID {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL) -> ResourceID =
             transmute(objc_msgSend as *const c_void);
@@ -410,14 +410,14 @@ pub fn msg_resource_id(obj: id, selector: SEL) -> ResourceID {
     }
 }
 
-pub fn msg_void_mtlsize(obj: id, selector: SEL, arg: Size) {
+pub(crate) fn msg_void_mtlsize(obj: id, selector: SEL, arg: Size) {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL, Size) = transmute(objc_msgSend as *const c_void);
         f(obj, selector, arg);
     }
 }
 
-pub fn msg_void_ptr_ptr_range(
+pub(crate) fn msg_void_ptr_ptr_range(
     obj: id,
     selector: SEL,
     arg1: *const id,
@@ -431,7 +431,7 @@ pub fn msg_void_ptr_ptr_range(
     }
 }
 
-pub fn msg_void_ptr_range(obj: id, selector: SEL, arg1: *const id, arg2: Range) {
+pub(crate) fn msg_void_ptr_range(obj: id, selector: SEL, arg1: *const id, arg2: Range) {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL, *const id, Range) =
             transmute(objc_msgSend as *const c_void);

@@ -20,26 +20,25 @@ struct DrawIndexedPrimitivesIndirectArguments {
     base_instance: u32,
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Running indirect_draw example...");
-    std::io::stdout().flush().unwrap();
+    let _ = std::io::stdout().flush();
 
     let Some(device) = Device::system_default() else {
         println!("No Metal device available.");
-        return;
+        return Ok(());
     };
     println!("Got device.");
-    std::io::stdout().flush().unwrap();
+    let _ = std::io::stdout().flush();
 
-    let queue = device.new_command_queue().unwrap();
-    let cmd_buf = queue.command_buffer().unwrap();
+    let queue = device.new_command_queue()?;
+    let cmd_buf = queue.command_buffer()?;
     println!("Got queue and command buffer.");
-    std::io::stdout().flush().unwrap();
+    let _ = std::io::stdout().flush();
 
     // Compile simple shaders
-    let library = device
-        .new_library_with_source(
-            r#"
+    let library = device.new_library_with_source(
+        r#"
         #include <metal_stdlib>
         using namespace metal;
         vertex float4 vertex_main(uint vid [[vertex_id]]) {
@@ -49,24 +48,17 @@ fn main() {
             return float4(1.0, 1.0, 1.0, 1.0);
         }
     "#,
-        )
-        .expect("failed to compile library");
-    let vertex_func = library
-        .function("vertex_main")
-        .expect("vertex function not found");
-    let fragment_func = library
-        .function("fragment_main")
-        .expect("fragment function not found");
+    )?;
+    let vertex_func = library.function("vertex_main")?;
+    let fragment_func = library.function("fragment_main")?;
     println!("Compiled shaders.");
-    std::io::stdout().flush().unwrap();
+    let _ = std::io::stdout().flush();
 
     // Create a 2D texture to bind to the render pass color attachment
     let texture_desc = TextureDescriptor::texture_2d(PixelFormat::Rgba8Unorm, 128, 128, false);
-    let texture = device
-        .new_texture(&texture_desc)
-        .expect("failed to create texture");
+    let texture = device.new_texture(&texture_desc)?;
     println!("Created texture.");
-    std::io::stdout().flush().unwrap();
+    let _ = std::io::stdout().flush();
 
     let render_pass_desc = RenderPassDescriptor::new();
     let attachment0 = render_pass_desc.color_attachment(0);
@@ -75,33 +67,27 @@ fn main() {
     base.set_load_action(LoadAction::Clear);
     base.set_store_action(StoreAction::Store);
     println!("Configured render pass.");
-    std::io::stdout().flush().unwrap();
+    let _ = std::io::stdout().flush();
 
     // Create render pipeline state
     let pipeline_desc = RenderPipelineDescriptor::new();
     pipeline_desc.set_vertex_function(&vertex_func);
     pipeline_desc.set_fragment_function(&fragment_func);
     pipeline_desc.set_color_attachment_pixel_format(0, PixelFormat::Rgba8Unorm);
-    let pipeline_state = device
-        .new_render_pipeline_state(&pipeline_desc)
-        .expect("failed to create pipeline state");
+    let pipeline_state = device.new_render_pipeline_state(&pipeline_desc)?;
     println!("Created render pipeline state.");
-    std::io::stdout().flush().unwrap();
+    let _ = std::io::stdout().flush();
 
-    let render_encoder = cmd_buf.render_command_encoder(&render_pass_desc).unwrap();
+    let render_encoder = cmd_buf.render_command_encoder(&render_pass_desc)?;
     render_encoder.set_render_pipeline_state(&pipeline_state);
     println!("Created render encoder and set pipeline state.");
-    std::io::stdout().flush().unwrap();
+    let _ = std::io::stdout().flush();
 
     // Create indirect buffer and index buffer
-    let indirect_buffer = device
-        .new_buffer(256, ResourceOptions::STORAGE_MODE_SHARED)
-        .unwrap();
-    let index_buffer = device
-        .new_buffer(256, ResourceOptions::STORAGE_MODE_SHARED)
-        .unwrap();
+    let indirect_buffer = device.new_buffer(256, ResourceOptions::STORAGE_MODE_SHARED)?;
+    let index_buffer = device.new_buffer(256, ResourceOptions::STORAGE_MODE_SHARED)?;
     println!("Created buffers.");
-    std::io::stdout().flush().unwrap();
+    let _ = std::io::stdout().flush();
 
     // Populate buffers with valid draw arguments
     let args1 = DrawPrimitivesIndirectArguments {
@@ -127,15 +113,15 @@ fn main() {
     }
     indirect_buffer.did_modify_range(Range::new(0, 128));
     println!("Populated buffers.");
-    std::io::stdout().flush().unwrap();
+    let _ = std::io::stdout().flush();
 
     // Exercise indirect draw commands
     println!("Calling draw_primitives_indirect...");
-    std::io::stdout().flush().unwrap();
+    let _ = std::io::stdout().flush();
     render_encoder.draw_primitives_indirect(PrimitiveType::Triangle, &indirect_buffer, 0);
 
     println!("Calling draw_indexed_primitives_indirect...");
-    std::io::stdout().flush().unwrap();
+    let _ = std::io::stdout().flush();
     render_encoder.draw_indexed_primitives_indirect(
         PrimitiveType::Triangle,
         IndexType::UInt16,
@@ -146,8 +132,9 @@ fn main() {
     );
 
     println!("Ending encoding...");
-    std::io::stdout().flush().unwrap();
+    let _ = std::io::stdout().flush();
     render_encoder.end_encoding();
     println!("Indirect draw commands encoded successfully!");
-    std::io::stdout().flush().unwrap();
+    let _ = std::io::stdout().flush();
+    Ok(())
 }

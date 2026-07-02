@@ -82,18 +82,22 @@ impl RenderPassAttachmentDescriptor {
         msg_void_usize(self.raw, sel(b"setResolveDepthPlane:\0"), depth_plane);
     }
 
-    pub fn load_action(&self) -> LoadAction {
+    pub fn load_action(&self) -> Result<LoadAction, MetalError> {
         let val = msg_usize(self.raw, sel(b"loadAction\0"));
-        LoadAction::from_raw(val).expect("invalid MTLLoadAction value from Metal")
+        LoadAction::from_raw(val).ok_or_else(|| {
+            MetalError::new(format!("invalid MTLLoadAction value from Metal: {}", val))
+        })
     }
 
     pub fn set_load_action(&self, load_action: LoadAction) {
         msg_void_usize(self.raw, sel(b"setLoadAction:\0"), load_action as usize);
     }
 
-    pub fn store_action(&self) -> StoreAction {
+    pub fn store_action(&self) -> Result<StoreAction, MetalError> {
         let val = msg_usize(self.raw, sel(b"storeAction\0"));
-        StoreAction::from_raw(val).expect("invalid MTLStoreAction value from Metal")
+        StoreAction::from_raw(val).ok_or_else(|| {
+            MetalError::new(format!("invalid MTLStoreAction value from Metal: {}", val))
+        })
     }
 
     pub fn set_store_action(&self, store_action: StoreAction) {
@@ -495,8 +499,11 @@ impl ComputePassDescriptor {
         }
     }
 
-    pub fn dispatch_type(&self) -> DispatchType {
-        unsafe { std::mem::transmute(msg_usize(self.raw, sel(b"dispatchType\0"))) }
+    pub fn dispatch_type(&self) -> Result<DispatchType, MetalError> {
+        let raw = msg_usize(self.raw, sel(b"dispatchType\0"));
+        DispatchType::from_raw(raw).ok_or_else(|| {
+            MetalError::new(format!("invalid MTLDispatchType value from Metal: {}", raw))
+        })
     }
 
     pub fn set_dispatch_type(&self, dispatch_type: DispatchType) {

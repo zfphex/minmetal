@@ -1303,8 +1303,11 @@ impl LogStateDescriptor {
         }
     }
 
-    pub fn level(&self) -> LogLevel {
-        unsafe { std::mem::transmute(msg_usize(self.raw, sel(b"level\0"))) }
+    pub fn level(&self) -> Result<LogLevel, MetalError> {
+        let raw = msg_usize(self.raw, sel(b"level\0"));
+        LogLevel::from_raw(raw as isize).ok_or_else(|| {
+            MetalError::new(format!("invalid MTLLogLevel value from Metal: {}", raw))
+        })
     }
 
     pub fn set_level(&self, level: LogLevel) {
