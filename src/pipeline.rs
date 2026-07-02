@@ -1176,9 +1176,7 @@ impl DynamicLibrary {
 
     pub fn serialize_to_url(&self, url_path: &str) -> Result<(), MetalError> {
         unsafe {
-            let ns_url_path = NSString::new(url_path);
-            let ns_url_class = class(b"NSURL\0");
-            let url = msg_id_id(ns_url_class, sel(b"fileURLWithPath:\0"), ns_url_path.raw());
+            let url = ns_url_from_path(url_path);
             let mut error = NIL;
             let f: unsafe extern "C" fn(id, SEL, id, *mut id) -> BOOL =
                 transmute(objc_msgSend as *const c_void);

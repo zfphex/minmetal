@@ -193,8 +193,7 @@ impl Drop for IOCompressionContext {
 }
 
 fn file_url(path: &str) -> id {
-    let ns_path = NSString::new(path);
-    msg_id_id(class(b"NSURL\0"), sel(b"fileURLWithPath:\0"), ns_path.raw())
+    ns_url_from_path(path)
 }
 
 #[derive(Debug)]

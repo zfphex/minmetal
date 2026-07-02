@@ -26,7 +26,7 @@ This file tracks the status of all Metal framework headers. Statuses can be `Bou
 | `MTLCounters.h` | Bound | V5 | Counter sets, sample buffers |
 | `MTLDefines.h` | N/A | - | Compiler macros |
 | `MTLDepthStencil.h` | Bound | V2 | Depth/stencil states and descriptors |
-| `MTLDevice.h` | Bound | V6 | required system default, queries, new tables/logs |
+| `MTLDevice.h` | Bound | V6 | required system default, queries, new tables/logs, precompiled library loading (V9) |
 | `MTLDeviceCertification.h` | Skipped | - | App Store / system certification APIs |
 | `MTLDrawable.h` | Bound | V1 | Metal drawables |
 | `MTLDynamicLibrary.h` | Bound | V6 | Dynamic library loading and serializing |
@@ -44,7 +44,7 @@ This file tracks the status of all Metal framework headers. Statuses can be `Bou
 | `MTLIOCommandBuffer.h` | Bound | V7 | IO command buffer load, barrier, enqueue, commit, wait, cancel, events |
 | `MTLIOCommandQueue.h` | Bound | V7 | IO queue descriptor, queue, file handles, device factories |
 | `MTLIOCompressor.h` | Bound | V7 | Compression context C API wrappers |
-| `MTLLibrary.h` | Bound | V6 | Functions, custom constant compilation, logs |
+| `MTLLibrary.h` | Bound | V6 | Functions, custom constant compilation, logs, library types and properties (V9) |
 | `MTLLinkedFunctions.h` | Bound | V6 | Linked functions for dynamic linking |
 | `MTLLogState.h` | Bound | V6 | GPU log state and log level configuration |
 | `MTLParallelRenderCommandEncoder.h` | Bound | V6 | Parallel render passes, child render encoders |

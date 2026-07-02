@@ -31,8 +31,7 @@ impl CaptureDescriptor {
     }
 
     pub fn set_output_url(&self, path: &str) {
-        let ns_path = NSString::new(path);
-        let ns_url = msg_id_id(class(b"NSURL\0"), sel(b"fileURLWithPath:\0"), ns_path.raw());
+        let ns_url = ns_url_from_path(path);
         msg_void_id(self.raw, sel(b"setOutputURL:\0"), ns_url);
     }
 }

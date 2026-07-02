@@ -109,6 +109,74 @@ impl Device {
         }
     }
 
+    pub fn new_library_with_url_path(&self, path: &str) -> Result<Library, MetalError> {
+        let selector = sel(b"newLibraryWithURL:error:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "newLibraryWithURL:error: is not supported on this macOS version",
+            ));
+        }
+        let ns_url = ns_url_from_path(path);
+        let mut error = NIL;
+        let raw = msg_id_id_err(self.raw, selector, ns_url, &mut error);
+        if raw.is_null() {
+            Err(MetalError::new(error_message(
+                error,
+                &format!("failed to load Metal library from URL: {}", path),
+            )))
+        } else {
+            Ok(Library { raw })
+        }
+    }
+
+    pub fn new_library_with_file(&self, path: &str) -> Result<Library, MetalError> {
+        let selector_url = sel(b"newLibraryWithURL:error:\0");
+        if responds_to_selector(self.raw, selector_url) {
+            self.new_library_with_url_path(path)
+        } else {
+            let ns_path = NSString::new(path);
+            let mut error = NIL;
+            let selector_file = sel(b"newLibraryWithFile:error:\0");
+            let raw = msg_id_id_err(self.raw, selector_file, ns_path.raw(), &mut error);
+            if raw.is_null() {
+                Err(MetalError::new(error_message(
+                    error,
+                    &format!("failed to load Metal library from file: {}", path),
+                )))
+            } else {
+                Ok(Library { raw })
+            }
+        }
+    }
+
+    pub fn new_default_library(&self) -> Result<Library, MetalError> {
+        let raw = msg_id(self.raw, sel(b"newDefaultLibrary\0"));
+        if raw.is_null() {
+            Err(MetalError::new("failed to create default Metal library"))
+        } else {
+            Ok(Library { raw })
+        }
+    }
+
+    pub fn new_default_library_with_bundle(&self, raw_bundle: id) -> Result<Library, MetalError> {
+        let selector = sel(b"newDefaultLibraryWithBundle:error:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "newDefaultLibraryWithBundle:error: is not supported on this macOS version",
+            ));
+        }
+        let mut error = NIL;
+        let raw = msg_id_id_err(self.raw, selector, raw_bundle, &mut error);
+        if raw.is_null() {
+            Err(MetalError::new(error_message(
+                error,
+                "failed to create default Metal library with bundle",
+            )))
+        } else {
+            Ok(Library { raw })
+        }
+    }
+
     pub fn new_render_pipeline_state(
         &self,
         descriptor: &RenderPipelineDescriptor,
@@ -608,6 +676,45 @@ impl Library {
             }
         }
     }
+
+    pub fn label(&self) -> Option<String> {
+        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    }
+
+    pub fn set_label(&self, label: &str) {
+        let ns_label = NSString::new(label);
+        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+    }
+
+    pub fn library_type(&self) -> Result<LibraryType, MetalError> {
+        let selector = sel(b"type\0");
+        if responds_to_selector(self.raw, selector) {
+            let raw_type = msg_usize(self.raw, selector);
+            match raw_type {
+                0 => Ok(LibraryType::Executable),
+                1 => Ok(LibraryType::Dynamic),
+                _ => Err(MetalError::new(format!(
+                    "unknown MTLLibraryType: {}",
+                    raw_type
+                ))),
+            }
+        } else {
+            Err(MetalError::new(
+                "type is not supported on this macOS version",
+            ))
+        }
+    }
+
+    pub fn install_name(&self) -> Result<Option<String>, MetalError> {
+        let selector = sel(b"installName\0");
+        if responds_to_selector(self.raw, selector) {
+            Ok(ns_string_to_string(msg_id(self.raw, selector)))
+        } else {
+            Err(MetalError::new(
+                "installName is not supported on this macOS version",
+            ))
+        }
+    }
 }
 
 impl Drop for Library {
@@ -647,13 +754,70 @@ impl CompileOptions {
         }
     }
 
-    pub fn set_library_type(&self, library_type: usize) {
-        msg_void_usize(self.raw, sel(b"setLibraryType:\0"), library_type);
+    pub fn set_library_type(&self, library_type: LibraryType) {
+        let selector = sel(b"setLibraryType:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_usize(self.raw, selector, library_type as usize);
+        }
+    }
+
+    pub fn set_library_type_raw(&self, library_type: usize) {
+        let selector = sel(b"setLibraryType:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_usize(self.raw, selector, library_type);
+        }
+    }
+
+    pub fn library_type(&self) -> Option<LibraryType> {
+        let selector = sel(b"libraryType\0");
+        if responds_to_selector(self.raw, selector) {
+            let raw_type = msg_usize(self.raw, selector);
+            match raw_type {
+                0 => Some(LibraryType::Executable),
+                1 => Some(LibraryType::Dynamic),
+                _ => None,
+            }
+        } else {
+            None
+        }
+    }
+
+    pub fn install_name(&self) -> Option<String> {
+        let selector = sel(b"installName\0");
+        if responds_to_selector(self.raw, selector) {
+            ns_string_to_string(msg_id(self.raw, selector))
+        } else {
+            None
+        }
     }
 
     pub fn set_install_name(&self, name: &str) {
-        let ns_name = NSString::new(name);
-        msg_void_id(self.raw, sel(b"setInstallName:\0"), ns_name.raw());
+        let selector = sel(b"setInstallName:\0");
+        if responds_to_selector(self.raw, selector) {
+            let ns_name = NSString::new(name);
+            msg_void_id(self.raw, selector, ns_name.raw());
+        }
+    }
+
+    pub fn optimization_level(&self) -> Option<LibraryOptimizationLevel> {
+        let selector = sel(b"optimizationLevel\0");
+        if responds_to_selector(self.raw, selector) {
+            let raw_val = msg_usize(self.raw, selector);
+            match raw_val as isize {
+                0 => Some(LibraryOptimizationLevel::Default),
+                1 => Some(LibraryOptimizationLevel::Size),
+                _ => None,
+            }
+        } else {
+            None
+        }
+    }
+
+    pub fn set_optimization_level(&self, level: LibraryOptimizationLevel) {
+        let selector = sel(b"setOptimizationLevel:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_usize(self.raw, selector, level as usize);
+        }
     }
 }
 

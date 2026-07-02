@@ -172,4 +172,16 @@ mod tests {
         let map_desc = RasterizationRateMapDescriptor::with_screen_size(Size::new(64, 64, 0));
         drop(map_desc);
     }
+
+    #[test]
+    fn test_load_non_existent_metallib() {
+        let Some(device) = Device::system_default() else {
+            return;
+        };
+        let result = device.new_library_with_file("/tmp/non_existent_file_xyz_123.metallib");
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err().to_string();
+        println!("Actual error message: {}", err_msg);
+        assert!(!err_msg.is_empty());
+    }
 }

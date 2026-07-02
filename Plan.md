@@ -558,3 +558,54 @@ V8 adds bindings for MTLFunctionStitching.h, closing the last major user-facing 
 - Re-run existing smoke examples: `compute`, `function_constants`, and `function_tables`
 - Validate that graph compilation failures return readable `MetalError` details
 - Validate that all owned Objective-C objects release through `Drop` wrappers
+
+## V9 Precompiled Metal Library Loading
+
+V9 adds first-class support for loading precompiled .metallib shader libraries. The crate remains a Metal bindings library: it exposes Metal’s runtime loading APIs, but does not add required shader build tooling, build.rs, code generation, macros, or dependencies.
+
+### V9 Decisions
+
+- URL-based loading is the preferred path on modern macOS.
+- URL-helper `ns_url_from_path(path: &str) -> id` is added to avoid duplicated URL creation.
+- Fall back to deprecated `newLibraryWithFile:error:` only if `newLibraryWithURL:error:` is not available.
+- Keep shader compilation external (using `xcrun`) and do not make it part of the crate's build behavior.
+
+### V9 Binding Additions
+
+- **Device Entry Points** (`src/device.rs`):
+  - `Device::new_library_with_url_path` using `newLibraryWithURL:error:`.
+  - `Device::new_library_with_file` wrapper preferring URL loading and falling back to file loading.
+  - `Device::new_default_library` using `newDefaultLibrary`.
+  - `Device::new_default_library_with_bundle` using `newDefaultLibraryWithBundle:error:`.
+
+- **Library Extensions** (`src/device.rs`):
+  - `Library::label` and `Library::set_label`.
+  - `Library::library_type` returning `LibraryType`.
+  - `Library::install_name` returning `Option<String>`.
+
+- **CompileOptions Improvements** (`src/device.rs`):
+  - Change `set_library_type` to use `LibraryType`.
+  - Add `set_library_type_raw` as an escape hatch.
+  - Add `library_type`, `install_name`, `set_optimization_level`, and `optimization_level`.
+
+- **Foundation Helpers** (`src/ffi.rs`):
+  - `ns_url_from_path` replacing manual URL creation.
+
+- **Enums** (`src/types.rs`):
+  - `LibraryType` (`Executable = 0`, `Dynamic = 1`).
+  - `LibraryOptimizationLevel` (`Default = 0`, `Size = 1`).
+  - `LibraryError` representing standard `MTLLibraryError` values.
+
+### V9 Smoke Examples
+
+- `examples/load_metallib.rs` loading a precompiled `.metallib` shader library.
+- `examples/shaders/precompiled_basic.metal` source file for compiling the `.metallib`.
+
+### V9 Validation
+
+- `cargo check --all-targets`
+- `cargo test` with real Metal runtime access
+- Verification of missing `.metallib` returning readable `MetalError` or instructions to compile.
+- Compile the library manually with:
+  `xcrun -sdk macosx metal -c examples/shaders/precompiled_basic.metal -o /tmp/minmetal_precompiled_basic.air`
+  `xcrun -sdk macosx metallib /tmp/minmetal_precompiled_basic.air -o examples/shaders/precompiled_basic.metallib`

@@ -438,3 +438,8 @@ pub fn msg_void_ptr_range(obj: id, selector: SEL, arg1: *const id, arg2: Range) 
         f(obj, selector, arg1, arg2);
     }
 }
+
+pub fn ns_url_from_path(path: &str) -> id {
+    let ns_path = NSString::new(path);
+    msg_id_id(class(b"NSURL\0"), sel(b"fileURLWithPath:\0"), ns_path.raw())
+}

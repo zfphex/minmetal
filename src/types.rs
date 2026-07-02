@@ -722,6 +722,31 @@ pub enum PurgeableState {
     Empty = 4,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(usize)]
+pub enum LibraryType {
+    Executable = 0,
+    Dynamic = 1,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(isize)]
+pub enum LibraryOptimizationLevel {
+    Default = 0,
+    Size = 1,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(usize)]
+pub enum LibraryError {
+    Unsupported = 1,
+    Internal = 2,
+    CompileFailure = 3,
+    CompileWarning = 4,
+    FunctionNotFound = 5,
+    FileNotFound = 6,
+}
+
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct ResourceID {
