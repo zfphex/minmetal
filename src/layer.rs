@@ -8,6 +8,14 @@ pub struct MetalLayer {
 }
 
 impl MetalLayer {
+    pub fn new() -> Result<Self, MetalError> {
+        let raw = retain(msg_id(class(b"CAMetalLayer\0"), sel(b"layer\0")));
+        if raw.is_null() {
+            return Err(MetalError::new("failed to create CAMetalLayer"));
+        }
+        Ok(Self { raw })
+    }
+
     pub unsafe fn attach_to_view(
         ns_view: *mut c_void,
         device: &Device,
