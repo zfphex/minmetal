@@ -28,8 +28,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Err(MetalError::new("compression flush failed").into());
     }
 
-    let file_handle =
-        device.new_io_file_handle_compressed(path_str, IOCompressionMethod::Lzfse)?;
+    let file_handle = device.new_io_file_handle_compressed(path_str, IOCompressionMethod::Lzfse)?;
 
     let buffer = device.new_buffer(payload.len(), ResourceOptions::STORAGE_MODE_SHARED)?;
 

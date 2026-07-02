@@ -35,12 +35,16 @@ impl ResidencySetDescriptor {
     pub fn new() -> Result<Self, MetalError> {
         let class_ptr = class(b"MTLResidencySetDescriptor\0");
         if class_ptr.is_null() {
-            return Err(MetalError::new("MTLResidencySetDescriptor is not available"));
+            return Err(MetalError::new(
+                "MTLResidencySetDescriptor is not available",
+            ));
         }
         let allocated = msg_id(class_ptr, sel(b"alloc\0"));
         let raw = msg_id(allocated, sel(b"init\0"));
         if raw.is_null() {
-            Err(MetalError::new("failed to create MTLResidencySetDescriptor"))
+            Err(MetalError::new(
+                "failed to create MTLResidencySetDescriptor",
+            ))
         } else {
             Ok(Self { raw })
         }

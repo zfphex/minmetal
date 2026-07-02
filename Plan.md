@@ -520,3 +520,41 @@ V7 closes important Metal coverage gaps while keeping `minmetal` a safe bindings
 - Unsupported OS/API selectors return `MetalError` or graceful skip instead of crashing
 - Fallible Objective-C creation methods propagate readable `NSError` descriptions
 - Newly owned Objective-C objects release through existing `Drop` wrappers
+
+## V8 Function Stitching Bindings
+
+V8 adds bindings for MTLFunctionStitching.h, closing the last major user-facing Metal API coverage gap. This remains bindings-only: no renderer, no shader build tooling, no .metallib pipeline, and no higher-level graph DSL.
+
+### V8 Decisions
+
+- Keep bindings direct and close to Metal's object model.
+- Stay zero-dependency, macro-free, runtime-shader-only, and bindings-focused.
+- Implement macOS-only guarded options and binary archives support (macOS 15+).
+
+### V8 Binding Additions
+
+- **Foundation Helpers** (`src/ffi.rs`):
+  - `ns_array_count`, `ns_array_object_at_index`, and `ns_array_to_vec` to query `NSArray` count and elements.
+
+- **Function Stitching Types** (`src/stitching.rs`):
+  - `StitchedLibraryOptions` options bitfield.
+  - `FunctionStitchingAttribute` protocol wrapper and `FunctionStitchingAttributeAlwaysInline` implementation.
+  - `FunctionStitchingNode` protocol wrapper, `FunctionStitchingInputNode` and `FunctionStitchingFunctionNode` implementations.
+  - `FunctionStitchingGraph` and `StitchedLibraryDescriptor`.
+
+- **Device Entry Point** (`src/device.rs`):
+  - `Device::new_library_with_stitched_descriptor` compiling function stitching graphs into an `Library`.
+  - `CompileOptions` with `set_library_type` and `set_install_name` to allow compiling dynamic libraries.
+
+### V8 Smoke Examples
+
+- `examples/function_stitching.rs`
+
+### V8 Validation
+
+- `cargo check --all-targets`
+- `cargo test` with real Metal runtime access
+- `cargo run --example function_stitching` executing a dynamically stitched function linked to a compute kernel
+- Re-run existing smoke examples: `compute`, `function_constants`, and `function_tables`
+- Validate that graph compilation failures return readable `MetalError` details
+- Validate that all owned Objective-C objects release through `Drop` wrappers

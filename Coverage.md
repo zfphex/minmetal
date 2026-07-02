@@ -36,7 +36,7 @@ This file tracks the status of all Metal framework headers. Statuses can be `Bou
 | `MTLFunctionDescriptor.h` | Bound | V6 | MTLFunctionDescriptor, MTLIntersectionFunctionDescriptor |
 | `MTLFunctionHandle.h` | Bound | V6 | MTLFunctionHandle |
 | `MTLFunctionLog.h` | Bound | V6 | Function log debugging location, logs |
-| `MTLFunctionStitching.h` | Skipped | - | Stitching descriptors (deferred; needs broader Foundation array/object graph helpers) |
+| `MTLFunctionStitching.h` | Bound | V8 | Stitching descriptors, attributes, graphs, inputs/functions, and descriptor settings |
 | `MTLHeap.h` | Bound | V6 | Heap allocation for acceleration structures, staged resource use |
 | `MTLIndirectCommandBuffer.h` | Bound | V3 | ICB options, execution |
 | `MTLIndirectCommandEncoder.h` | Bound | V3 | ICB draw / dispatch commands |

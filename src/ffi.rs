@@ -197,6 +197,31 @@ pub fn ns_array_from_ids(objects: &[id]) -> id {
     }
 }
 
+pub fn ns_array_count(array: id) -> usize {
+    if array.is_null() {
+        0
+    } else {
+        msg_usize(array, sel(b"count\0"))
+    }
+}
+
+pub fn ns_array_object_at_index(array: id, index: usize) -> id {
+    if array.is_null() {
+        ptr::null_mut()
+    } else {
+        msg_id_usize(array, sel(b"objectAtIndex:\0"), index)
+    }
+}
+
+pub fn ns_array_to_vec(array: id) -> Vec<id> {
+    let count = ns_array_count(array);
+    let mut vec = Vec::with_capacity(count);
+    for i in 0..count {
+        vec.push(ns_array_object_at_index(array, i));
+    }
+    vec
+}
+
 pub fn retain(obj: id) -> id {
     if !obj.is_null() {
         msg_id(obj, sel(b"retain\0"))

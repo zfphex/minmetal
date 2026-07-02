@@ -400,7 +400,10 @@ impl RenderPassDescriptor {
         }
     }
 
-    pub fn set_rasterization_rate_map(&self, map: Option<&RasterizationRateMap>) -> Result<(), MetalError> {
+    pub fn set_rasterization_rate_map(
+        &self,
+        map: Option<&RasterizationRateMap>,
+    ) -> Result<(), MetalError> {
         let selector = sel(b"setRasterizationRateMap:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new("setRasterizationRateMap: is not supported"));

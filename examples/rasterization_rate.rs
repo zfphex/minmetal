@@ -38,10 +38,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     rate_map.copy_parameter_data_to_buffer(&param_buffer, aligned_offset)?;
 
     let physical_size = rate_map.physical_size_for_layer(0)?;
-    let mapped = rate_map.map_screen_to_physical_coordinates(
-        Coordinate2D::new(32.0, 32.0),
-        0,
-    )?;
+    let mapped = rate_map.map_screen_to_physical_coordinates(Coordinate2D::new(32.0, 32.0), 0)?;
     assert!(mapped.x <= 32.0);
     assert!(mapped.y <= 32.0);
 

@@ -131,9 +131,7 @@ unsafe extern "C" {
         data: *const c_void,
         size: usize,
     );
-    fn MTLIOFlushAndDestroyCompressionContext(
-        context: RawIOCompressionContext,
-    ) -> isize;
+    fn MTLIOFlushAndDestroyCompressionContext(context: RawIOCompressionContext) -> isize;
 }
 
 pub fn io_compression_context_default_chunk_size() -> usize {
@@ -153,9 +151,8 @@ impl IOCompressionContext {
     ) -> Result<Self, MetalError> {
         let c_path = std::ffi::CString::new(path)
             .map_err(|_| MetalError::new("compression context path contains interior nul bytes"))?;
-        let raw = unsafe {
-            MTLIOCreateCompressionContext(c_path.as_ptr(), method as isize, chunk_size)
-        };
+        let raw =
+            unsafe { MTLIOCreateCompressionContext(c_path.as_ptr(), method as isize, chunk_size) };
         if raw.is_null() {
             Err(MetalError::new("failed to create IO compression context"))
         } else {
@@ -178,7 +175,9 @@ impl IOCompressionContext {
         })?;
         let status = unsafe { MTLIOFlushAndDestroyCompressionContext(raw) };
         IOCompressionStatus::from_raw(status).ok_or_else(|| {
-            MetalError::new(format!("invalid IOCompressionStatus value from Metal: {status}"))
+            MetalError::new(format!(
+                "invalid IOCompressionStatus value from Metal: {status}"
+            ))
         })
     }
 }
@@ -356,7 +355,9 @@ impl IOCommandBuffer {
     ) -> Result<(), MetalError> {
         let selector = sel(b"loadBytes:size:sourceHandle:sourceHandleOffset:\0");
         if !responds_to_selector(self.raw, selector) {
-            return Err(MetalError::new("loadBytes:size:sourceHandle:sourceHandleOffset: is not supported"));
+            return Err(MetalError::new(
+                "loadBytes:size:sourceHandle:sourceHandleOffset: is not supported",
+            ));
         }
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, *mut c_void, usize, id, usize) =
@@ -457,7 +458,9 @@ impl IOCommandBuffer {
     pub fn copy_status_to_buffer(&self, buffer: &Buffer, offset: usize) -> Result<(), MetalError> {
         let selector = sel(b"copyStatusToBuffer:offset:\0");
         if !responds_to_selector(self.raw, selector) {
-            return Err(MetalError::new("copyStatusToBuffer:offset: is not supported"));
+            return Err(MetalError::new(
+                "copyStatusToBuffer:offset: is not supported",
+            ));
         }
         msg_void_id_usize(self.raw, selector, buffer.raw, offset);
         Ok(())
@@ -466,7 +469,9 @@ impl IOCommandBuffer {
     pub fn commit(&self) -> Result<(), MetalError> {
         let selector = sel(b"commit\0");
         if !responds_to_selector(self.raw, selector) {
-            return Err(MetalError::new("commit is not supported on IO command buffer"));
+            return Err(MetalError::new(
+                "commit is not supported on IO command buffer",
+            ));
         }
         msg_void(self.raw, selector);
         Ok(())
@@ -486,7 +491,9 @@ impl IOCommandBuffer {
     pub fn try_cancel(&self) -> Result<(), MetalError> {
         let selector = sel(b"tryCancel\0");
         if !responds_to_selector(self.raw, selector) {
-            return Err(MetalError::new("tryCancel is not supported on IO command buffer"));
+            return Err(MetalError::new(
+                "tryCancel is not supported on IO command buffer",
+            ));
         }
         msg_void(self.raw, selector);
         Ok(())
@@ -495,7 +502,9 @@ impl IOCommandBuffer {
     pub fn add_barrier(&self) -> Result<(), MetalError> {
         let selector = sel(b"addBarrier\0");
         if !responds_to_selector(self.raw, selector) {
-            return Err(MetalError::new("addBarrier is not supported on IO command buffer"));
+            return Err(MetalError::new(
+                "addBarrier is not supported on IO command buffer",
+            ));
         }
         msg_void(self.raw, selector);
         Ok(())
@@ -504,7 +513,9 @@ impl IOCommandBuffer {
     pub fn enqueue(&self) -> Result<(), MetalError> {
         let selector = sel(b"enqueue\0");
         if !responds_to_selector(self.raw, selector) {
-            return Err(MetalError::new("enqueue is not supported on IO command buffer"));
+            return Err(MetalError::new(
+                "enqueue is not supported on IO command buffer",
+            ));
         }
         msg_void(self.raw, selector);
         Ok(())
@@ -531,7 +542,9 @@ impl IOCommandBuffer {
     pub fn status(&self) -> Result<IOStatus, MetalError> {
         let selector = sel(b"status\0");
         if !responds_to_selector(self.raw, selector) {
-            return Err(MetalError::new("status is not supported on IO command buffer"));
+            return Err(MetalError::new(
+                "status is not supported on IO command buffer",
+            ));
         }
         let raw = msg_usize(self.raw, selector) as isize;
         IOStatus::from_raw(raw)

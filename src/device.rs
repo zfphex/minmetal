@@ -59,6 +59,56 @@ impl Device {
         }
     }
 
+    pub fn new_library_with_source_and_options(
+        &self,
+        source: &str,
+        options: &CompileOptions,
+    ) -> Result<Library, MetalError> {
+        unsafe {
+            let source = NSString::new(source);
+            let mut error = NIL;
+            let f: unsafe extern "C" fn(id, SEL, id, id, *mut id) -> id =
+                transmute(objc_msgSend as *const c_void);
+            let raw = f(
+                self.raw,
+                sel(b"newLibraryWithSource:options:error:\0"),
+                source.raw(),
+                options.raw,
+                &mut error,
+            );
+            if raw.is_null() {
+                Err(MetalError::new(error_message(
+                    error,
+                    "failed to compile Metal shader source with options",
+                )))
+            } else {
+                Ok(Library { raw })
+            }
+        }
+    }
+
+    pub fn new_library_with_stitched_descriptor(
+        &self,
+        descriptor: &StitchedLibraryDescriptor,
+    ) -> Result<Library, MetalError> {
+        let selector = sel(b"newLibraryWithStitchedDescriptor:error:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "newLibraryWithStitchedDescriptor:error: is not supported on this macOS version",
+            ));
+        }
+        let mut error = NIL;
+        let raw = msg_id_id_err(self.raw, selector, descriptor.raw, &mut error);
+        if raw.is_null() {
+            Err(MetalError::new(error_message(
+                error,
+                "failed to create stitched Metal library",
+            )))
+        } else {
+            Ok(Library { raw })
+        }
+    }
+
     pub fn new_render_pipeline_state(
         &self,
         descriptor: &RenderPipelineDescriptor,
@@ -579,6 +629,41 @@ impl Function {
 }
 
 impl Drop for Function {
+    fn drop(&mut self) {
+        release(self.raw);
+    }
+}
+
+#[derive(Debug)]
+pub struct CompileOptions {
+    pub raw: id,
+}
+
+impl CompileOptions {
+    pub fn new() -> Self {
+        let allocated = msg_id(class(b"MTLCompileOptions\0"), sel(b"alloc\0"));
+        Self {
+            raw: msg_id(allocated, sel(b"init\0")),
+        }
+    }
+
+    pub fn set_library_type(&self, library_type: usize) {
+        msg_void_usize(self.raw, sel(b"setLibraryType:\0"), library_type);
+    }
+
+    pub fn set_install_name(&self, name: &str) {
+        let ns_name = NSString::new(name);
+        msg_void_id(self.raw, sel(b"setInstallName:\0"), ns_name.raw());
+    }
+}
+
+impl Default for CompileOptions {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Drop for CompileOptions {
     fn drop(&mut self) {
         release(self.raw);
     }

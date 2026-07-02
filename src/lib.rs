@@ -15,6 +15,7 @@ mod raytracing;
 mod residency;
 mod resource;
 mod sparse;
+mod stitching;
 mod types;
 
 pub use capture::*;
@@ -32,6 +33,7 @@ pub use raytracing::*;
 pub use residency::*;
 pub use resource::*;
 pub use sparse::*;
+pub use stitching::*;
 pub use types::*;
 
 #[cfg(test)]
@@ -159,9 +161,7 @@ mod tests {
         drop(desc8);
         let desc9 = IOCommandQueueDescriptor::new();
         drop(desc9);
-        if let Ok(ctx) =
-            IOCompressionContext::new("/dev/null", IOCompressionMethod::Lzfse, 4096)
-        {
+        if let Ok(ctx) = IOCompressionContext::new("/dev/null", IOCompressionMethod::Lzfse, 4096) {
             drop(ctx);
         }
         if let Ok(desc10) = ResidencySetDescriptor::new() {
