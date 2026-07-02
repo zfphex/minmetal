@@ -31,7 +31,9 @@ fn sparse_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
 
     // If not supported, we must skip mapping updates gracefully
     if !supports_sparse || tile_size.width == 0 || tile_size.height == 0 {
-        println!("Sparse textures not supported/available on this device, skipping resource state encoding.");
+        println!(
+            "Sparse textures not supported/available on this device, skipping resource state encoding."
+        );
         return Ok(());
     }
 
@@ -44,7 +46,10 @@ fn sparse_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     let heap = match device.new_heap(&heap_descriptor) {
         Ok(h) => h,
         Err(e) => {
-            println!("Could not create sparse heap: {}. Skipping mapping update test.", e);
+            println!(
+                "Could not create sparse heap: {}. Skipping mapping update test.",
+                e
+            );
             return Ok(());
         }
     };

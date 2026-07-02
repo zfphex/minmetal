@@ -95,16 +95,21 @@ fn rasterization_rate_module_permutations() -> Result<(), Box<dyn std::error::Er
     assert_eq!(desc_screen.screen_size().height, screen_size.height);
 
     // with_screen_size_and_layer
-    let desc_layer = RasterizationRateMapDescriptor::with_screen_size_and_layer(screen_size, &layer2);
+    let desc_layer =
+        RasterizationRateMapDescriptor::with_screen_size_and_layer(screen_size, &layer2);
     assert_eq!(desc_layer.screen_size().width, screen_size.width);
     assert_eq!(desc_layer.screen_size().height, screen_size.height);
     assert_eq!(desc_layer.layer_count(), 1);
 
     // with_screen_size_and_layers using one layer and two layers
-    let desc_layers1 = RasterizationRateMapDescriptor::with_screen_size_and_layers(screen_size, &[&layer2]);
+    let desc_layers1 =
+        RasterizationRateMapDescriptor::with_screen_size_and_layers(screen_size, &[&layer2]);
     assert_eq!(desc_layers1.layer_count(), 1);
 
-    let desc_layers2 = RasterizationRateMapDescriptor::with_screen_size_and_layers(screen_size, &[&layer2, &layer3]);
+    let desc_layers2 = RasterizationRateMapDescriptor::with_screen_size_and_layers(
+        screen_size,
+        &[&layer2, &layer3],
+    );
     assert_eq!(desc_layers2.layer_count(), 2);
 
     // screen_size getter and set_screen_size
@@ -118,7 +123,10 @@ fn rasterization_rate_module_permutations() -> Result<(), Box<dyn std::error::Er
     assert_eq!(desc_screen.label().as_deref(), Some(""));
 
     desc_screen.set_label("minmetal-rasterization-rate");
-    assert_eq!(desc_screen.label().as_deref(), Some("minmetal-rasterization-rate"));
+    assert_eq!(
+        desc_screen.label().as_deref(),
+        Some("minmetal-rasterization-rate")
+    );
 
     // layer_count
     assert_eq!(desc_screen.layer_count(), 0);
@@ -155,7 +163,9 @@ fn rasterization_rate_module_permutations() -> Result<(), Box<dyn std::error::Er
 
     let selector = sel(b"supportsRasterizationRateMapWithLayerCount:\0");
     if !responds_to_selector(device.raw, selector) {
-        println!("supportsRasterizationRateMapWithLayerCount: is unsupported, skipping device-backed map creation.");
+        println!(
+            "supportsRasterizationRateMapWithLayerCount: is unsupported, skipping device-backed map creation."
+        );
         return Ok(());
     }
 
@@ -163,10 +173,14 @@ fn rasterization_rate_module_permutations() -> Result<(), Box<dyn std::error::Er
     let support_0 = device.supports_rasterization_rate_map_with_layer_count(0)?;
     let support_1 = device.supports_rasterization_rate_map_with_layer_count(1)?;
     let support_2 = device.supports_rasterization_rate_map_with_layer_count(2)?;
-    println!("Device supports rasterization rate map with layer counts: 0: {}, 1: {}, 2: {}", support_0, support_1, support_2);
+    println!(
+        "Device supports rasterization rate map with layer counts: 0: {}, 1: {}, 2: {}",
+        support_0, support_1, support_2
+    );
 
     if support_1 {
-        let one_layer_desc = RasterizationRateMapDescriptor::with_screen_size_and_layer(screen_size, &layer2);
+        let one_layer_desc =
+            RasterizationRateMapDescriptor::with_screen_size_and_layer(screen_size, &layer2);
         one_layer_desc.set_label("minmetal-rasterization-rate-device-test");
         let rate_map = device.new_rasterization_rate_map(&one_layer_desc)?;
 
@@ -176,7 +190,10 @@ fn rasterization_rate_module_permutations() -> Result<(), Box<dyn std::error::Er
         // layer_count()
         assert_eq!(rate_map.layer_count(), 1);
         // label()
-        assert_eq!(rate_map.label().as_deref(), Some("minmetal-rasterization-rate-device-test"));
+        assert_eq!(
+            rate_map.label().as_deref(),
+            Some("minmetal-rasterization-rate-device-test")
+        );
         // device() returns a non-null device
         let rate_map_device = rate_map.device();
         assert!(!rate_map_device.raw.is_null());
@@ -190,7 +207,10 @@ fn rasterization_rate_module_permutations() -> Result<(), Box<dyn std::error::Er
         assert!(size_align.align > 0);
 
         // copy_parameter_data_to_buffer(...) succeeds using an aligned offset
-        let buffer = device.new_buffer(size_align.size + size_align.align, ResourceOptions::STORAGE_MODE_SHARED)?;
+        let buffer = device.new_buffer(
+            size_align.size + size_align.align,
+            ResourceOptions::STORAGE_MODE_SHARED,
+        )?;
         rate_map.copy_parameter_data_to_buffer(&buffer, size_align.align)?;
 
         // physical_size_for_layer(0) succeeds and returns non-zero width/height
@@ -199,13 +219,15 @@ fn rasterization_rate_module_permutations() -> Result<(), Box<dyn std::error::Er
         assert!(phys_size.height > 0);
 
         // screen-to-physical and physical-to-screen coordinate mapping succeeds
-        let center = Coordinate2D::new(screen_size.width as f32 / 2.0, screen_size.height as f32 / 2.0);
-        let br = Coordinate2D::new(screen_size.width as f32 - 1.0, screen_size.height as f32 - 1.0);
-        let coords = [
-            Coordinate2D::new(0.0, 0.0),
-            center,
-            br
-        ];
+        let center = Coordinate2D::new(
+            screen_size.width as f32 / 2.0,
+            screen_size.height as f32 / 2.0,
+        );
+        let br = Coordinate2D::new(
+            screen_size.width as f32 - 1.0,
+            screen_size.height as f32 - 1.0,
+        );
+        let coords = [Coordinate2D::new(0.0, 0.0), center, br];
         for coord in coords {
             let mapped_phys = rate_map.map_screen_to_physical_coordinates(coord, 0)?;
             let mapped_screen = rate_map.map_physical_to_screen_coordinates(mapped_phys, 0)?;
@@ -224,7 +246,10 @@ fn rasterization_rate_module_permutations() -> Result<(), Box<dyn std::error::Er
     }
 
     if support_2 {
-        let two_layer_desc = RasterizationRateMapDescriptor::with_screen_size_and_layers(screen_size, &[&layer2, &layer3]);
+        let two_layer_desc = RasterizationRateMapDescriptor::with_screen_size_and_layers(
+            screen_size,
+            &[&layer2, &layer3],
+        );
         let rate_map_2 = device.new_rasterization_rate_map(&two_layer_desc)?;
         assert_eq!(rate_map_2.layer_count(), 2);
         let size_0 = rate_map_2.physical_size_for_layer(0)?;

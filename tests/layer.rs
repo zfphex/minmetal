@@ -11,7 +11,10 @@ fn layer_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     let layer = match MetalLayer::new() {
         Ok(l) => l,
         Err(e) => {
-            println!("CAMetalLayer class not available: {}. Skipping layer tests.", e);
+            println!(
+                "CAMetalLayer class not available: {}. Skipping layer tests.",
+                e
+            );
             return Ok(());
         }
     };
@@ -59,7 +62,9 @@ fn layer_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
         }
         drawable.present();
     } else {
-        println!("next_drawable returned None, which is expected for off-screen / unattached layers.");
+        println!(
+            "next_drawable returned None, which is expected for off-screen / unattached layers."
+        );
     }
 
     Ok(())

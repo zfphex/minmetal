@@ -60,7 +60,9 @@ fn indirect_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     drop(desc_default);
 
     // 3. Nil-safe / Out-of-bounds error behavior
-    let nil_icb = IndirectCommandBuffer { raw: std::ptr::null_mut() };
+    let nil_icb = IndirectCommandBuffer {
+        raw: std::ptr::null_mut(),
+    };
     assert!(nil_icb.render_command(0).is_err());
     assert!(nil_icb.compute_command(0).is_err());
 
@@ -84,7 +86,10 @@ fn indirect_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     ) {
         Ok(buf) => buf,
         Err(e) => {
-            println!("Indirect command buffers not supported/created on this device: {}. Skipping execution test.", e);
+            println!(
+                "Indirect command buffers not supported/created on this device: {}. Skipping execution test.",
+                e
+            );
             return Ok(());
         }
     };
@@ -150,14 +155,20 @@ fn indirect_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     inherit_test_desc.set_command_types(IndirectCommandType::DRAW);
     inherit_test_desc.set_inherit_pipeline_state(true);
     inherit_test_desc.set_inherit_buffers(true);
-    let _ = device.new_indirect_command_buffer(&inherit_test_desc, 1, IndirectCommandBufferOptions::NONE);
+    let _ = device.new_indirect_command_buffer(
+        &inherit_test_desc,
+        1,
+        IndirectCommandBufferOptions::NONE,
+    );
 
     // Descriptor for testing command-level setters (must not inherit pipeline state or buffers)
     let render_desc = IndirectCommandBufferDescriptor::new();
     render_desc.set_command_types(IndirectCommandType::DRAW | IndirectCommandType::DRAW_INDEXED);
     render_desc.set_inherit_pipeline_state(false);
     render_desc.set_inherit_buffers(false);
-    if let Ok(render_icb) = device.new_indirect_command_buffer(&render_desc, 1, IndirectCommandBufferOptions::NONE) {
+    if let Ok(render_icb) =
+        device.new_indirect_command_buffer(&render_desc, 1, IndirectCommandBufferOptions::NONE)
+    {
         render_icb.reset(Range::new(0, 1));
         if let Ok(render_cmd) = render_icb.render_command(0) {
             let vertex_lib = device.new_library_with_source(
@@ -166,7 +177,7 @@ fn indirect_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
                 using namespace metal;
                 vertex float4 vs(uint vid [[vertex_id]]) { return float4(0.0); }
                 fragment float4 fs() { return float4(1.0); }
-                "#
+                "#,
             )?;
             let vs_func = vertex_lib.function("vs")?;
             let fs_func = vertex_lib.function("fs")?;

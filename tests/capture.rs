@@ -38,7 +38,10 @@ fn capture_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     let capture_manager = match CaptureManager::shared() {
         Ok(mgr) => mgr,
         Err(e) => {
-            println!("CaptureManager not available: {}. Skipping remaining capture tests.", e);
+            println!(
+                "CaptureManager not available: {}. Skipping remaining capture tests.",
+                e
+            );
             return Ok(());
         }
     };
@@ -46,7 +49,10 @@ fn capture_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     // supports_destination
     let tools_supported = capture_manager.supports_destination(CaptureDestination::DeveloperTools);
     let doc_supported = capture_manager.supports_destination(CaptureDestination::GpuTraceDocument);
-    println!("DeveloperTools supported: {}, GpuTraceDocument supported: {}", tools_supported, doc_supported);
+    println!(
+        "DeveloperTools supported: {}, GpuTraceDocument supported: {}",
+        tools_supported, doc_supported
+    );
 
     // Check is_capturing
     let _ = capture_manager.is_capturing();

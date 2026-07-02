@@ -37,7 +37,10 @@ fn counters_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     let counter_sets = match device.counter_sets() {
         Ok(sets) => sets,
         Err(e) => {
-            println!("Counter sets query not supported on this device/OS: {}. Graceful skip.", e);
+            println!(
+                "Counter sets query not supported on this device/OS: {}. Graceful skip.",
+                e
+            );
             return Ok(());
         }
     };
@@ -73,7 +76,10 @@ fn counters_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     let sample_buffer = match device.new_counter_sample_buffer(&desc) {
         Ok(buf) => buf,
         Err(e) => {
-            println!("Failed to create counter sample buffer: {}. Skipping encoder tests.", e);
+            println!(
+                "Failed to create counter sample buffer: {}. Skipping encoder tests.",
+                e
+            );
             return Ok(());
         }
     };
@@ -88,10 +94,10 @@ fn counters_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     if device.supports_counter_sampling(CounterSamplingPoint::AtBlitBoundary) {
         let blit = command_buffer.blit_command_encoder()?;
         blit.sample_counters_in_buffer(&sample_buffer, 0, true)?;
-        
+
         let dest_buf = device.new_buffer(256, ResourceOptions::STORAGE_MODE_SHARED)?;
         blit.resolve_counters(&sample_buffer, Range::new(0, 1), &dest_buf, 0)?;
-        
+
         blit.end_encoding();
         encoded_any = true;
     }

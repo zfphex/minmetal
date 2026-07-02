@@ -6,7 +6,10 @@ fn residency_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     let descriptor = match ResidencySetDescriptor::new() {
         Ok(desc) => desc,
         Err(e) => {
-            println!("Residency sets not supported (descriptor allocation failed): {}. Skipping tests.", e);
+            println!(
+                "Residency sets not supported (descriptor allocation failed): {}. Skipping tests.",
+                e
+            );
             return Ok(());
         }
     };
@@ -38,7 +41,10 @@ fn residency_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     let residency_set = match device.new_residency_set(&descriptor) {
         Ok(rs) => rs,
         Err(e) => {
-            println!("Residency sets are not supported on this device/OS version: {}. Skipping remaining tests.", e);
+            println!(
+                "Residency sets are not supported on this device/OS version: {}. Skipping remaining tests.",
+                e
+            );
             return Ok(());
         }
     };

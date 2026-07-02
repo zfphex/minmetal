@@ -1,6 +1,6 @@
 use minmetal::*;
 use std::ffi::c_void;
-use std::fs::{remove_file, File};
+use std::fs::{File, remove_file};
 use std::io::Write;
 
 #[test]
@@ -135,13 +135,17 @@ fn io_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
 
     // Try creating a compressed file using context
     let mut compression_supported = true;
-    if let Ok(comp_ctx) = IOCompressionContext::new(temp_compressed_path, IOCompressionMethod::Lzfse, chunk_size) {
+    if let Ok(comp_ctx) =
+        IOCompressionContext::new(temp_compressed_path, IOCompressionMethod::Lzfse, chunk_size)
+    {
         comp_ctx.append_data(&[]);
         comp_ctx.append_data(&payload);
         let flush_res = comp_ctx.flush_and_destroy()?;
         assert_eq!(flush_res, IOCompressionStatus::Complete);
     } else {
-        println!("IOCompressionContext creation unsupported in this environment. Skipping compressed readback path.");
+        println!(
+            "IOCompressionContext creation unsupported in this environment. Skipping compressed readback path."
+        );
         compression_supported = false;
     }
 
@@ -155,7 +159,9 @@ fn io_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
 
     let dummy_desc = IOCommandQueueDescriptor::new();
     if device.new_io_command_queue(&dummy_desc).is_err() {
-        println!("newIOCommandQueueWithDescriptor:error: is not supported on this device/OS. Skipping remaining IO tests.");
+        println!(
+            "newIOCommandQueueWithDescriptor:error: is not supported on this device/OS. Skipping remaining IO tests."
+        );
         let _ = remove_file(temp_uncompressed_path);
         let _ = remove_file(temp_compressed_path);
         return Ok(());
@@ -260,21 +266,23 @@ fn io_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
 
     // Verify texture payload (4x4 RGBA8 = 64 bytes)
     let mut tex_data = vec![0u8; 64];
-    shared_texture.get_bytes(
-        Region::new_2d(0, 0, 4, 4),
-        0,
-        &mut tex_data,
-        16,
-    );
+    shared_texture.get_bytes(Region::new_2d(0, 0, 4, 4), 0, &mut tex_data, 16);
     assert_eq!(tex_data[..64], payload[..64]);
 
     // 6. Test compressed readback if supported
-    let has_compressed_new = responds_to_selector(device.raw, sel(b"newIOFileHandleWithURL:compressionMethod:error:\0"));
-    let has_compressed_legacy = responds_to_selector(device.raw, sel(b"newIOHandleWithURL:compressionMethod:error:\0"));
+    let has_compressed_new = responds_to_selector(
+        device.raw,
+        sel(b"newIOFileHandleWithURL:compressionMethod:error:\0"),
+    );
+    let has_compressed_legacy = responds_to_selector(
+        device.raw,
+        sel(b"newIOHandleWithURL:compressionMethod:error:\0"),
+    );
     let compressed_supported = has_compressed_new || has_compressed_legacy;
 
     if compressed_supported && compression_supported {
-        let comp_file_handle = device.new_io_file_handle_compressed(temp_compressed_path, IOCompressionMethod::Lzfse)?;
+        let comp_file_handle = device
+            .new_io_file_handle_compressed(temp_compressed_path, IOCompressionMethod::Lzfse)?;
         let decomp_buf = device.new_buffer(1024, ResourceOptions::STORAGE_MODE_SHARED)?;
         let comp_cmd_buf = queue_concurrent.command_buffer()?;
         comp_cmd_buf.load_buffer(&decomp_buf, 0, 1024, &comp_file_handle, 0)?;
