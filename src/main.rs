@@ -53,7 +53,7 @@ fragment float4 gradient_fragment(VertexOut in [[stage_in]],
 "#;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut window = create_window("Metal Demo", None, 800, 600, WindowStyle::Standard);
+    let mut window = create_window("Metal Demo", None, 800, 600, true, WindowStyle::Standard);
 
     let device = Device::required_system_default()?;
     eprintln!("Using {}", device.name());
