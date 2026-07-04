@@ -184,6 +184,42 @@ impl PixelFormat {
     pub const fn as_raw(self) -> usize {
         self as usize
     }
+
+    pub fn from_raw(raw: usize) -> Self {
+        match raw {
+            10 => Self::R8Unorm,
+            13 => Self::R8Uint,
+            25 => Self::R16Float,
+            30 => Self::Rg8Unorm,
+            65 => Self::Rg16Float,
+            70 => Self::Rgba8Unorm,
+            71 => Self::Rgba8UnormSrgb,
+            80 => Self::Bgra8Unorm,
+            81 => Self::Bgra8UnormSrgb,
+            90 => Self::Rgb10A2Unorm,
+            92 => Self::Rg11B10Float,
+            93 => Self::Rgb9E5Float,
+            115 => Self::Rgba16Float,
+            125 => Self::Rgba32Float,
+            130 => Self::Bc1Rgba,
+            131 => Self::Bc1RgbaSrgb,
+            132 => Self::Bc2Rgba,
+            133 => Self::Bc2RgbaSrgb,
+            134 => Self::Bc3Rgba,
+            135 => Self::Bc3RgbaSrgb,
+            140 => Self::Bc4RUnorm,
+            142 => Self::Bc5RgUnorm,
+            150 => Self::Bc6HRgbFloat,
+            152 => Self::Bc7RgbaUnorm,
+            153 => Self::Bc7RgbaUnormSrgb,
+            250 => Self::Depth16Unorm,
+            252 => Self::Depth32Float,
+            253 => Self::Stencil8,
+            255 => Self::Depth24UnormStencil8,
+            260 => Self::Depth32FloatStencil8,
+            _ => Self::Invalid,
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -192,6 +228,7 @@ pub enum StorageMode {
     Shared = 0,
     Managed = 1,
     Private = 2,
+    Memoryless = 3,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -235,11 +272,16 @@ pub enum HazardTrackingMode {
 pub struct ResourceOptions(usize);
 
 impl ResourceOptions {
+    pub const fn from_raw(raw: usize) -> Self {
+        Self(raw)
+    }
+
     pub const CPU_CACHE_MODE_DEFAULT: Self = Self(0);
     pub const CPU_CACHE_MODE_WRITE_COMBINED: Self = Self(1);
     pub const STORAGE_MODE_SHARED: Self = Self(StorageMode::Shared.as_resource_bits());
     pub const STORAGE_MODE_MANAGED: Self = Self(StorageMode::Managed.as_resource_bits());
     pub const STORAGE_MODE_PRIVATE: Self = Self(StorageMode::Private.as_resource_bits());
+    pub const STORAGE_MODE_MEMORYLESS: Self = Self(StorageMode::Memoryless.as_resource_bits());
     pub const HAZARD_TRACKING_MODE_UNTRACKED: Self = Self(1 << 8);
     pub const HAZARD_TRACKING_MODE_TRACKED: Self = Self(2 << 8);
 
@@ -285,11 +327,16 @@ impl std::ops::BitOr for ResourceUsage {
 pub struct TextureUsage(usize);
 
 impl TextureUsage {
+    pub const fn from_raw(raw: usize) -> Self {
+        Self(raw)
+    }
+
     pub const UNKNOWN: Self = Self(0);
     pub const SHADER_READ: Self = Self(1);
     pub const SHADER_WRITE: Self = Self(1 << 1);
     pub const RENDER_TARGET: Self = Self(1 << 2);
     pub const PIXEL_FORMAT_VIEW: Self = Self(1 << 4);
+    pub const SHADER_ATOMIC: Self = Self(1 << 5);
 
     pub const fn as_raw(self) -> usize {
         self.0
@@ -370,6 +417,45 @@ pub enum TextureType {
     CubeArray = 6,
     D3 = 7,
     D2MultisampleArray = 8,
+    TextureBuffer = 9,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(u8)]
+pub enum TextureSwizzle {
+    Zero = 0,
+    One = 1,
+    Red = 2,
+    Green = 3,
+    Blue = 4,
+    Alpha = 5,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(C)]
+pub struct TextureSwizzleChannels {
+    pub red: TextureSwizzle,
+    pub green: TextureSwizzle,
+    pub blue: TextureSwizzle,
+    pub alpha: TextureSwizzle,
+}
+
+impl Default for TextureSwizzleChannels {
+    fn default() -> Self {
+        Self {
+            red: TextureSwizzle::Red,
+            green: TextureSwizzle::Green,
+            blue: TextureSwizzle::Blue,
+            alpha: TextureSwizzle::Alpha,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(usize)]
+pub enum TextureCompressionType {
+    Lossless = 0,
+    Lossy = 1,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -517,6 +603,22 @@ pub enum SamplerAddressMode {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(usize)]
+pub enum SamplerBorderColor {
+    TransparentBlack = 0,
+    OpaqueBlack = 1,
+    OpaqueWhite = 2,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(usize)]
+pub enum SamplerReductionMode {
+    WeightedAverage = 0,
+    Minimum = 1,
+    Maximum = 2,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(usize)]
 pub enum CullMode {
     None = 0,
     Front = 1,
@@ -547,6 +649,28 @@ pub enum DataType {
     Float2 = 4,
     Float3 = 5,
     Float4 = 6,
+    Float2x2 = 7,
+    Float2x3 = 8,
+    Float2x4 = 9,
+    Float3x2 = 10,
+    Float3x3 = 11,
+    Float3x4 = 12,
+    Float4x2 = 13,
+    Float4x3 = 14,
+    Float4x4 = 15,
+    Half = 16,
+    Half2 = 17,
+    Half3 = 18,
+    Half4 = 19,
+    Half2x2 = 20,
+    Half2x3 = 21,
+    Half2x4 = 22,
+    Half3x2 = 23,
+    Half3x3 = 24,
+    Half3x4 = 25,
+    Half4x2 = 26,
+    Half4x3 = 27,
+    Half4x4 = 28,
     Int = 29,
     Int2 = 30,
     Int3 = 31,
@@ -555,10 +679,66 @@ pub enum DataType {
     UInt2 = 34,
     UInt3 = 35,
     UInt4 = 36,
+    Short = 37,
+    Short2 = 38,
+    Short3 = 39,
+    Short4 = 40,
+    UShort = 41,
+    UShort2 = 42,
+    UShort3 = 43,
+    UShort4 = 44,
+    Char = 45,
+    Char2 = 46,
+    Char3 = 47,
+    Char4 = 48,
+    UChar = 49,
+    UChar2 = 50,
+    UChar3 = 51,
+    UChar4 = 52,
     Bool = 53,
+    Bool2 = 54,
+    Bool3 = 55,
+    Bool4 = 56,
     Texture = 58,
     Sampler = 59,
     Pointer = 60,
+    R8Unorm = 62,
+    R8Snorm = 63,
+    R16Unorm = 64,
+    R16Snorm = 65,
+    RG8Unorm = 66,
+    RG8Snorm = 67,
+    RG16Unorm = 68,
+    RG16Snorm = 69,
+    RGBA8Unorm = 70,
+    RGBA8Unorm_sRGB = 71,
+    RGBA8Snorm = 72,
+    RGBA16Unorm = 73,
+    RGBA16Snorm = 74,
+    RGB10A2Unorm = 75,
+    RG11B10Float = 76,
+    RGB9E5Float = 77,
+    RenderPipeline = 78,
+    ComputePipeline = 79,
+    IndirectCommandBuffer = 80,
+    Long = 81,
+    Long2 = 82,
+    Long3 = 83,
+    Long4 = 84,
+    ULong = 85,
+    ULong2 = 86,
+    ULong3 = 87,
+    ULong4 = 88,
+    VisibleFunctionTable = 115,
+    IntersectionFunctionTable = 116,
+    PrimitiveAccelerationStructure = 117,
+    InstanceAccelerationStructure = 118,
+    BFloat = 121,
+    BFloat2 = 122,
+    BFloat3 = 123,
+    BFloat4 = 124,
+    DepthStencilState = 139,
+    Tensor = 140,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -567,6 +747,46 @@ pub enum ArgumentAccess {
     ReadOnly = 0,
     ReadWrite = 1,
     WriteOnly = 2,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(usize)]
+pub enum BindingAccess {
+    ReadOnly = 0,
+    ReadWrite = 1,
+    WriteOnly = 2,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(usize)]
+pub enum BindingType {
+    Buffer = 0,
+    ThreadgroupMemory = 1,
+    Texture = 2,
+    Sampler = 3,
+    ImageblockData = 16,
+    Imageblock = 17,
+    VisibleFunctionTable = 24,
+    PrimitiveAccelerationStructure = 25,
+    InstanceAccelerationStructure = 26,
+    IntersectionFunctionTable = 27,
+    ObjectPayload = 34,
+    Tensor = 37,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(usize)]
+pub enum ArgumentType {
+    Buffer = 0,
+    ThreadgroupMemory = 1,
+    Texture = 2,
+    Sampler = 3,
+    ImageblockData = 16,
+    Imageblock = 17,
+    VisibleFunctionTable = 24,
+    PrimitiveAccelerationStructure = 25,
+    InstanceAccelerationStructure = 26,
+    IntersectionFunctionTable = 27,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -661,6 +881,58 @@ impl CommandBufferStatus {
             _ => None,
         }
     }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(usize)]
+pub enum CommandBufferError {
+    None = 0,
+    Internal = 1,
+    Timeout = 2,
+    PageFault = 3,
+    AccessRevoked = 4,
+    NotPermitted = 7,
+    OutOfMemory = 8,
+    InvalidResource = 9,
+    Memoryless = 10,
+    DeviceRemoved = 11,
+    StackOverflow = 12,
+}
+
+impl CommandBufferError {
+    pub fn from_raw(raw: usize) -> Option<Self> {
+        match raw {
+            0 => Some(Self::None),
+            1 => Some(Self::Internal),
+            2 => Some(Self::Timeout),
+            3 => Some(Self::PageFault),
+            4 => Some(Self::AccessRevoked),
+            7 => Some(Self::NotPermitted),
+            8 => Some(Self::OutOfMemory),
+            9 => Some(Self::InvalidResource),
+            10 => Some(Self::Memoryless),
+            11 => Some(Self::DeviceRemoved),
+            12 => Some(Self::StackOverflow),
+            _ => None,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(usize)]
+pub enum CommandBufferErrorOption {
+    None = 0,
+    EncoderExecutionStatus = 1 << 0,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(isize)]
+pub enum CommandEncoderErrorState {
+    Unknown = 0,
+    Completed = 1,
+    Affected = 2,
+    Pending = 3,
+    Faulted = 4,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

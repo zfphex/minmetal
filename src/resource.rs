@@ -86,6 +86,125 @@ impl Buffer {
             Err(MetalError::new("gpuAddress not supported on this Buffer"))
         }
     }
+
+    pub fn device(&self) -> Device {
+        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        Device { raw: ptr }
+    }
+
+    pub fn cpu_cache_mode(&self) -> CpuCacheMode {
+        let val = msg_usize(self.raw, sel(b"cpuCacheMode\0"));
+        match val {
+            1 => CpuCacheMode::WriteCombined,
+            _ => CpuCacheMode::DefaultCache,
+        }
+    }
+
+    pub fn storage_mode(&self) -> StorageMode {
+        let val = msg_usize(self.raw, sel(b"storageMode\0"));
+        match val {
+            0 => StorageMode::Shared,
+            1 => StorageMode::Managed,
+            2 => StorageMode::Private,
+            3 => StorageMode::Memoryless,
+            _ => StorageMode::Shared,
+        }
+    }
+
+    pub fn hazard_tracking_mode(&self) -> HazardTrackingMode {
+        let selector = sel(b"hazardTrackingMode\0");
+        if responds_to_selector(self.raw, selector) {
+            let val = msg_usize(self.raw, selector);
+            match val {
+                1 => HazardTrackingMode::Untracked,
+                2 => HazardTrackingMode::Tracked,
+                _ => HazardTrackingMode::Default,
+            }
+        } else {
+            HazardTrackingMode::Default
+        }
+    }
+
+    pub fn resource_options(&self) -> ResourceOptions {
+        let selector = sel(b"resourceOptions\0");
+        if responds_to_selector(self.raw, selector) {
+            ResourceOptions::from_raw(msg_usize(self.raw, selector))
+        } else {
+            ResourceOptions::from_raw(0)
+        }
+    }
+
+    pub fn set_purgeable_state(&self, state: PurgeableState) -> PurgeableState {
+        let val = msg_usize_usize(self.raw, sel(b"setPurgeableState:\0"), state as usize);
+        match val {
+            1 => PurgeableState::KeepCurrent,
+            2 => PurgeableState::NonVolatile,
+            3 => PurgeableState::Volatile,
+            4 => PurgeableState::Empty,
+            _ => PurgeableState::KeepCurrent,
+        }
+    }
+
+    pub fn heap(&self) -> Option<Heap> {
+        let selector = sel(b"heap\0");
+        if responds_to_selector(self.raw, selector) {
+            let ptr = msg_id(self.raw, selector);
+            if ptr.is_null() {
+                None
+            } else {
+                Some(Heap { raw: retain(ptr) })
+            }
+        } else {
+            None
+        }
+    }
+
+    pub fn heap_offset(&self) -> usize {
+        let selector = sel(b"heapOffset\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_usize(self.raw, selector)
+        } else {
+            0
+        }
+    }
+
+    pub fn allocated_size(&self) -> usize {
+        let selector = sel(b"allocatedSize\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_usize(self.raw, selector)
+        } else {
+            self.len()
+        }
+    }
+
+    pub fn make_aliasable(&self) {
+        let selector = sel(b"makeAliasable\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void(self.raw, selector);
+        }
+    }
+
+    pub fn is_aliasable(&self) -> bool {
+        let selector = sel(b"isAliasable\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_bool(self.raw, selector) != 0
+        } else {
+            false
+        }
+    }
+
+    pub fn set_owner_with_identity(&self, task_id_token: u32) -> i32 {
+        let selector = sel(b"setOwnerWithIdentity:\0");
+        if responds_to_selector(self.raw, selector) {
+            unsafe {
+                let f: unsafe extern "C" fn(id, SEL, u32) -> i32 =
+                    transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector, task_id_token)
+            }
+        } else {
+            0
+        }
+    }
 }
 
 impl Drop for Buffer {
@@ -105,6 +224,29 @@ impl TextureDescriptor {
         Self {
             raw: msg_id(allocated, sel(b"init\0")),
         }
+    }
+
+    pub fn texture_buffer(
+        pixel_format: PixelFormat,
+        width: usize,
+        resource_options: ResourceOptions,
+        usage: TextureUsage,
+    ) -> Self {
+        let selector =
+            sel(b"textureBufferDescriptorWithPixelFormat:width:resourceOptions:usage:\0");
+        let raw = unsafe {
+            let f: unsafe extern "C" fn(id, SEL, usize, usize, usize, usize) -> id =
+                transmute(objc_msgSend as *const c_void);
+            retain(f(
+                class(b"MTLTextureDescriptor\0"),
+                selector,
+                pixel_format.as_raw(),
+                width,
+                resource_options.as_raw(),
+                usage.as_raw(),
+            ))
+        };
+        Self { raw }
     }
 
     pub fn texture_2d(
@@ -197,6 +339,180 @@ impl TextureDescriptor {
     pub fn set_storage_mode(&self, storage_mode: StorageMode) {
         msg_void_usize(self.raw, sel(b"setStorageMode:\0"), storage_mode as usize);
     }
+
+    pub fn texture_type(&self) -> TextureType {
+        let val = msg_usize(self.raw, sel(b"textureType\0"));
+        match val {
+            0 => TextureType::D1,
+            1 => TextureType::D1Array,
+            2 => TextureType::D2,
+            3 => TextureType::D2Array,
+            4 => TextureType::D2Multisample,
+            5 => TextureType::Cube,
+            6 => TextureType::CubeArray,
+            7 => TextureType::D3,
+            8 => TextureType::D2MultisampleArray,
+            9 => TextureType::TextureBuffer,
+            _ => TextureType::D2,
+        }
+    }
+
+    pub fn pixel_format(&self) -> PixelFormat {
+        PixelFormat::from_raw(msg_usize(self.raw, sel(b"pixelFormat\0")))
+    }
+
+    pub fn width(&self) -> usize {
+        msg_usize(self.raw, sel(b"width\0"))
+    }
+
+    pub fn height(&self) -> usize {
+        msg_usize(self.raw, sel(b"height\0"))
+    }
+
+    pub fn depth(&self) -> usize {
+        msg_usize(self.raw, sel(b"depth\0"))
+    }
+
+    pub fn mipmap_level_count(&self) -> usize {
+        msg_usize(self.raw, sel(b"mipmapLevelCount\0"))
+    }
+
+    pub fn array_length(&self) -> usize {
+        msg_usize(self.raw, sel(b"arrayLength\0"))
+    }
+
+    pub fn sample_count(&self) -> usize {
+        msg_usize(self.raw, sel(b"sampleCount\0"))
+    }
+
+    pub fn usage(&self) -> TextureUsage {
+        TextureUsage::from_raw(msg_usize(self.raw, sel(b"usage\0")))
+    }
+
+    pub fn storage_mode(&self) -> StorageMode {
+        let val = msg_usize(self.raw, sel(b"storageMode\0"));
+        match val {
+            0 => StorageMode::Shared,
+            1 => StorageMode::Managed,
+            2 => StorageMode::Private,
+            3 => StorageMode::Memoryless,
+            _ => StorageMode::Shared,
+        }
+    }
+
+    pub fn cpu_cache_mode(&self) -> CpuCacheMode {
+        let val = msg_usize(self.raw, sel(b"cpuCacheMode\0"));
+        match val {
+            1 => CpuCacheMode::WriteCombined,
+            _ => CpuCacheMode::DefaultCache,
+        }
+    }
+
+    pub fn set_cpu_cache_mode(&self, cpu_cache_mode: CpuCacheMode) {
+        msg_void_usize(
+            self.raw,
+            sel(b"setCpuCacheMode:\0"),
+            cpu_cache_mode as usize,
+        );
+    }
+
+    pub fn hazard_tracking_mode(&self) -> HazardTrackingMode {
+        let selector = sel(b"hazardTrackingMode\0");
+        if responds_to_selector(self.raw, selector) {
+            let val = msg_usize(self.raw, selector);
+            match val {
+                1 => HazardTrackingMode::Untracked,
+                2 => HazardTrackingMode::Tracked,
+                _ => HazardTrackingMode::Default,
+            }
+        } else {
+            HazardTrackingMode::Default
+        }
+    }
+
+    pub fn set_hazard_tracking_mode(&self, hazard_tracking_mode: HazardTrackingMode) {
+        let selector = sel(b"setHazardTrackingMode:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_usize(self.raw, selector, hazard_tracking_mode as usize);
+        }
+    }
+
+    pub fn resource_options(&self) -> ResourceOptions {
+        let selector = sel(b"resourceOptions\0");
+        if responds_to_selector(self.raw, selector) {
+            ResourceOptions::from_raw(msg_usize(self.raw, selector))
+        } else {
+            ResourceOptions::from_raw(0)
+        }
+    }
+
+    pub fn set_resource_options(&self, resource_options: ResourceOptions) {
+        msg_void_usize(
+            self.raw,
+            sel(b"setResourceOptions:\0"),
+            resource_options.as_raw(),
+        );
+    }
+
+    pub fn allow_gpu_optimized_contents(&self) -> bool {
+        let selector = sel(b"allowGPUOptimizedContents\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_bool(self.raw, selector) != 0
+        } else {
+            true
+        }
+    }
+
+    pub fn set_allow_gpu_optimized_contents(&self, allow: bool) {
+        let selector = sel(b"setAllowGPUOptimizedContents:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_bool(self.raw, selector, if allow { YES } else { NO });
+        }
+    }
+
+    pub fn compression_type(&self) -> TextureCompressionType {
+        let selector = sel(b"compressionType\0");
+        if responds_to_selector(self.raw, selector) {
+            let val = msg_usize(self.raw, selector);
+            match val {
+                1 => TextureCompressionType::Lossy,
+                _ => TextureCompressionType::Lossless,
+            }
+        } else {
+            TextureCompressionType::Lossless
+        }
+    }
+
+    pub fn set_compression_type(&self, compression_type: TextureCompressionType) {
+        let selector = sel(b"setCompressionType:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_usize(self.raw, selector, compression_type as usize);
+        }
+    }
+
+    pub fn swizzle(&self) -> TextureSwizzleChannels {
+        let selector = sel(b"swizzle\0");
+        if responds_to_selector(self.raw, selector) {
+            unsafe {
+                let f: unsafe extern "C" fn(id, SEL) -> TextureSwizzleChannels =
+                    transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector)
+            }
+        } else {
+            TextureSwizzleChannels::default()
+        }
+    }
+
+    pub fn set_swizzle(&self, swizzle: TextureSwizzleChannels) {
+        let selector = sel(b"setSwizzle:\0");
+        if responds_to_selector(self.raw, selector) {
+            unsafe {
+                let f: unsafe extern "C" fn(id, SEL, TextureSwizzleChannels) =
+                    transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector, swizzle);
+            }
+        }
+    }
 }
 
 impl Default for TextureDescriptor {
@@ -272,6 +588,308 @@ impl Texture {
         }
     }
 
+    pub fn new_texture_view_with_type_and_ranges(
+        &self,
+        pixel_format: PixelFormat,
+        texture_type: TextureType,
+        levels: Range,
+        slices: Range,
+    ) -> Result<Texture, MetalError> {
+        let selector = sel(b"newTextureViewWithPixelFormat:textureType:levels:slices:\0");
+        let raw = unsafe {
+            let f: unsafe extern "C" fn(id, SEL, usize, usize, Range, Range) -> id =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                selector,
+                pixel_format.as_raw(),
+                texture_type as usize,
+                levels,
+                slices,
+            )
+        };
+        if raw.is_null() {
+            Err(MetalError::new("failed to create texture view with ranges"))
+        } else {
+            Ok(Texture { raw: retain(raw) })
+        }
+    }
+
+    pub fn new_texture_view_with_swizzle(
+        &self,
+        pixel_format: PixelFormat,
+        texture_type: TextureType,
+        levels: Range,
+        slices: Range,
+        swizzle: TextureSwizzleChannels,
+    ) -> Result<Texture, MetalError> {
+        let selector = sel(b"newTextureViewWithPixelFormat:textureType:levels:slices:swizzle:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "swizzled texture views are not supported on this macOS version",
+            ));
+        }
+        let raw = unsafe {
+            let f: unsafe extern "C" fn(
+                id,
+                SEL,
+                usize,
+                usize,
+                Range,
+                Range,
+                TextureSwizzleChannels,
+            ) -> id = transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                selector,
+                pixel_format.as_raw(),
+                texture_type as usize,
+                levels,
+                slices,
+                swizzle,
+            )
+        };
+        if raw.is_null() {
+            Err(MetalError::new("failed to create swizzled texture view"))
+        } else {
+            Ok(Texture { raw: retain(raw) })
+        }
+    }
+
+    pub fn new_texture_view_with_descriptor(
+        &self,
+        descriptor: &TextureViewDescriptor,
+    ) -> Result<Texture, MetalError> {
+        let selector = sel(b"newTextureViewWithDescriptor:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "newTextureViewWithDescriptor: not supported on this macOS version",
+            ));
+        }
+        let raw = msg_id_id(self.raw, selector, descriptor.raw);
+        if raw.is_null() {
+            Err(MetalError::new(
+                "failed to create texture view with descriptor",
+            ))
+        } else {
+            Ok(Texture { raw: retain(raw) })
+        }
+    }
+
+    pub fn new_shared_texture_handle(&self) -> Option<SharedTextureHandle> {
+        let selector = sel(b"newSharedTextureHandle\0");
+        if responds_to_selector(self.raw, selector) {
+            let ptr = msg_id(self.raw, selector);
+            if ptr.is_null() {
+                None
+            } else {
+                Some(SharedTextureHandle { raw: retain(ptr) })
+            }
+        } else {
+            None
+        }
+    }
+
+    pub fn parent_texture(&self) -> Option<Texture> {
+        let selector = sel(b"parentTexture\0");
+        if responds_to_selector(self.raw, selector) {
+            let ptr = msg_id(self.raw, selector);
+            if ptr.is_null() {
+                None
+            } else {
+                Some(Texture { raw: retain(ptr) })
+            }
+        } else {
+            None
+        }
+    }
+
+    pub fn parent_relative_level(&self) -> usize {
+        let selector = sel(b"parentRelativeLevel\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_usize(self.raw, selector)
+        } else {
+            0
+        }
+    }
+
+    pub fn parent_relative_slice(&self) -> usize {
+        let selector = sel(b"parentRelativeSlice\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_usize(self.raw, selector)
+        } else {
+            0
+        }
+    }
+
+    pub fn buffer(&self) -> Option<Buffer> {
+        let selector = sel(b"buffer\0");
+        if responds_to_selector(self.raw, selector) {
+            let ptr = msg_id(self.raw, selector);
+            if ptr.is_null() {
+                None
+            } else {
+                Some(Buffer { raw: retain(ptr) })
+            }
+        } else {
+            None
+        }
+    }
+
+    pub fn buffer_offset(&self) -> usize {
+        let selector = sel(b"bufferOffset\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_usize(self.raw, selector)
+        } else {
+            0
+        }
+    }
+
+    pub fn buffer_bytes_per_row(&self) -> usize {
+        let selector = sel(b"bufferBytesPerRow\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_usize(self.raw, selector)
+        } else {
+            0
+        }
+    }
+
+    pub fn iosurface(&self) -> Option<id> {
+        let selector = sel(b"iosurface\0");
+        if responds_to_selector(self.raw, selector) {
+            let ptr = msg_id(self.raw, selector);
+            if ptr.is_null() { None } else { Some(ptr) }
+        } else {
+            None
+        }
+    }
+
+    pub fn iosurface_plane(&self) -> usize {
+        let selector = sel(b"iosurfacePlane\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_usize(self.raw, selector)
+        } else {
+            0
+        }
+    }
+
+    pub fn texture_type(&self) -> TextureType {
+        let val = msg_usize(self.raw, sel(b"textureType\0"));
+        match val {
+            0 => TextureType::D1,
+            1 => TextureType::D1Array,
+            2 => TextureType::D2,
+            3 => TextureType::D2Array,
+            4 => TextureType::D2Multisample,
+            5 => TextureType::Cube,
+            6 => TextureType::CubeArray,
+            7 => TextureType::D3,
+            8 => TextureType::D2MultisampleArray,
+            9 => TextureType::TextureBuffer,
+            _ => TextureType::D2,
+        }
+    }
+
+    pub fn depth(&self) -> usize {
+        msg_usize(self.raw, sel(b"depth\0"))
+    }
+
+    pub fn mipmap_level_count(&self) -> usize {
+        msg_usize(self.raw, sel(b"mipmapLevelCount\0"))
+    }
+
+    pub fn sample_count(&self) -> usize {
+        msg_usize(self.raw, sel(b"sampleCount\0"))
+    }
+
+    pub fn array_length(&self) -> usize {
+        msg_usize(self.raw, sel(b"arrayLength\0"))
+    }
+
+    pub fn usage(&self) -> TextureUsage {
+        TextureUsage::from_raw(msg_usize(self.raw, sel(b"usage\0")))
+    }
+
+    pub fn is_shareable(&self) -> bool {
+        let selector = sel(b"isShareable\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_bool(self.raw, selector) != 0
+        } else {
+            false
+        }
+    }
+
+    pub fn is_framebuffer_only(&self) -> bool {
+        let selector = sel(b"isFramebufferOnly\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_bool(self.raw, selector) != 0
+        } else {
+            false
+        }
+    }
+
+    pub fn first_mipmap_in_tail(&self) -> usize {
+        let selector = sel(b"firstMipmapInTail\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_usize(self.raw, selector)
+        } else {
+            0
+        }
+    }
+
+    pub fn tail_size_in_bytes(&self) -> usize {
+        let selector = sel(b"tailSizeInBytes\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_usize(self.raw, selector)
+        } else {
+            0
+        }
+    }
+
+    pub fn is_sparse(&self) -> bool {
+        let selector = sel(b"isSparse\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_bool(self.raw, selector) != 0
+        } else {
+            false
+        }
+    }
+
+    pub fn allow_gpu_optimized_contents(&self) -> bool {
+        let selector = sel(b"allowGPUOptimizedContents\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_bool(self.raw, selector) != 0
+        } else {
+            true
+        }
+    }
+
+    pub fn compression_type(&self) -> TextureCompressionType {
+        let selector = sel(b"compressionType\0");
+        if responds_to_selector(self.raw, selector) {
+            let val = msg_usize(self.raw, selector);
+            match val {
+                1 => TextureCompressionType::Lossy,
+                _ => TextureCompressionType::Lossless,
+            }
+        } else {
+            TextureCompressionType::Lossless
+        }
+    }
+
+    pub fn swizzle(&self) -> TextureSwizzleChannels {
+        let selector = sel(b"swizzle\0");
+        if responds_to_selector(self.raw, selector) {
+            unsafe {
+                let f: unsafe extern "C" fn(id, SEL) -> TextureSwizzleChannels =
+                    transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector)
+            }
+        } else {
+            TextureSwizzleChannels::default()
+        }
+    }
+
     pub fn width(&self) -> usize {
         msg_usize(self.raw, sel(b"width\0"))
     }
@@ -301,6 +919,125 @@ impl Texture {
             Err(MetalError::new(
                 "gpuResourceID not supported on this Texture",
             ))
+        }
+    }
+
+    pub fn device(&self) -> Device {
+        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        Device { raw: ptr }
+    }
+
+    pub fn cpu_cache_mode(&self) -> CpuCacheMode {
+        let val = msg_usize(self.raw, sel(b"cpuCacheMode\0"));
+        match val {
+            1 => CpuCacheMode::WriteCombined,
+            _ => CpuCacheMode::DefaultCache,
+        }
+    }
+
+    pub fn storage_mode(&self) -> StorageMode {
+        let val = msg_usize(self.raw, sel(b"storageMode\0"));
+        match val {
+            0 => StorageMode::Shared,
+            1 => StorageMode::Managed,
+            2 => StorageMode::Private,
+            3 => StorageMode::Memoryless,
+            _ => StorageMode::Shared,
+        }
+    }
+
+    pub fn hazard_tracking_mode(&self) -> HazardTrackingMode {
+        let selector = sel(b"hazardTrackingMode\0");
+        if responds_to_selector(self.raw, selector) {
+            let val = msg_usize(self.raw, selector);
+            match val {
+                1 => HazardTrackingMode::Untracked,
+                2 => HazardTrackingMode::Tracked,
+                _ => HazardTrackingMode::Default,
+            }
+        } else {
+            HazardTrackingMode::Default
+        }
+    }
+
+    pub fn resource_options(&self) -> ResourceOptions {
+        let selector = sel(b"resourceOptions\0");
+        if responds_to_selector(self.raw, selector) {
+            ResourceOptions::from_raw(msg_usize(self.raw, selector))
+        } else {
+            ResourceOptions::from_raw(0)
+        }
+    }
+
+    pub fn set_purgeable_state(&self, state: PurgeableState) -> PurgeableState {
+        let val = msg_usize_usize(self.raw, sel(b"setPurgeableState:\0"), state as usize);
+        match val {
+            1 => PurgeableState::KeepCurrent,
+            2 => PurgeableState::NonVolatile,
+            3 => PurgeableState::Volatile,
+            4 => PurgeableState::Empty,
+            _ => PurgeableState::KeepCurrent,
+        }
+    }
+
+    pub fn heap(&self) -> Option<Heap> {
+        let selector = sel(b"heap\0");
+        if responds_to_selector(self.raw, selector) {
+            let ptr = msg_id(self.raw, selector);
+            if ptr.is_null() {
+                None
+            } else {
+                Some(Heap { raw: retain(ptr) })
+            }
+        } else {
+            None
+        }
+    }
+
+    pub fn heap_offset(&self) -> usize {
+        let selector = sel(b"heapOffset\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_usize(self.raw, selector)
+        } else {
+            0
+        }
+    }
+
+    pub fn allocated_size(&self) -> usize {
+        let selector = sel(b"allocatedSize\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_usize(self.raw, selector)
+        } else {
+            0
+        }
+    }
+
+    pub fn make_aliasable(&self) {
+        let selector = sel(b"makeAliasable\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void(self.raw, selector);
+        }
+    }
+
+    pub fn is_aliasable(&self) -> bool {
+        let selector = sel(b"isAliasable\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_bool(self.raw, selector) != 0
+        } else {
+            false
+        }
+    }
+
+    pub fn set_owner_with_identity(&self, task_id_token: u32) -> i32 {
+        let selector = sel(b"setOwnerWithIdentity:\0");
+        if responds_to_selector(self.raw, selector) {
+            unsafe {
+                let f: unsafe extern "C" fn(id, SEL, u32) -> i32 =
+                    transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector, task_id_token)
+            }
+        } else {
+            0
         }
     }
 }
@@ -609,6 +1346,82 @@ impl Heap {
         let ns_label = NSString::new(label);
         msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
     }
+
+    pub fn device(&self) -> Device {
+        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        Device { raw: ptr }
+    }
+
+    pub fn storage_mode(&self) -> StorageMode {
+        let val = msg_usize(self.raw, sel(b"storageMode\0"));
+        match val {
+            0 => StorageMode::Shared,
+            1 => StorageMode::Managed,
+            2 => StorageMode::Private,
+            3 => StorageMode::Memoryless,
+            _ => StorageMode::Shared,
+        }
+    }
+
+    pub fn cpu_cache_mode(&self) -> CpuCacheMode {
+        let val = msg_usize(self.raw, sel(b"cpuCacheMode\0"));
+        match val {
+            1 => CpuCacheMode::WriteCombined,
+            _ => CpuCacheMode::DefaultCache,
+        }
+    }
+
+    pub fn hazard_tracking_mode(&self) -> HazardTrackingMode {
+        let selector = sel(b"hazardTrackingMode\0");
+        if responds_to_selector(self.raw, selector) {
+            let val = msg_usize(self.raw, selector);
+            match val {
+                1 => HazardTrackingMode::Untracked,
+                2 => HazardTrackingMode::Tracked,
+                _ => HazardTrackingMode::Default,
+            }
+        } else {
+            HazardTrackingMode::Default
+        }
+    }
+
+    pub fn resource_options(&self) -> ResourceOptions {
+        let selector = sel(b"resourceOptions\0");
+        if responds_to_selector(self.raw, selector) {
+            ResourceOptions::from_raw(msg_usize(self.raw, selector))
+        } else {
+            ResourceOptions::from_raw(0)
+        }
+    }
+
+    pub fn size(&self) -> usize {
+        msg_usize(self.raw, sel(b"size\0"))
+    }
+
+    pub fn set_purgeable_state(&self, state: PurgeableState) -> PurgeableState {
+        let val = msg_usize_usize(self.raw, sel(b"setPurgeableState:\0"), state as usize);
+        match val {
+            1 => PurgeableState::KeepCurrent,
+            2 => PurgeableState::NonVolatile,
+            3 => PurgeableState::Volatile,
+            4 => PurgeableState::Empty,
+            _ => PurgeableState::KeepCurrent,
+        }
+    }
+
+    pub fn heap_type(&self) -> HeapType {
+        let selector = sel(b"type\0");
+        if responds_to_selector(self.raw, selector) {
+            let val = msg_usize(self.raw, selector);
+            match val {
+                1 => HeapType::Placement,
+                2 => HeapType::Sparse,
+                _ => HeapType::Automatic,
+            }
+        } else {
+            HeapType::Automatic
+        }
+    }
 }
 
 impl Drop for Heap {
@@ -902,5 +1715,120 @@ impl SharedEvent {
 impl Drop for SharedEvent {
     fn drop(&mut self) {
         release(self.raw);
+    }
+}
+
+#[derive(Debug)]
+pub struct SharedTextureHandle {
+    pub raw: id,
+}
+
+impl Drop for SharedTextureHandle {
+    fn drop(&mut self) {
+        release(self.raw);
+    }
+}
+
+impl SharedTextureHandle {
+    pub fn device(&self) -> Device {
+        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        Device { raw: ptr }
+    }
+
+    pub fn label(&self) -> Option<String> {
+        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    }
+}
+
+#[derive(Debug)]
+pub struct TextureViewDescriptor {
+    pub raw: id,
+}
+
+impl Drop for TextureViewDescriptor {
+    fn drop(&mut self) {
+        release(self.raw);
+    }
+}
+
+impl TextureViewDescriptor {
+    pub fn new() -> Self {
+        let raw = retain(msg_id(class(b"MTLTextureViewDescriptor\0"), sel(b"new\0")));
+        Self { raw }
+    }
+
+    pub fn pixel_format(&self) -> PixelFormat {
+        PixelFormat::from_raw(msg_usize(self.raw, sel(b"pixelFormat\0")))
+    }
+
+    pub fn set_pixel_format(&self, format: PixelFormat) {
+        msg_void_usize(self.raw, sel(b"setPixelFormat:\0"), format.as_raw());
+    }
+
+    pub fn texture_type(&self) -> TextureType {
+        let val = msg_usize(self.raw, sel(b"textureType\0"));
+        match val {
+            0 => TextureType::D1,
+            1 => TextureType::D1Array,
+            2 => TextureType::D2,
+            3 => TextureType::D2Array,
+            4 => TextureType::D2Multisample,
+            5 => TextureType::Cube,
+            6 => TextureType::CubeArray,
+            7 => TextureType::D3,
+            8 => TextureType::D2MultisampleArray,
+            9 => TextureType::TextureBuffer,
+            _ => TextureType::D2,
+        }
+    }
+
+    pub fn set_texture_type(&self, texture_type: TextureType) {
+        msg_void_usize(self.raw, sel(b"setTextureType:\0"), texture_type as usize);
+    }
+
+    pub fn level_range(&self) -> Range {
+        msg_range(self.raw, sel(b"levelRange\0"))
+    }
+
+    pub fn set_level_range(&self, range: Range) {
+        msg_void_range(self.raw, sel(b"setLevelRange:\0"), range);
+    }
+
+    pub fn slice_range(&self) -> Range {
+        msg_range(self.raw, sel(b"sliceRange\0"))
+    }
+
+    pub fn set_slice_range(&self, range: Range) {
+        msg_void_range(self.raw, sel(b"setSliceRange:\0"), range);
+    }
+
+    pub fn swizzle(&self) -> TextureSwizzleChannels {
+        let selector = sel(b"swizzle\0");
+        if responds_to_selector(self.raw, selector) {
+            unsafe {
+                let f: unsafe extern "C" fn(id, SEL) -> TextureSwizzleChannels =
+                    transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector)
+            }
+        } else {
+            TextureSwizzleChannels::default()
+        }
+    }
+
+    pub fn set_swizzle(&self, swizzle: TextureSwizzleChannels) {
+        let selector = sel(b"setSwizzle:\0");
+        if responds_to_selector(self.raw, selector) {
+            unsafe {
+                let f: unsafe extern "C" fn(id, SEL, TextureSwizzleChannels) =
+                    transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector, swizzle);
+            }
+        }
+    }
+}
+
+impl Default for TextureViewDescriptor {
+    fn default() -> Self {
+        Self::new()
     }
 }

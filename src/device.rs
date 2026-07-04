@@ -35,6 +35,41 @@ impl Device {
         }
     }
 
+    pub fn new_command_queue_with_max_command_buffer_count(
+        &self,
+        max_command_buffer_count: usize,
+    ) -> Result<CommandQueue, MetalError> {
+        let selector = sel(b"newCommandQueueWithMaxCommandBufferCount:\0");
+        let raw = msg_id_usize(self.raw, selector, max_command_buffer_count);
+        if raw.is_null() {
+            Err(MetalError::new(
+                "failed to create Metal command queue with max command buffer count",
+            ))
+        } else {
+            Ok(CommandQueue { raw })
+        }
+    }
+
+    pub fn new_command_queue_with_descriptor(
+        &self,
+        descriptor: &CommandQueueDescriptor,
+    ) -> Result<CommandQueue, MetalError> {
+        let selector = sel(b"newCommandQueueWithDescriptor:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "newCommandQueueWithDescriptor: is not supported on this macOS version",
+            ));
+        }
+        let raw = msg_id_id(self.raw, selector, descriptor.raw);
+        if raw.is_null() {
+            Err(MetalError::new(
+                "failed to create Metal command queue with descriptor",
+            ))
+        } else {
+            Ok(CommandQueue { raw })
+        }
+    }
+
     pub fn new_library_with_source(&self, source: &str) -> Result<Library, MetalError> {
         unsafe {
             let source = NSString::new(source);
@@ -472,6 +507,92 @@ impl CommandQueue {
             Ok(CommandBuffer { raw })
         }
     }
+
+    pub fn command_buffer_with_unretained_references(&self) -> Result<CommandBuffer, MetalError> {
+        let raw = retain(msg_id(
+            self.raw,
+            sel(b"commandBufferWithUnretainedReferences\0"),
+        ));
+        if raw.is_null() {
+            Err(MetalError::new(
+                "failed to create Metal command buffer with unretained references",
+            ))
+        } else {
+            Ok(CommandBuffer { raw })
+        }
+    }
+
+    pub fn command_buffer_with_descriptor(
+        &self,
+        descriptor: &CommandBufferDescriptor,
+    ) -> Result<CommandBuffer, MetalError> {
+        let selector = sel(b"commandBufferWithDescriptor:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "commandBufferWithDescriptor: is not supported on this macOS version",
+            ));
+        }
+        let raw = retain(msg_id_id(self.raw, selector, descriptor.raw));
+        if raw.is_null() {
+            Err(MetalError::new(
+                "failed to create Metal command buffer with descriptor",
+            ))
+        } else {
+            Ok(CommandBuffer { raw })
+        }
+    }
+
+    pub fn device(&self) -> Device {
+        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        Device { raw: ptr }
+    }
+
+    pub fn label(&self) -> Option<String> {
+        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    }
+
+    pub fn set_label(&self, label: &str) {
+        let ns_label = NSString::new(label);
+        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+    }
+
+    pub fn add_residency_set(&self, residency_set: &ResidencySet) {
+        let selector = sel(b"addResidencySet:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_id(self.raw, selector, residency_set.raw);
+        }
+    }
+
+    pub fn add_residency_sets(&self, residency_sets: &[&ResidencySet]) {
+        let selector = sel(b"addResidencySets:count:\0");
+        if responds_to_selector(self.raw, selector) {
+            let raw_sets: Vec<id> = residency_sets.iter().map(|s| s.raw).collect();
+            unsafe {
+                let f: unsafe extern "C" fn(id, SEL, *const id, usize) =
+                    transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector, raw_sets.as_ptr(), raw_sets.len());
+            }
+        }
+    }
+
+    pub fn remove_residency_set(&self, residency_set: &ResidencySet) {
+        let selector = sel(b"removeResidencySet:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_id(self.raw, selector, residency_set.raw);
+        }
+    }
+
+    pub fn remove_residency_sets(&self, residency_sets: &[&ResidencySet]) {
+        let selector = sel(b"removeResidencySets:count:\0");
+        if responds_to_selector(self.raw, selector) {
+            let raw_sets: Vec<id> = residency_sets.iter().map(|s| s.raw).collect();
+            unsafe {
+                let f: unsafe extern "C" fn(id, SEL, *const id, usize) =
+                    transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector, raw_sets.as_ptr(), raw_sets.len());
+            }
+        }
+    }
 }
 
 impl Drop for CommandQueue {
@@ -544,6 +665,46 @@ impl CommandBuffer {
         }
     }
 
+    pub fn compute_command_encoder_with_descriptor(
+        &self,
+        descriptor: &ComputePassDescriptor,
+    ) -> Result<ComputeCommandEncoder, MetalError> {
+        let selector = sel(b"computeCommandEncoderWithDescriptor:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "computeCommandEncoderWithDescriptor: is not supported on this macOS version",
+            ));
+        }
+        let raw = retain(msg_id_id(self.raw, selector, descriptor.raw));
+        if raw.is_null() {
+            Err(MetalError::new(
+                "failed to create Metal compute command encoder with descriptor",
+            ))
+        } else {
+            Ok(ComputeCommandEncoder { raw })
+        }
+    }
+
+    pub fn compute_command_encoder_with_dispatch_type(
+        &self,
+        dispatch_type: DispatchType,
+    ) -> Result<ComputeCommandEncoder, MetalError> {
+        let selector = sel(b"computeCommandEncoderWithDispatchType:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "computeCommandEncoderWithDispatchType: is not supported on this macOS version",
+            ));
+        }
+        let raw = retain(msg_id_usize(self.raw, selector, dispatch_type as usize));
+        if raw.is_null() {
+            Err(MetalError::new(
+                "failed to create Metal compute command encoder with dispatch type",
+            ))
+        } else {
+            Ok(ComputeCommandEncoder { raw })
+        }
+    }
+
     pub fn resource_state_command_encoder(
         &self,
     ) -> Result<ResourceStateCommandEncoder, MetalError> {
@@ -554,6 +715,46 @@ impl CommandBuffer {
             ))
         } else {
             Ok(ResourceStateCommandEncoder { raw })
+        }
+    }
+
+    pub fn resource_state_command_encoder_with_descriptor(
+        &self,
+        descriptor: &ResourceStatePassDescriptor,
+    ) -> Result<ResourceStateCommandEncoder, MetalError> {
+        let selector = sel(b"resourceStateCommandEncoderWithDescriptor:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "resourceStateCommandEncoderWithDescriptor: is not supported on this macOS version",
+            ));
+        }
+        let raw = retain(msg_id_id(self.raw, selector, descriptor.raw));
+        if raw.is_null() {
+            Err(MetalError::new(
+                "failed to create Metal resource state command encoder with descriptor",
+            ))
+        } else {
+            Ok(ResourceStateCommandEncoder { raw })
+        }
+    }
+
+    pub fn blit_command_encoder_with_descriptor(
+        &self,
+        descriptor: &BlitPassDescriptor,
+    ) -> Result<BlitCommandEncoder, MetalError> {
+        let selector = sel(b"blitCommandEncoderWithDescriptor:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "blitCommandEncoderWithDescriptor: is not supported on this macOS version",
+            ));
+        }
+        let raw = retain(msg_id_id(self.raw, selector, descriptor.raw));
+        if raw.is_null() {
+            Err(MetalError::new(
+                "failed to create Metal blit command encoder with descriptor",
+            ))
+        } else {
+            Ok(BlitCommandEncoder { raw })
         }
     }
 
@@ -587,8 +788,38 @@ impl CommandBuffer {
         msg_void_id(self.raw, sel(b"presentDrawable:\0"), drawable.raw);
     }
 
+    pub fn present_drawable_at_time(&self, drawable: &Drawable, time: f64) {
+        let selector = sel(b"presentDrawable:atTime:\0");
+        if responds_to_selector(self.raw, selector) {
+            unsafe {
+                let f: unsafe extern "C" fn(id, SEL, id, f64) =
+                    transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector, drawable.raw, time);
+            }
+        }
+    }
+
+    pub fn present_drawable_after_minimum_duration(&self, drawable: &Drawable, duration: f64) {
+        let selector = sel(b"presentDrawable:afterMinimumDuration:\0");
+        if responds_to_selector(self.raw, selector) {
+            unsafe {
+                let f: unsafe extern "C" fn(id, SEL, id, f64) =
+                    transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector, drawable.raw, duration);
+            }
+        }
+    }
+
     pub fn commit(&self) {
         msg_void(self.raw, sel(b"commit\0"));
+    }
+
+    pub fn enqueue(&self) {
+        msg_void(self.raw, sel(b"enqueue\0"));
+    }
+
+    pub fn wait_until_scheduled(&self) {
+        msg_void(self.raw, sel(b"waitUntilScheduled\0"));
     }
 
     pub fn wait_until_completed(&self) {
@@ -617,6 +848,111 @@ impl CommandBuffer {
                 error,
                 "Metal command buffer failed",
             )))
+        }
+    }
+
+    pub fn device(&self) -> Device {
+        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        Device { raw: ptr }
+    }
+
+    pub fn command_queue(&self) -> CommandQueue {
+        let ptr = retain(msg_id(self.raw, sel(b"commandQueue\0")));
+        CommandQueue { raw: ptr }
+    }
+
+    pub fn label(&self) -> Option<String> {
+        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    }
+
+    pub fn set_label(&self, label: &str) {
+        let ns_label = NSString::new(label);
+        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+    }
+
+    pub fn retained_references(&self) -> bool {
+        msg_bool(self.raw, sel(b"retainedReferences\0")) != 0
+    }
+
+    pub fn error_options(&self) -> CommandBufferErrorOption {
+        let selector = sel(b"errorOptions\0");
+        if responds_to_selector(self.raw, selector) {
+            let val = msg_usize(self.raw, selector);
+            match val {
+                1 => CommandBufferErrorOption::EncoderExecutionStatus,
+                _ => CommandBufferErrorOption::None,
+            }
+        } else {
+            CommandBufferErrorOption::None
+        }
+    }
+
+    pub fn kernel_start_time(&self) -> f64 {
+        let selector = sel(b"kernelStartTime\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_f64(self.raw, selector)
+        } else {
+            0.0
+        }
+    }
+
+    pub fn kernel_end_time(&self) -> f64 {
+        let selector = sel(b"kernelEndTime\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_f64(self.raw, selector)
+        } else {
+            0.0
+        }
+    }
+
+    pub fn gpu_start_time(&self) -> f64 {
+        let selector = sel(b"GPUStartTime\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_f64(self.raw, selector)
+        } else {
+            0.0
+        }
+    }
+
+    pub fn gpu_end_time(&self) -> f64 {
+        let selector = sel(b"GPUEndTime\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_f64(self.raw, selector)
+        } else {
+            0.0
+        }
+    }
+
+    pub fn logs(&self) -> Option<LogContainer> {
+        let selector = sel(b"logs\0");
+        if responds_to_selector(self.raw, selector) {
+            let ptr = msg_id(self.raw, selector);
+            if ptr.is_null() {
+                None
+            } else {
+                Some(LogContainer { raw: retain(ptr) })
+            }
+        } else {
+            None
+        }
+    }
+
+    pub fn use_residency_set(&self, residency_set: &ResidencySet) {
+        let selector = sel(b"useResidencySet:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_id(self.raw, selector, residency_set.raw);
+        }
+    }
+
+    pub fn use_residency_sets(&self, residency_sets: &[&ResidencySet]) {
+        let selector = sel(b"useResidencySets:count:\0");
+        if responds_to_selector(self.raw, selector) {
+            let raw_sets: Vec<id> = residency_sets.iter().map(|s| s.raw).collect();
+            unsafe {
+                let f: unsafe extern "C" fn(id, SEL, *const id, usize) =
+                    transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector, raw_sets.as_ptr(), raw_sets.len());
+            }
         }
     }
 }
@@ -814,6 +1150,211 @@ impl Default for CompileOptions {
 }
 
 impl Drop for CompileOptions {
+    fn drop(&mut self) {
+        release(self.raw);
+    }
+}
+
+#[derive(Debug)]
+pub struct CommandQueueDescriptor {
+    pub raw: id,
+}
+
+impl CommandQueueDescriptor {
+    pub fn new() -> Result<Self, MetalError> {
+        let class_ptr = class(b"MTLCommandQueueDescriptor\0");
+        if class_ptr.is_null() {
+            return Err(MetalError::new(
+                "MTLCommandQueueDescriptor is not available",
+            ));
+        }
+        let allocated = msg_id(class_ptr, sel(b"alloc\0"));
+        let raw = msg_id(allocated, sel(b"init\0"));
+        if raw.is_null() {
+            Err(MetalError::new(
+                "failed to initialize MTLCommandQueueDescriptor",
+            ))
+        } else {
+            Ok(Self { raw })
+        }
+    }
+
+    pub fn max_command_buffer_count(&self) -> usize {
+        msg_usize(self.raw, sel(b"maxCommandBufferCount\0"))
+    }
+
+    pub fn set_max_command_buffer_count(&self, count: usize) {
+        msg_void_usize(self.raw, sel(b"setMaxCommandBufferCount:\0"), count);
+    }
+
+    pub fn log_state(&self) -> Option<LogState> {
+        let selector = sel(b"logState\0");
+        if responds_to_selector(self.raw, selector) {
+            let ptr = msg_id(self.raw, selector);
+            if ptr.is_null() {
+                None
+            } else {
+                Some(LogState { raw: retain(ptr) })
+            }
+        } else {
+            None
+        }
+    }
+
+    pub fn set_log_state(&self, state: &LogState) {
+        let selector = sel(b"setLogState:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_id(self.raw, selector, state.raw);
+        }
+    }
+}
+
+impl Clone for CommandQueueDescriptor {
+    fn clone(&self) -> Self {
+        Self {
+            raw: retain(self.raw),
+        }
+    }
+}
+
+impl Drop for CommandQueueDescriptor {
+    fn drop(&mut self) {
+        release(self.raw);
+    }
+}
+
+#[derive(Debug)]
+pub struct CommandBufferDescriptor {
+    pub raw: id,
+}
+
+impl CommandBufferDescriptor {
+    pub fn new() -> Result<Self, MetalError> {
+        let class_ptr = class(b"MTLCommandBufferDescriptor\0");
+        if class_ptr.is_null() {
+            return Err(MetalError::new(
+                "MTLCommandBufferDescriptor is not available",
+            ));
+        }
+        let allocated = msg_id(class_ptr, sel(b"alloc\0"));
+        let raw = msg_id(allocated, sel(b"init\0"));
+        if raw.is_null() {
+            Err(MetalError::new(
+                "failed to initialize MTLCommandBufferDescriptor",
+            ))
+        } else {
+            Ok(Self { raw })
+        }
+    }
+
+    pub fn retained_references(&self) -> bool {
+        msg_bool(self.raw, sel(b"retainedReferences\0")) != 0
+    }
+
+    pub fn set_retained_references(&self, retained: bool) {
+        msg_void_bool(self.raw, sel(b"setRetainedReferences:\0"), retained as BOOL);
+    }
+
+    pub fn error_options(&self) -> CommandBufferErrorOption {
+        let selector = sel(b"errorOptions\0");
+        if responds_to_selector(self.raw, selector) {
+            let val = msg_usize(self.raw, selector);
+            match val {
+                1 => CommandBufferErrorOption::EncoderExecutionStatus,
+                _ => CommandBufferErrorOption::None,
+            }
+        } else {
+            CommandBufferErrorOption::None
+        }
+    }
+
+    pub fn set_error_options(&self, options: CommandBufferErrorOption) {
+        let selector = sel(b"setErrorOptions:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_usize(self.raw, selector, options as usize);
+        }
+    }
+
+    pub fn log_state(&self) -> Option<LogState> {
+        let selector = sel(b"logState\0");
+        if responds_to_selector(self.raw, selector) {
+            let ptr = msg_id(self.raw, selector);
+            if ptr.is_null() {
+                None
+            } else {
+                Some(LogState { raw: retain(ptr) })
+            }
+        } else {
+            None
+        }
+    }
+
+    pub fn set_log_state(&self, state: &LogState) {
+        let selector = sel(b"setLogState:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_id(self.raw, selector, state.raw);
+        }
+    }
+}
+
+impl Clone for CommandBufferDescriptor {
+    fn clone(&self) -> Self {
+        Self {
+            raw: retain(self.raw),
+        }
+    }
+}
+
+impl Drop for CommandBufferDescriptor {
+    fn drop(&mut self) {
+        release(self.raw);
+    }
+}
+
+#[derive(Debug)]
+pub struct LogContainer {
+    pub raw: id,
+}
+
+impl LogContainer {
+    pub fn len(&self) -> usize {
+        if self.raw.is_null() {
+            0
+        } else {
+            msg_usize(self.raw, sel(b"count\0"))
+        }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    pub fn log_at(&self, index: usize) -> Option<FunctionLog> {
+        if self.raw.is_null() || index >= self.len() {
+            None
+        } else {
+            let item = msg_id_usize(self.raw, sel(b"objectAtIndexedSubscript:\0"), index);
+            if item.is_null() {
+                None
+            } else {
+                Some(FunctionLog { raw: retain(item) })
+            }
+        }
+    }
+
+    pub fn to_vec(&self) -> Vec<FunctionLog> {
+        let count = self.len();
+        let mut vec = Vec::with_capacity(count);
+        for i in 0..count {
+            if let Some(log) = self.log_at(i) {
+                vec.push(log);
+            }
+        }
+        vec
+    }
+}
+
+impl Drop for LogContainer {
     fn drop(&mut self) {
         release(self.raw);
     }

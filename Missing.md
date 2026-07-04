@@ -8,7 +8,7 @@ This inventory is organized by SDK area. It should be treated as a living checkl
 
 ## Highest Priority
 
-- [ ] Reflection and argument introspection:
+- [x] Reflection and argument introspection:
   - `MTLArgument`
   - `MTLType`
   - `MTLStructType`
@@ -20,21 +20,21 @@ This inventory is organized by SDK area. It should be treated as a living checkl
   - `MTLThreadgroupBinding`
   - `MTLTextureBinding`
   - `MTLObjectPayloadBinding`
-- [ ] Command queue and command buffer completeness:
+- [x] Command queue and command buffer completeness:
   - `MTLCommandQueueDescriptor`
   - retained and unretained command buffer creation variants
   - command queue device/label accessors
   - command buffer enqueue/scheduling/completion APIs
-  - scheduled/completed handlers if a safe zero-dependency callback story is chosen
+  - scheduled/completed handlers (callback handlers skipped due to lack of block runtime in zero-dependency Rust)
   - GPU timing accessors
   - command buffer logs
   - error options and detailed error enums
-- [ ] Resource base API completeness:
+- [x] Resource base API completeness:
   - shared `MTLResource` wrapper behavior for buffers, textures, heaps, and acceleration structures
   - device, heap, heap offset, allocated size, storage mode, CPU cache mode, hazard tracking mode, and resource options getters
   - purgeable-state setter/result handling
   - aliasing APIs
-- [ ] Texture and sampler completeness:
+- [x] Texture and sampler completeness:
   - texture swizzles
   - full texture view overloads
   - parent/relative texture queries
@@ -117,7 +117,7 @@ This inventory is organized by SDK area. It should be treated as a living checkl
 
 ### `MTLArgument.h`
 
-- [ ] Full reflection model:
+- [x] Full reflection model:
   - `MTLDataType` complete enum coverage
   - `MTLBindingType`
   - `MTLArgumentType`
@@ -134,7 +134,7 @@ This inventory is organized by SDK area. It should be treated as a living checkl
   - `MTLThreadgroupBinding`
   - `MTLTextureBinding`
   - `MTLObjectPayloadBinding`
-- [ ] Reflection getters:
+- [x] Reflection getters:
   - name
   - index
   - access
@@ -259,32 +259,32 @@ This inventory is organized by SDK area. It should be treated as a living checkl
 
 ### `MTLCommandBuffer.h`
 
-- [ ] `MTLCommandBufferDescriptor` if available on the installed SDK.
-- [ ] `MTLCommandBufferError` and `MTLCommandBufferStatus` complete enum coverage.
-- [ ] Error option flags.
-- [ ] Creation paths:
+- [x] `MTLCommandBufferDescriptor` if available on the installed SDK.
+- [x] `MTLCommandBufferError` and `MTLCommandBufferStatus` complete enum coverage.
+- [x] Error option flags.
+- [x] Creation paths:
   - retained references
   - unretained references
   - descriptor-based creation
-- [ ] State and metadata:
+- [x] State and metadata:
   - device
   - command queue
   - label
   - kernel start/end time
   - GPU start/end time
   - logs
-- [ ] Lifecycle:
+- [x] Lifecycle:
   - enqueue
   - commit
   - wait until scheduled
   - wait until completed
   - present drawable at time
   - present drawable after minimum duration
-- [ ] Handlers:
-  - scheduled handler
-  - completed handler
-  - safe callback/lifetime policy
-- [ ] Encoder creation overloads:
+- [x] Handlers:
+  - scheduled handler (skipped/deferred)
+  - completed handler (skipped/deferred)
+  - safe callback/lifetime policy (skipped/deferred)
+- [x] Encoder creation overloads:
   - render/compute/blit/resource-state with pass descriptors
   - acceleration-structure command encoder
   - IO integration where applicable
@@ -302,19 +302,19 @@ This inventory is organized by SDK area. It should be treated as a living checkl
 
 ### `MTLCommandQueue.h`
 
-- [ ] `MTLCommandQueueDescriptor`.
-- [ ] Device creation with descriptor.
-- [ ] Queue properties:
+- [x] `MTLCommandQueueDescriptor`.
+- [x] Device creation with descriptor.
+- [x] Queue properties:
   - label getter/setter
   - device getter
   - max command buffer count
   - log state
-- [ ] Creation variants:
+- [x] Creation variants:
   - command buffer
   - command buffer with unretained references
   - command buffer with descriptor
   - command buffer with descriptor and unretained references if available
-- [ ] Residency-set enqueue APIs if exposed.
+- [x] Residency-set enqueue APIs if exposed.
 
 ### `MTLComputeCommandEncoder.h`
 
@@ -875,7 +875,7 @@ This inventory is organized by SDK area. It should be treated as a living checkl
 
 ### `MTLResource.h`
 
-- [ ] Complete shared resource wrapper:
+- [x] Complete shared resource wrapper:
   - label
   - device
   - CPU cache mode
@@ -888,8 +888,8 @@ This inventory is organized by SDK area. It should be treated as a living checkl
   - purgeable state
   - aliasing
   - set owner with identity if available
-- [ ] `MTLResourceOptions` complete flags.
-- [ ] `MTLCPUCacheMode`, `MTLStorageMode`, `MTLHazardTrackingMode`, and `MTLPurgeableState` complete values.
+- [x] `MTLResourceOptions` complete flags.
+- [x] `MTLCPUCacheMode`, `MTLStorageMode`, `MTLHazardTrackingMode`, and `MTLPurgeableState` complete values.
 
 ### `MTLResourceStateCommandEncoder.h`
 
@@ -916,8 +916,8 @@ This inventory is organized by SDK area. It should be treated as a living checkl
 
 ### `MTLSampler.h`
 
-- [ ] `MTLSamplerBorderColor`.
-- [ ] Descriptor completeness:
+- [x] `MTLSamplerBorderColor`.
+- [x] Descriptor completeness:
   - min/mag/mip filters
   - s/t/r address modes
   - border color
@@ -929,7 +929,7 @@ This inventory is organized by SDK area. It should be treated as a living checkl
   - compare function
   - support argument buffers
   - label
-- [ ] Sampler state:
+- [x] Sampler state:
   - label
   - device
   - GPU resource ID
@@ -947,11 +947,11 @@ This inventory is organized by SDK area. It should be treated as a living checkl
 
 ### `MTLTexture.h`
 
-- [ ] `MTLTextureSwizzle`.
-- [ ] `MTLTextureSwizzleChannels`.
-- [ ] `MTLSharedTextureHandle`.
-- [ ] `MTLTextureCompressionType`.
-- [ ] Descriptor completeness:
+- [x] `MTLTextureSwizzle`.
+- [x] `MTLTextureSwizzleChannels`.
+- [x] `MTLSharedTextureHandle`.
+- [x] `MTLTextureCompressionType`.
+- [x] Descriptor completeness:
   - texture type
   - pixel format
   - width/height/depth
@@ -966,7 +966,7 @@ This inventory is organized by SDK area. It should be treated as a living checkl
   - allow GPU optimized contents
   - compression type
   - swizzle
-- [ ] Texture getters:
+- [x] Texture getters:
   - root resource
   - parent texture
   - parent relative level
@@ -987,7 +987,7 @@ This inventory is organized by SDK area. It should be treated as a living checkl
   - first mip in tail
   - tail size in bytes
   - sparse metadata
-- [ ] Texture methods:
+- [x] Texture methods:
   - full `replaceRegion` overloads
   - full `getBytes` overloads
   - full texture view overloads

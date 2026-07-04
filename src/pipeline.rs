@@ -889,12 +889,37 @@ impl SamplerDescriptor {
         }
     }
 
+    pub fn min_filter(&self) -> SamplerMinMagFilter {
+        let val = msg_usize(self.raw, sel(b"minFilter\0"));
+        match val {
+            1 => SamplerMinMagFilter::Linear,
+            _ => SamplerMinMagFilter::Nearest,
+        }
+    }
+
     pub fn set_min_filter(&self, filter: SamplerMinMagFilter) {
         msg_void_usize(self.raw, sel(b"setMinFilter:\0"), filter as usize);
     }
 
+    pub fn mag_filter(&self) -> SamplerMinMagFilter {
+        let val = msg_usize(self.raw, sel(b"magFilter\0"));
+        match val {
+            1 => SamplerMinMagFilter::Linear,
+            _ => SamplerMinMagFilter::Nearest,
+        }
+    }
+
     pub fn set_mag_filter(&self, filter: SamplerMinMagFilter) {
         msg_void_usize(self.raw, sel(b"setMagFilter:\0"), filter as usize);
+    }
+
+    pub fn mip_filter(&self) -> SamplerMipFilter {
+        let val = msg_usize(self.raw, sel(b"mipFilter\0"));
+        match val {
+            1 => SamplerMipFilter::Nearest,
+            2 => SamplerMipFilter::Linear,
+            _ => SamplerMipFilter::NotMipmapped,
+        }
     }
 
     pub fn set_mip_filter(&self, filter: SamplerMipFilter) {
@@ -907,16 +932,172 @@ impl SamplerDescriptor {
         self.set_r_address_mode(mode);
     }
 
+    pub fn s_address_mode(&self) -> SamplerAddressMode {
+        let val = msg_usize(self.raw, sel(b"sAddressMode\0"));
+        match val {
+            0 => SamplerAddressMode::ClampToEdge,
+            1 => SamplerAddressMode::MirrorClampToEdge,
+            2 => SamplerAddressMode::Repeat,
+            3 => SamplerAddressMode::MirrorRepeat,
+            4 => SamplerAddressMode::ClampToZero,
+            5 => SamplerAddressMode::ClampToBorderColor,
+            _ => SamplerAddressMode::ClampToEdge,
+        }
+    }
+
     pub fn set_s_address_mode(&self, mode: SamplerAddressMode) {
         msg_void_usize(self.raw, sel(b"setSAddressMode:\0"), mode as usize);
+    }
+
+    pub fn t_address_mode(&self) -> SamplerAddressMode {
+        let val = msg_usize(self.raw, sel(b"tAddressMode\0"));
+        match val {
+            0 => SamplerAddressMode::ClampToEdge,
+            1 => SamplerAddressMode::MirrorClampToEdge,
+            2 => SamplerAddressMode::Repeat,
+            3 => SamplerAddressMode::MirrorRepeat,
+            4 => SamplerAddressMode::ClampToZero,
+            5 => SamplerAddressMode::ClampToBorderColor,
+            _ => SamplerAddressMode::ClampToEdge,
+        }
     }
 
     pub fn set_t_address_mode(&self, mode: SamplerAddressMode) {
         msg_void_usize(self.raw, sel(b"setTAddressMode:\0"), mode as usize);
     }
 
+    pub fn r_address_mode(&self) -> SamplerAddressMode {
+        let val = msg_usize(self.raw, sel(b"rAddressMode\0"));
+        match val {
+            0 => SamplerAddressMode::ClampToEdge,
+            1 => SamplerAddressMode::MirrorClampToEdge,
+            2 => SamplerAddressMode::Repeat,
+            3 => SamplerAddressMode::MirrorRepeat,
+            4 => SamplerAddressMode::ClampToZero,
+            5 => SamplerAddressMode::ClampToBorderColor,
+            _ => SamplerAddressMode::ClampToEdge,
+        }
+    }
+
     pub fn set_r_address_mode(&self, mode: SamplerAddressMode) {
         msg_void_usize(self.raw, sel(b"setRAddressMode:\0"), mode as usize);
+    }
+
+    pub fn border_color(&self) -> SamplerBorderColor {
+        let selector = sel(b"borderColor\0");
+        if responds_to_selector(self.raw, selector) {
+            let val = msg_usize(self.raw, selector);
+            match val {
+                1 => SamplerBorderColor::OpaqueBlack,
+                2 => SamplerBorderColor::OpaqueWhite,
+                _ => SamplerBorderColor::TransparentBlack,
+            }
+        } else {
+            SamplerBorderColor::TransparentBlack
+        }
+    }
+
+    pub fn set_border_color(&self, border_color: SamplerBorderColor) {
+        let selector = sel(b"setBorderColor:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_usize(self.raw, selector, border_color as usize);
+        }
+    }
+
+    pub fn reduction_mode(&self) -> SamplerReductionMode {
+        let selector = sel(b"reductionMode\0");
+        if responds_to_selector(self.raw, selector) {
+            let val = msg_usize(self.raw, selector);
+            match val {
+                1 => SamplerReductionMode::Minimum,
+                2 => SamplerReductionMode::Maximum,
+                _ => SamplerReductionMode::WeightedAverage,
+            }
+        } else {
+            SamplerReductionMode::WeightedAverage
+        }
+    }
+
+    pub fn set_reduction_mode(&self, reduction_mode: SamplerReductionMode) {
+        let selector = sel(b"setReductionMode:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_usize(self.raw, selector, reduction_mode as usize);
+        }
+    }
+
+    pub fn normalized_coordinates(&self) -> bool {
+        msg_bool(self.raw, sel(b"normalizedCoordinates\0")) != 0
+    }
+
+    pub fn set_normalized_coordinates(&self, normalized_coordinates: bool) {
+        msg_void_bool(
+            self.raw,
+            sel(b"setNormalizedCoordinates:\0"),
+            if normalized_coordinates { YES } else { NO },
+        );
+    }
+
+    pub fn lod_min_clamp(&self) -> f32 {
+        msg_f32(self.raw, sel(b"lodMinClamp\0"))
+    }
+
+    pub fn set_lod_min_clamp(&self, value: f32) {
+        msg_void_f32(self.raw, sel(b"setLodMinClamp:\0"), value);
+    }
+
+    pub fn lod_max_clamp(&self) -> f32 {
+        msg_f32(self.raw, sel(b"lodMaxClamp\0"))
+    }
+
+    pub fn set_lod_max_clamp(&self, value: f32) {
+        msg_void_f32(self.raw, sel(b"setLodMaxClamp:\0"), value);
+    }
+
+    pub fn lod_average(&self) -> bool {
+        let selector = sel(b"lodAverage\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_bool(self.raw, selector) != 0
+        } else {
+            false
+        }
+    }
+
+    pub fn set_lod_average(&self, lod_average: bool) {
+        let selector = sel(b"setLodAverage:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_bool(self.raw, selector, if lod_average { YES } else { NO });
+        }
+    }
+
+    pub fn lod_bias(&self) -> f32 {
+        let selector = sel(b"lodBias\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_f32(self.raw, selector)
+        } else {
+            0.0
+        }
+    }
+
+    pub fn set_lod_bias(&self, bias: f32) {
+        let selector = sel(b"setLodBias:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_f32(self.raw, selector, bias);
+        }
+    }
+
+    pub fn compare_function(&self) -> CompareFunction {
+        let val = msg_usize(self.raw, sel(b"compareFunction\0"));
+        match val {
+            0 => CompareFunction::Never,
+            1 => CompareFunction::Less,
+            2 => CompareFunction::Equal,
+            3 => CompareFunction::LessEqual,
+            4 => CompareFunction::Greater,
+            5 => CompareFunction::NotEqual,
+            6 => CompareFunction::GreaterEqual,
+            7 => CompareFunction::Always,
+            _ => CompareFunction::Never,
+        }
     }
 
     pub fn set_compare_function(&self, compare_function: CompareFunction) {
@@ -927,16 +1108,37 @@ impl SamplerDescriptor {
         );
     }
 
+    pub fn max_anisotropy(&self) -> usize {
+        msg_usize(self.raw, sel(b"maxAnisotropy\0"))
+    }
+
     pub fn set_max_anisotropy(&self, max_anisotropy: usize) {
         msg_void_usize(self.raw, sel(b"setMaxAnisotropy:\0"), max_anisotropy);
     }
 
-    pub fn set_lod_min_clamp(&self, value: f64) {
-        msg_void_f64(self.raw, sel(b"setLodMinClamp:\0"), value);
+    pub fn support_argument_buffers(&self) -> bool {
+        let selector = sel(b"supportArgumentBuffers\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_bool(self.raw, selector) != 0
+        } else {
+            false
+        }
     }
 
-    pub fn set_lod_max_clamp(&self, value: f64) {
-        msg_void_f64(self.raw, sel(b"setLodMaxClamp:\0"), value);
+    pub fn set_support_argument_buffers(&self, support: bool) {
+        let selector = sel(b"setSupportArgumentBuffers:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_bool(self.raw, selector, if support { YES } else { NO });
+        }
+    }
+
+    pub fn label(&self) -> Option<String> {
+        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    }
+
+    pub fn set_label(&self, label: &str) {
+        let ns_label = NSString::new(label);
+        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
     }
 }
 
@@ -982,6 +1184,11 @@ impl SamplerState {
                 "gpuResourceID not supported on this SamplerState",
             ))
         }
+    }
+
+    pub fn device(&self) -> Device {
+        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        Device { raw: ptr }
     }
 }
 

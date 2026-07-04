@@ -292,6 +292,134 @@ impl AccelerationStructure {
             ))
         }
     }
+
+    pub fn label(&self) -> Option<String> {
+        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    }
+
+    pub fn set_label(&self, label: &str) {
+        let ns_label = NSString::new(label);
+        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+    }
+
+    pub fn device(&self) -> Device {
+        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        Device { raw: ptr }
+    }
+
+    pub fn cpu_cache_mode(&self) -> CpuCacheMode {
+        let val = msg_usize(self.raw, sel(b"cpuCacheMode\0"));
+        match val {
+            1 => CpuCacheMode::WriteCombined,
+            _ => CpuCacheMode::DefaultCache,
+        }
+    }
+
+    pub fn storage_mode(&self) -> StorageMode {
+        let val = msg_usize(self.raw, sel(b"storageMode\0"));
+        match val {
+            0 => StorageMode::Shared,
+            1 => StorageMode::Managed,
+            2 => StorageMode::Private,
+            3 => StorageMode::Memoryless,
+            _ => StorageMode::Shared,
+        }
+    }
+
+    pub fn hazard_tracking_mode(&self) -> HazardTrackingMode {
+        let selector = sel(b"hazardTrackingMode\0");
+        if responds_to_selector(self.raw, selector) {
+            let val = msg_usize(self.raw, selector);
+            match val {
+                1 => HazardTrackingMode::Untracked,
+                2 => HazardTrackingMode::Tracked,
+                _ => HazardTrackingMode::Default,
+            }
+        } else {
+            HazardTrackingMode::Default
+        }
+    }
+
+    pub fn resource_options(&self) -> ResourceOptions {
+        let selector = sel(b"resourceOptions\0");
+        if responds_to_selector(self.raw, selector) {
+            ResourceOptions::from_raw(msg_usize(self.raw, selector))
+        } else {
+            ResourceOptions::from_raw(0)
+        }
+    }
+
+    pub fn set_purgeable_state(&self, state: PurgeableState) -> PurgeableState {
+        let val = msg_usize_usize(self.raw, sel(b"setPurgeableState:\0"), state as usize);
+        match val {
+            1 => PurgeableState::KeepCurrent,
+            2 => PurgeableState::NonVolatile,
+            3 => PurgeableState::Volatile,
+            4 => PurgeableState::Empty,
+            _ => PurgeableState::KeepCurrent,
+        }
+    }
+
+    pub fn heap(&self) -> Option<Heap> {
+        let selector = sel(b"heap\0");
+        if responds_to_selector(self.raw, selector) {
+            let ptr = msg_id(self.raw, selector);
+            if ptr.is_null() {
+                None
+            } else {
+                Some(Heap { raw: retain(ptr) })
+            }
+        } else {
+            None
+        }
+    }
+
+    pub fn heap_offset(&self) -> usize {
+        let selector = sel(b"heapOffset\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_usize(self.raw, selector)
+        } else {
+            0
+        }
+    }
+
+    pub fn allocated_size(&self) -> usize {
+        let selector = sel(b"allocatedSize\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_usize(self.raw, selector)
+        } else {
+            self.size()
+        }
+    }
+
+    pub fn make_aliasable(&self) {
+        let selector = sel(b"makeAliasable\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void(self.raw, selector);
+        }
+    }
+
+    pub fn is_aliasable(&self) -> bool {
+        let selector = sel(b"isAliasable\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_bool(self.raw, selector) != 0
+        } else {
+            false
+        }
+    }
+
+    pub fn set_owner_with_identity(&self, task_id_token: u32) -> i32 {
+        let selector = sel(b"setOwnerWithIdentity:\0");
+        if responds_to_selector(self.raw, selector) {
+            unsafe {
+                let f: unsafe extern "C" fn(id, SEL, u32) -> i32 =
+                    transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector, task_id_token)
+            }
+        } else {
+            0
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -382,6 +510,26 @@ impl CommandBuffer {
         if raw.is_null() {
             Err(MetalError::new(
                 "failed to create AccelerationStructureCommandEncoder",
+            ))
+        } else {
+            Ok(AccelerationStructureCommandEncoder { raw })
+        }
+    }
+
+    pub fn acceleration_structure_command_encoder_with_descriptor(
+        &self,
+        descriptor: &AccelerationStructurePassDescriptor,
+    ) -> Result<AccelerationStructureCommandEncoder, MetalError> {
+        let selector = sel(b"accelerationStructureCommandEncoderWithDescriptor:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "accelerationStructureCommandEncoderWithDescriptor: not supported on this CommandBuffer",
+            ));
+        }
+        let raw = retain(msg_id_id(self.raw, selector, descriptor.raw));
+        if raw.is_null() {
+            Err(MetalError::new(
+                "failed to create AccelerationStructureCommandEncoder with descriptor",
             ))
         } else {
             Ok(AccelerationStructureCommandEncoder { raw })

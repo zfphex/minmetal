@@ -769,3 +769,155 @@ impl Drop for ParallelRenderCommandEncoder {
         release(self.raw);
     }
 }
+
+#[derive(Debug)]
+pub struct AccelerationStructurePassSampleBufferAttachmentDescriptor {
+    pub raw: id,
+}
+
+impl AccelerationStructurePassSampleBufferAttachmentDescriptor {
+    pub fn new() -> Self {
+        let allocated = msg_id(
+            class(b"MTLAccelerationStructurePassSampleBufferAttachmentDescriptor\0"),
+            sel(b"alloc\0"),
+        );
+        Self {
+            raw: msg_id(allocated, sel(b"init\0")),
+        }
+    }
+
+    pub fn sample_buffer(&self) -> Option<CounterSampleBuffer> {
+        let ptr = msg_id(self.raw, sel(b"sampleBuffer\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(CounterSampleBuffer { raw: retain(ptr) })
+        }
+    }
+
+    pub fn set_sample_buffer(&self, sample_buffer: Option<&CounterSampleBuffer>) {
+        let ptr = sample_buffer.map(|b| b.raw).unwrap_or(std::ptr::null_mut());
+        msg_void_id(self.raw, sel(b"setSampleBuffer:\0"), ptr);
+    }
+
+    pub fn start_of_encoder_sample_index(&self) -> usize {
+        msg_usize(self.raw, sel(b"startOfEncoderSampleIndex\0"))
+    }
+
+    pub fn set_start_of_encoder_sample_index(&self, index: usize) {
+        msg_void_usize(self.raw, sel(b"setStartOfEncoderSampleIndex:\0"), index);
+    }
+
+    pub fn end_of_encoder_sample_index(&self) -> usize {
+        msg_usize(self.raw, sel(b"endOfEncoderSampleIndex\0"))
+    }
+
+    pub fn set_end_of_encoder_sample_index(&self, index: usize) {
+        msg_void_usize(self.raw, sel(b"setEndOfEncoderSampleIndex:\0"), index);
+    }
+}
+
+impl Default for AccelerationStructurePassSampleBufferAttachmentDescriptor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Clone for AccelerationStructurePassSampleBufferAttachmentDescriptor {
+    fn clone(&self) -> Self {
+        Self {
+            raw: retain(self.raw),
+        }
+    }
+}
+
+impl Drop for AccelerationStructurePassSampleBufferAttachmentDescriptor {
+    fn drop(&mut self) {
+        release(self.raw);
+    }
+}
+
+#[derive(Debug)]
+pub struct AccelerationStructurePassSampleBufferAttachmentDescriptorArray {
+    pub raw: id,
+}
+
+impl AccelerationStructurePassSampleBufferAttachmentDescriptorArray {
+    pub fn object_at_indexed_subscript(
+        &self,
+        index: usize,
+    ) -> Option<AccelerationStructurePassSampleBufferAttachmentDescriptor> {
+        let ptr = msg_id_usize(self.raw, sel(b"objectAtIndexedSubscript:\0"), index);
+        if ptr.is_null() {
+            None
+        } else {
+            Some(AccelerationStructurePassSampleBufferAttachmentDescriptor { raw: retain(ptr) })
+        }
+    }
+
+    pub fn set_object(
+        &self,
+        attachment: Option<&AccelerationStructurePassSampleBufferAttachmentDescriptor>,
+        index: usize,
+    ) {
+        let ptr = attachment.map(|a| a.raw).unwrap_or(std::ptr::null_mut());
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"setObject:atIndexedSubscript:\0"),
+                ptr,
+                index,
+            );
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct AccelerationStructurePassDescriptor {
+    pub raw: id,
+}
+
+impl AccelerationStructurePassDescriptor {
+    pub fn new() -> Result<Self, MetalError> {
+        let class_ptr = class(b"MTLAccelerationStructurePassDescriptor\0");
+        if class_ptr.is_null() {
+            return Err(MetalError::new(
+                "MTLAccelerationStructurePassDescriptor is not available",
+            ));
+        }
+        let raw = retain(msg_id(
+            class_ptr,
+            sel(b"accelerationStructurePassDescriptor\0"),
+        ));
+        if raw.is_null() {
+            Err(MetalError::new(
+                "failed to create MTLAccelerationStructurePassDescriptor",
+            ))
+        } else {
+            Ok(Self { raw })
+        }
+    }
+
+    pub fn sample_buffer_attachments(
+        &self,
+    ) -> AccelerationStructurePassSampleBufferAttachmentDescriptorArray {
+        let array = msg_id(self.raw, sel(b"sampleBufferAttachments\0"));
+        AccelerationStructurePassSampleBufferAttachmentDescriptorArray { raw: array }
+    }
+}
+
+impl Clone for AccelerationStructurePassDescriptor {
+    fn clone(&self) -> Self {
+        Self {
+            raw: retain(self.raw),
+        }
+    }
+}
+
+impl Drop for AccelerationStructurePassDescriptor {
+    fn drop(&mut self) {
+        release(self.raw);
+    }
+}
