@@ -956,6 +956,34 @@ impl RenderCommandEncoder {
         );
     }
 
+    pub fn device(&self) -> Device {
+        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        Device { raw: ptr }
+    }
+
+    pub fn label(&self) -> Option<String> {
+        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    }
+
+    pub fn set_label(&self, label: &str) {
+        let ns_label = NSString::new(label);
+        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+    }
+
+    pub fn insert_debug_signpost(&self, string: &str) {
+        let ns_str = NSString::new(string);
+        msg_void_id(self.raw, sel(b"insertDebugSignpost:\0"), ns_str.raw());
+    }
+
+    pub fn push_debug_group(&self, string: &str) {
+        let ns_str = NSString::new(string);
+        msg_void_id(self.raw, sel(b"pushDebugGroup:\0"), ns_str.raw());
+    }
+
+    pub fn pop_debug_group(&self) {
+        msg_void(self.raw, sel(b"popDebugGroup\0"));
+    }
+
     pub fn end_encoding(&self) {
         msg_void(self.raw, sel(b"endEncoding\0"));
     }
@@ -1168,6 +1196,310 @@ impl ComputeCommandEncoder {
         );
     }
 
+    pub fn dispatch_type(&self) -> DispatchType {
+        let val = msg_usize(self.raw, sel(b"dispatchType\0"));
+        match val {
+            0 => DispatchType::Serial,
+            _ => DispatchType::Concurrent,
+        }
+    }
+
+    pub fn set_buffer_offset(&self, offset: usize, index: usize) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, usize, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(self.raw, sel(b"setBufferOffset:atIndex:\0"), offset, index);
+        }
+    }
+
+    pub fn set_buffer_offset_with_attribute_stride(&self, offset: usize, stride: usize, index: usize) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, usize, usize, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"setBufferOffset:attributeStride:atIndex:\0"),
+                offset,
+                stride,
+                index,
+            );
+        }
+    }
+
+    pub fn set_buffer_with_attribute_stride(
+        &self,
+        buffer: &Buffer,
+        offset: usize,
+        stride: usize,
+        index: usize,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, usize, usize, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"setBuffer:offset:attributeStride:atIndex:\0"),
+                buffer.raw,
+                offset,
+                stride,
+                index,
+            );
+        }
+    }
+
+    pub fn set_buffers_with_attribute_strides(
+        &self,
+        buffers: &[Option<&Buffer>],
+        offsets: &[usize],
+        strides: &[usize],
+        range: Range,
+    ) {
+        let raw_buffers: Vec<id> = buffers
+            .iter()
+            .map(|b| b.map_or(NIL, |buf| buf.raw))
+            .collect();
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, *const id, *const usize, *const usize, Range) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"setBuffers:offsets:attributeStrides:withRange:\0"),
+                raw_buffers.as_ptr(),
+                offsets.as_ptr(),
+                strides.as_ptr(),
+                range,
+            );
+        }
+    }
+
+    pub fn set_bytes_with_attribute_stride<T>(
+        &self,
+        index: usize,
+        value: &T,
+        stride: usize,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, *const c_void, usize, usize, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"setBytes:length:attributeStride:atIndex:\0"),
+                value as *const T as *const c_void,
+                std::mem::size_of::<T>(),
+                stride,
+                index,
+            );
+        }
+    }
+
+    pub fn set_sampler_state_with_lod_clamps(
+        &self,
+        sampler: &SamplerState,
+        lod_min_clamp: f32,
+        lod_max_clamp: f32,
+        index: usize,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, f32, f32, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"setSamplerState:lodMinClamp:lodMaxClamp:atIndex:\0"),
+                sampler.raw,
+                lod_min_clamp,
+                lod_max_clamp,
+                index,
+            );
+        }
+    }
+
+    pub fn set_sampler_states_with_lod_clamps(
+        &self,
+        samplers: &[Option<&SamplerState>],
+        lod_min_clamps: &[f32],
+        lod_max_clamps: &[f32],
+        range: Range,
+    ) {
+        let raw_samplers: Vec<id> = samplers
+            .iter()
+            .map(|s| s.map_or(NIL, |sm| sm.raw))
+            .collect();
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, *const id, *const f32, *const f32, Range) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"setSamplerStates:lodMinClamps:lodMaxClamps:withRange:\0"),
+                raw_samplers.as_ptr(),
+                lod_min_clamps.as_ptr(),
+                lod_max_clamps.as_ptr(),
+                range,
+            );
+        }
+    }
+
+    pub fn set_threadgroup_memory_length(&self, length: usize, index: usize) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, usize, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"setThreadgroupMemoryLength:atIndex:\0"),
+                length,
+                index,
+            );
+        }
+    }
+
+    pub fn set_imageblock_size(&self, width: usize, height: usize) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, usize, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"setImageblockWidth:height:\0"),
+                width,
+                height,
+            );
+        }
+    }
+
+    pub fn set_stage_in_region(&self, region: Region) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, Region) =
+                transmute(objc_msgSend as *const c_void);
+            f(self.raw, sel(b"setStageInRegion:\0"), region);
+        }
+    }
+
+    pub fn set_stage_in_region_with_indirect_buffer(
+        &self,
+        indirect_buffer: &Buffer,
+        indirect_buffer_offset: usize,
+    ) {
+        msg_void_id_usize(
+            self.raw,
+            sel(b"setStageInRegionWithIndirectBuffer:indirectBufferOffset:\0"),
+            indirect_buffer.raw,
+            indirect_buffer_offset,
+        );
+    }
+
+    pub fn dispatch_threadgroups_with_indirect_buffer(
+        &self,
+        indirect_buffer: &Buffer,
+        indirect_buffer_offset: usize,
+        threads_per_threadgroup: Size,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, usize, Size) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"dispatchThreadgroupsWithIndirectBuffer:indirectBufferOffset:threadsPerThreadgroup:\0"),
+                indirect_buffer.raw,
+                indirect_buffer_offset,
+                threads_per_threadgroup,
+            );
+        }
+    }
+
+    pub fn use_resources(&self, resources: &[id], usage: ResourceUsage) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, *const id, usize, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"useResources:count:usage:\0"),
+                resources.as_ptr(),
+                resources.len(),
+                usage.as_raw(),
+            );
+        }
+    }
+
+    pub fn use_heaps(&self, heaps: &[id]) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, *const id, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"useHeaps:count:\0"),
+                heaps.as_ptr(),
+                heaps.len(),
+            );
+        }
+    }
+
+    pub fn execute_commands_in_buffer_indirect(
+        &self,
+        indirect_command_buffer: &IndirectCommandBuffer,
+        indirect_range_buffer: &Buffer,
+        indirect_buffer_offset: usize,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, id, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"executeCommandsInBuffer:indirectBuffer:indirectBufferOffset:\0"),
+                indirect_command_buffer.raw,
+                indirect_range_buffer.raw,
+                indirect_buffer_offset,
+            );
+        }
+    }
+
+    pub fn memory_barrier_with_scope(&self, scope: BarrierScope) {
+        msg_void_usize(
+            self.raw,
+            sel(b"memoryBarrierWithScope:\0"),
+            scope.0,
+        );
+    }
+
+    pub fn memory_barrier_with_resources(&self, resources: &[id]) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, *const id, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"memoryBarrierWithResources:count:\0"),
+                resources.as_ptr(),
+                resources.len(),
+            );
+        }
+    }
+
+
+    pub fn device(&self) -> Device {
+        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        Device { raw: ptr }
+    }
+
+    pub fn label(&self) -> Option<String> {
+        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    }
+
+    pub fn set_label(&self, label: &str) {
+        let ns_label = NSString::new(label);
+        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+    }
+
+    pub fn insert_debug_signpost(&self, string: &str) {
+        let ns_str = NSString::new(string);
+        msg_void_id(self.raw, sel(b"insertDebugSignpost:\0"), ns_str.raw());
+    }
+
+    pub fn push_debug_group(&self, string: &str) {
+        let ns_str = NSString::new(string);
+        msg_void_id(self.raw, sel(b"pushDebugGroup:\0"), ns_str.raw());
+    }
+
+    pub fn pop_debug_group(&self) {
+        msg_void(self.raw, sel(b"popDebugGroup\0"));
+    }
+
     pub fn end_encoding(&self) {
         msg_void(self.raw, sel(b"endEncoding\0"));
     }
@@ -1191,6 +1523,34 @@ impl ResourceStateCommandEncoder {
 
     pub fn wait_for_fence(&self, fence: &Fence) {
         msg_void_id(self.raw, sel(b"waitForFence:\0"), fence.raw);
+    }
+
+    pub fn device(&self) -> Device {
+        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        Device { raw: ptr }
+    }
+
+    pub fn label(&self) -> Option<String> {
+        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    }
+
+    pub fn set_label(&self, label: &str) {
+        let ns_label = NSString::new(label);
+        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+    }
+
+    pub fn insert_debug_signpost(&self, string: &str) {
+        let ns_str = NSString::new(string);
+        msg_void_id(self.raw, sel(b"insertDebugSignpost:\0"), ns_str.raw());
+    }
+
+    pub fn push_debug_group(&self, string: &str) {
+        let ns_str = NSString::new(string);
+        msg_void_id(self.raw, sel(b"pushDebugGroup:\0"), ns_str.raw());
+    }
+
+    pub fn pop_debug_group(&self) {
+        msg_void(self.raw, sel(b"popDebugGroup\0"));
     }
 
     pub fn end_encoding(&self) {
@@ -1329,6 +1689,34 @@ impl BlitCommandEncoder {
 
     pub fn wait_for_fence(&self, fence: &Fence) {
         msg_void_id(self.raw, sel(b"waitForFence:\0"), fence.raw);
+    }
+
+    pub fn device(&self) -> Device {
+        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        Device { raw: ptr }
+    }
+
+    pub fn label(&self) -> Option<String> {
+        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    }
+
+    pub fn set_label(&self, label: &str) {
+        let ns_label = NSString::new(label);
+        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+    }
+
+    pub fn insert_debug_signpost(&self, string: &str) {
+        let ns_str = NSString::new(string);
+        msg_void_id(self.raw, sel(b"insertDebugSignpost:\0"), ns_str.raw());
+    }
+
+    pub fn push_debug_group(&self, string: &str) {
+        let ns_str = NSString::new(string);
+        msg_void_id(self.raw, sel(b"pushDebugGroup:\0"), ns_str.raw());
+    }
+
+    pub fn pop_debug_group(&self) {
+        msg_void(self.raw, sel(b"popDebugGroup\0"));
     }
 
     pub fn end_encoding(&self) {

@@ -846,6 +846,34 @@ impl ParallelRenderCommandEncoder {
         msg_void_usize(self.raw, sel(b"setStencilStoreActionOptions:\0"), options.0);
     }
 
+    pub fn device(&self) -> Device {
+        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        Device { raw: ptr }
+    }
+
+    pub fn label(&self) -> Option<String> {
+        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    }
+
+    pub fn set_label(&self, label: &str) {
+        let ns_label = NSString::new(label);
+        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+    }
+
+    pub fn insert_debug_signpost(&self, string: &str) {
+        let ns_str = NSString::new(string);
+        msg_void_id(self.raw, sel(b"insertDebugSignpost:\0"), ns_str.raw());
+    }
+
+    pub fn push_debug_group(&self, string: &str) {
+        let ns_str = NSString::new(string);
+        msg_void_id(self.raw, sel(b"pushDebugGroup:\0"), ns_str.raw());
+    }
+
+    pub fn pop_debug_group(&self) {
+        msg_void(self.raw, sel(b"popDebugGroup\0"));
+    }
+
     pub fn end_encoding(&self) {
         msg_void(self.raw, sel(b"endEncoding\0"));
     }

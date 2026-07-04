@@ -291,14 +291,14 @@ This inventory is organized by SDK area. It should be treated as a living checkl
 
 ### `MTLCommandEncoder.h`
 
-- [ ] Base methods for every encoder wrapper:
+- [x] Base methods for every encoder wrapper:
   - device
   - label getter/setter
   - end encoding
   - insert debug signpost
   - push debug group
   - pop debug group
-- [ ] Ensure every encoder implements the base methods consistently.
+- [x] Ensure every encoder implements the base methods consistently.
 
 ### `MTLCommandQueue.h`
 
@@ -318,8 +318,8 @@ This inventory is organized by SDK area. It should be treated as a living checkl
 
 ### `MTLComputeCommandEncoder.h`
 
-- [ ] Full command encoder base methods.
-- [ ] Binding overloads:
+- [x] Full command encoder base methods.
+- [x] Binding overloads:
   - buffers with range
   - bytes with length/index
   - texture arrays
@@ -327,15 +327,15 @@ This inventory is organized by SDK area. It should be treated as a living checkl
   - visible function table arrays
   - intersection function table arrays
   - acceleration-structure arrays if available
-- [ ] Dispatch variants:
+- [x] Dispatch variants:
   - indirect dispatch
   - dispatch type/pass descriptor coverage
-- [ ] Memory APIs:
+- [x] Memory APIs:
   - threadgroup memory length
   - imageblock memory length if available
   - memory barriers
   - texture barriers
-- [ ] Resource usage:
+- [x] Resource usage:
   - use resources
   - use heaps
   - staged variants where available
@@ -405,7 +405,7 @@ This inventory is organized by SDK area. It should be treated as a living checkl
 
 ### `MTLDevice.h`
 
-- [ ] Device feature and limit queries:
+- [x] Device feature and limit queries:
   - registry ID
   - location and location number
   - max threads per threadgroup
@@ -427,7 +427,7 @@ This inventory is organized by SDK area. It should be treated as a living checkl
   - sample count support
   - texture format support
   - BC/ASTC/PVRTC capability queries where exposed
-- [ ] Device creation methods:
+- [x] Device creation methods:
   - command queues with max count and descriptor
   - buffers with bytes-no-copy and deallocator policy
   - textures with IOSurface/shared handles if available
@@ -439,33 +439,33 @@ This inventory is organized by SDK area. It should be treated as a living checkl
   - counters, log states, and capture scopes
   - peer group/device APIs if available
 - [ ] Device notification APIs if present.
-- [ ] Full error enum coverage for device-related creation failures.
+- [x] Full error enum coverage for device-related creation failures.
 
 ### `MTLDeviceCertification.h`
 
-- [ ] Decide whether to bind or explicitly skip:
+- [x] Decide whether to bind or explicitly skip:
   - certification APIs
   - certification enum/result types
-- [ ] If skipped, document the exact reason in `Coverage.md`.
+- [x] If skipped, document the exact reason in `Coverage.md`.
 
 ### `MTLDrawable.h`
 
-- [ ] Drawable protocol completeness:
+- [x] Drawable protocol completeness:
   - presented time
   - drawable ID if available
   - layer identity if exposed through `CAMetalDrawable`
-- [ ] Present variants:
+- [x] Present variants:
   - present
   - present at time
   - present after minimum duration
 
 ### `MTLDynamicLibrary.h`
 
-- [ ] Device creation methods:
+- [x] Device creation methods:
   - new dynamic library from URL
   - new dynamic library from library
   - new dynamic library from data if available
-- [ ] Dynamic library:
+- [x] Dynamic library:
   - device
   - label
   - install name
@@ -474,14 +474,14 @@ This inventory is organized by SDK area. It should be treated as a living checkl
 
 ### `MTLEvent.h`
 
-- [ ] `MTLEvent` wrapper.
-- [ ] `MTLSharedEvent` completeness:
+- [x] `MTLEvent` wrapper.
+- [x] `MTLSharedEvent` completeness:
   - device
   - label
   - signaled value
   - new shared event handle
   - create shared event from handle
-- [ ] Listener/callback APIs:
+- [x] Listener/callback APIs:
   - `MTLSharedEventListener`
   - notify listener at value
   - safe callback/lifetime strategy

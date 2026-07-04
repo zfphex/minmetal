@@ -26,6 +26,295 @@ impl Device {
             .unwrap_or_else(|| "Unknown Metal Device".to_string())
     }
 
+    pub fn registry_id(&self) -> u64 {
+        msg_u64(self.raw, sel(b"registryID\0"))
+    }
+
+    pub fn is_low_power(&self) -> bool {
+        msg_bool(self.raw, sel(b"isLowPower\0")) != 0
+    }
+
+    pub fn is_headless(&self) -> bool {
+        msg_bool(self.raw, sel(b"isHeadless\0")) != 0
+    }
+
+    pub fn is_removable(&self) -> bool {
+        msg_bool(self.raw, sel(b"isRemovable\0")) != 0
+    }
+
+    pub fn has_unified_memory(&self) -> bool {
+        msg_bool(self.raw, sel(b"hasUnifiedMemory\0")) != 0
+    }
+
+    pub fn recommended_max_working_set_size(&self) -> u64 {
+        msg_u64(self.raw, sel(b"recommendedMaxWorkingSetSize\0"))
+    }
+
+    pub fn location(&self) -> DeviceLocation {
+        let val = msg_usize(self.raw, sel(b"location\0"));
+        match val {
+            0 => DeviceLocation::BuiltIn,
+            1 => DeviceLocation::Slot,
+            2 => DeviceLocation::External,
+            _ => DeviceLocation::Unspecified,
+        }
+    }
+
+    pub fn location_number(&self) -> usize {
+        msg_usize(self.raw, sel(b"locationNumber\0"))
+    }
+
+    pub fn max_threads_per_threadgroup(&self) -> Size {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL) -> Size = transmute(objc_msgSend as *const c_void);
+            f(self.raw, sel(b"maxThreadsPerThreadgroup\0"))
+        }
+    }
+
+    pub fn max_transfer_rate(&self) -> u64 {
+        msg_u64(self.raw, sel(b"maxTransferRate\0"))
+    }
+
+    pub fn max_threadgroup_memory_length(&self) -> usize {
+        msg_usize(self.raw, sel(b"maxThreadgroupMemoryLength\0"))
+    }
+
+    pub fn max_argument_buffer_sampler_count(&self) -> usize {
+        msg_usize(self.raw, sel(b"maxArgumentBufferSamplerCount\0"))
+    }
+
+    pub fn max_buffer_length(&self) -> usize {
+        msg_usize(self.raw, sel(b"maxBufferLength\0"))
+    }
+
+    pub fn maximum_concurrent_compilation_task_count(&self) -> usize {
+        msg_usize(self.raw, sel(b"maximumConcurrentCompilationTaskCount\0"))
+    }
+
+    pub fn current_allocated_size(&self) -> usize {
+        msg_usize(self.raw, sel(b"currentAllocatedSize\0"))
+    }
+
+    pub fn read_write_texture_support(&self) -> ReadWriteTextureTier {
+        let val = msg_usize(self.raw, sel(b"readWriteTextureSupport\0"));
+        match val {
+            1 => ReadWriteTextureTier::Tier1,
+            2 => ReadWriteTextureTier::Tier2,
+            _ => ReadWriteTextureTier::None,
+        }
+    }
+
+    pub fn argument_buffers_support(&self) -> ArgumentBuffersTier {
+        let val = msg_usize(self.raw, sel(b"argumentBuffersSupport\0"));
+        match val {
+            1 => ArgumentBuffersTier::Tier2,
+            _ => ArgumentBuffersTier::Tier1,
+        }
+    }
+
+    pub fn depth24_stencil8_pixel_format_supported(&self) -> bool {
+        msg_bool(self.raw, sel(b"isDepth24Stencil8PixelFormatSupported\0")) != 0
+    }
+
+    pub fn supports_32bit_float_filtering(&self) -> bool {
+        msg_bool(self.raw, sel(b"supports32BitFloatFiltering\0")) != 0
+    }
+
+    pub fn supports_32bit_msaa(&self) -> bool {
+        msg_bool(self.raw, sel(b"supports32BitMSAA\0")) != 0
+    }
+
+    pub fn supports_query_texture_lod(&self) -> bool {
+        msg_bool(self.raw, sel(b"supportsQueryTextureLOD\0")) != 0
+    }
+
+    pub fn supports_bc_texture_compression(&self) -> bool {
+        msg_bool(self.raw, sel(b"supportsBCTextureCompression\0")) != 0
+    }
+
+    pub fn supports_pull_model_interpolation(&self) -> bool {
+        msg_bool(self.raw, sel(b"supportsPullModelInterpolation\0")) != 0
+    }
+
+    pub fn supports_shader_barycentric_coordinates(&self) -> bool {
+        msg_bool(self.raw, sel(b"supportsShaderBarycentricCoordinates\0")) != 0
+    }
+
+    pub fn supports_dynamic_libraries(&self) -> bool {
+        msg_bool(self.raw, sel(b"supportsDynamicLibraries\0")) != 0
+    }
+
+    pub fn supports_render_dynamic_libraries(&self) -> bool {
+        msg_bool(self.raw, sel(b"supportsRenderDynamicLibraries\0")) != 0
+    }
+
+    pub fn supports_function_pointers(&self) -> bool {
+        msg_bool(self.raw, sel(b"supportsFunctionPointers\0")) != 0
+    }
+
+    pub fn supports_function_pointers_from_render(&self) -> bool {
+        msg_bool(self.raw, sel(b"supportsFunctionPointersFromRender\0")) != 0
+    }
+
+    pub fn supports_raytracing_from_render(&self) -> bool {
+        msg_bool(self.raw, sel(b"supportsRaytracingFromRender\0")) != 0
+    }
+
+    pub fn supports_primitive_motion_blur(&self) -> bool {
+        msg_bool(self.raw, sel(b"supportsPrimitiveMotionBlur\0")) != 0
+    }
+
+    pub fn supports_family(&self, family: GPUFamily) -> bool {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, isize) -> BOOL = transmute(objc_msgSend as *const c_void);
+            f(self.raw, sel(b"supportsFamily:\0"), family as isize) != 0
+        }
+    }
+
+    pub fn supports_feature_set(&self, feature_set: FeatureSet) -> bool {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, usize) -> BOOL = transmute(objc_msgSend as *const c_void);
+            f(self.raw, sel(b"supportsFeatureSet:\0"), feature_set as usize) != 0
+        }
+    }
+
+    pub fn supports_texture_sample_count(&self, sample_count: usize) -> bool {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, usize) -> BOOL = transmute(objc_msgSend as *const c_void);
+            f(self.raw, sel(b"supportsTextureSampleCount:\0"), sample_count) != 0
+        }
+    }
+
+    pub fn supports_vertex_amplification_count(&self, count: usize) -> bool {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, usize) -> BOOL = transmute(objc_msgSend as *const c_void);
+            f(self.raw, sel(b"supportsVertexAmplificationCount:\0"), count) != 0
+        }
+    }
+
+    pub fn peer_group_id(&self) -> u64 {
+        msg_u64(self.raw, sel(b"peerGroupID\0"))
+    }
+
+    pub fn peer_index(&self) -> u32 {
+        msg_u32(self.raw, sel(b"peerIndex\0"))
+    }
+
+    pub fn peer_count(&self) -> u32 {
+        msg_u32(self.raw, sel(b"peerCount\0"))
+    }
+
+    pub fn new_buffer_with_bytes_no_copy(
+        &self,
+        pointer: *mut c_void,
+        length: usize,
+        options: ResourceOptions,
+    ) -> Result<Buffer, MetalError> {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, *mut c_void, usize, usize, id) -> id =
+                transmute(objc_msgSend as *const c_void);
+            let raw = retain(f(
+                self.raw,
+                sel(b"newBufferWithBytesNoCopy:length:options:deallocator:\0"),
+                pointer,
+                length,
+                options.as_raw(),
+                NIL,
+            ));
+            if raw.is_null() {
+                Err(MetalError::new("failed to create buffer with bytes no copy"))
+            } else {
+                Ok(Buffer { raw })
+            }
+        }
+    }
+
+    pub fn new_shared_texture(
+        &self,
+        descriptor: &TextureDescriptor,
+    ) -> Result<Texture, MetalError> {
+        let raw = retain(msg_id_id(
+            self.raw,
+            sel(b"newSharedTextureWithDescriptor:\0"),
+            descriptor.raw,
+        ));
+        if raw.is_null() {
+            Err(MetalError::new("failed to create new shared texture"))
+        } else {
+            Ok(Texture { raw })
+        }
+    }
+
+    pub fn new_shared_texture_with_handle(
+        &self,
+        shared_handle: &SharedTextureHandle,
+    ) -> Result<Texture, MetalError> {
+        let raw = retain(msg_id_id(
+            self.raw,
+            sel(b"newSharedTextureWithHandle:\0"),
+            shared_handle.raw,
+        ));
+        if raw.is_null() {
+            Err(MetalError::new("failed to create new shared texture with handle"))
+        } else {
+            Ok(Texture { raw })
+        }
+    }
+
+    pub fn new_texture_with_iosurface(
+        &self,
+        descriptor: &TextureDescriptor,
+        iosurface: *mut c_void,
+        plane: usize,
+    ) -> Result<Texture, MetalError> {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, *mut c_void, usize) -> id =
+                transmute(objc_msgSend as *const c_void);
+            let raw = retain(f(
+                self.raw,
+                sel(b"newTextureWithDescriptor:iosurface:plane:\0"),
+                descriptor.raw,
+                iosurface,
+                plane,
+            ));
+            if raw.is_null() {
+                Err(MetalError::new("failed to create texture with iosurface"))
+            } else {
+                Ok(Texture { raw })
+            }
+        }
+    }
+
+    pub fn new_dynamic_library(&self, library: &Library) -> Result<DynamicLibrary, MetalError> {
+        unsafe {
+            let mut error = NIL;
+            let f: unsafe extern "C" fn(id, SEL, id, *mut id) -> id =
+                transmute(objc_msgSend as *const c_void);
+            let raw = retain(f(self.raw, sel(b"newDynamicLibrary:error:\0"), library.raw, &mut error));
+            if raw.is_null() {
+                Err(MetalError::new(error_message(error, "failed to create dynamic library")))
+            } else {
+                Ok(DynamicLibrary { raw })
+            }
+        }
+    }
+
+    pub fn new_dynamic_library_with_url(&self, url_path: &str) -> Result<DynamicLibrary, MetalError> {
+        unsafe {
+            let url = ns_url_from_path(url_path);
+            let mut error = NIL;
+            let f: unsafe extern "C" fn(id, SEL, id, *mut id) -> id =
+                transmute(objc_msgSend as *const c_void);
+            let raw = retain(f(self.raw, sel(b"newDynamicLibraryWithURL:error:\0"), url, &mut error));
+            if raw.is_null() {
+                Err(MetalError::new(error_message(error, "failed to create dynamic library from URL")))
+            } else {
+                Ok(DynamicLibrary { raw })
+            }
+        }
+    }
+
+
     pub fn new_command_queue(&self) -> Result<CommandQueue, MetalError> {
         let raw = msg_id(self.raw, sel(b"newCommandQueue\0"));
         if raw.is_null() {
@@ -330,6 +619,31 @@ impl Device {
             Err(MetalError::new("failed to create Metal shared event"))
         } else {
             Ok(SharedEvent { raw })
+        }
+    }
+
+    pub fn new_shared_event_with_handle(
+        &self,
+        handle: &SharedEventHandle,
+    ) -> Result<SharedEvent, MetalError> {
+        let raw = retain(msg_id_id(
+            self.raw,
+            sel(b"newSharedEventWithHandle:\0"),
+            handle.raw,
+        ));
+        if raw.is_null() {
+            Err(MetalError::new("failed to create shared event with handle"))
+        } else {
+            Ok(SharedEvent { raw })
+        }
+    }
+
+    pub fn new_event(&self) -> Result<Event, MetalError> {
+        let raw = retain(msg_id(self.raw, sel(b"newEvent\0")));
+        if raw.is_null() {
+            Err(MetalError::new("failed to create Metal event"))
+        } else {
+            Ok(Event { raw })
         }
     }
 

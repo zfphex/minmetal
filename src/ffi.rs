@@ -116,6 +116,13 @@ pub(crate) fn msg_u64(obj: id, selector: SEL) -> u64 {
     }
 }
 
+pub(crate) fn msg_u32(obj: id, selector: SEL) -> u32 {
+    unsafe {
+        let f: unsafe extern "C" fn(id, SEL) -> u32 = transmute(objc_msgSend as *const c_void);
+        f(obj, selector)
+    }
+}
+
 #[allow(dead_code)]
 pub(crate) fn msg_bool(obj: id, selector: SEL) -> BOOL {
     unsafe {

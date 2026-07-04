@@ -1651,6 +1651,11 @@ pub struct DynamicLibrary {
 }
 
 impl DynamicLibrary {
+    pub fn device(&self) -> Device {
+        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        Device { raw: ptr }
+    }
+
     pub fn label(&self) -> Option<String> {
         ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
     }

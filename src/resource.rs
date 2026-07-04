@@ -1775,11 +1775,60 @@ impl Drop for ArgumentEncoder {
 }
 
 #[derive(Debug)]
+pub struct Event {
+    pub raw: id,
+}
+
+impl Event {
+    pub fn device(&self) -> Option<Device> {
+        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(Device { raw: ptr })
+        }
+    }
+
+    pub fn label(&self) -> Option<String> {
+        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    }
+
+    pub fn set_label(&self, label: &str) {
+        let ns_label = NSString::new(label);
+        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+    }
+}
+
+impl Drop for Event {
+    fn drop(&mut self) {
+        release(self.raw);
+    }
+}
+
+#[derive(Debug)]
 pub struct SharedEvent {
     pub raw: id,
 }
 
 impl SharedEvent {
+    pub fn device(&self) -> Option<Device> {
+        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(Device { raw: ptr })
+        }
+    }
+
+    pub fn label(&self) -> Option<String> {
+        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    }
+
+    pub fn set_label(&self, label: &str) {
+        let ns_label = NSString::new(label);
+        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+    }
+
     pub fn signaled_value(&self) -> u64 {
         msg_u64(self.raw, sel(b"signaledValue\0"))
     }
@@ -1787,9 +1836,82 @@ impl SharedEvent {
     pub fn set_signaled_value(&self, value: u64) {
         msg_void_u64(self.raw, sel(b"setSignaledValue:\0"), value);
     }
+
+    pub fn new_shared_event_handle(&self) -> Result<SharedEventHandle, MetalError> {
+        let raw = retain(msg_id(self.raw, sel(b"newSharedEventHandle\0")));
+        if raw.is_null() {
+            Err(MetalError::new("failed to create new shared event handle"))
+        } else {
+            Ok(SharedEventHandle { raw })
+        }
+    }
+
+    pub fn wait_until_signaled_value(&self, value: u64, timeout_ms: u64) -> bool {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, u64, u64) -> BOOL =
+                transmute(objc_msgSend as *const c_void);
+            f(self.raw, sel(b"waitUntilSignaledValue:timeoutMS:\0"), value, timeout_ms) != 0
+        }
+    }
 }
 
 impl Drop for SharedEvent {
+    fn drop(&mut self) {
+        release(self.raw);
+    }
+}
+
+#[derive(Debug)]
+pub struct SharedEventHandle {
+    pub raw: id,
+}
+
+impl SharedEventHandle {
+    pub fn label(&self) -> Option<String> {
+        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    }
+}
+
+impl Drop for SharedEventHandle {
+    fn drop(&mut self) {
+        release(self.raw);
+    }
+}
+
+#[derive(Debug)]
+pub struct SharedEventListener {
+    pub raw: id,
+}
+
+impl SharedEventListener {
+    pub fn new() -> Result<Self, MetalError> {
+        let cls = class(b"MTLSharedEventListener\0");
+        let obj = retain(msg_id(cls, sel(b"alloc\0")));
+        let raw = msg_id(obj, sel(b"init\0"));
+        if raw.is_null() {
+            Err(MetalError::new("failed to create MTLSharedEventListener"))
+        } else {
+            Ok(Self { raw })
+        }
+    }
+
+    pub fn with_dispatch_queue(queue: *mut c_void) -> Result<Self, MetalError> {
+        unsafe {
+            let cls = class(b"MTLSharedEventListener\0");
+            let obj = retain(msg_id(cls, sel(b"alloc\0")));
+            let f: unsafe extern "C" fn(id, SEL, *mut c_void) -> id =
+                transmute(objc_msgSend as *const c_void);
+            let raw = f(obj, sel(b"initWithDispatchQueue:\0"), queue);
+            if raw.is_null() {
+                Err(MetalError::new("failed to create MTLSharedEventListener with dispatch queue"))
+            } else {
+                Ok(Self { raw })
+            }
+        }
+    }
+}
+
+impl Drop for SharedEventListener {
     fn drop(&mut self) {
         release(self.raw);
     }

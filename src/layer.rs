@@ -115,6 +115,31 @@ impl Drawable {
     pub fn present(&self) {
         msg_void(self.raw, sel(b"present\0"));
     }
+
+    pub fn present_at_time(&self, time: f64) {
+        msg_void_f64(self.raw, sel(b"presentAtTime:\0"), time);
+    }
+
+    pub fn present_after_minimum_duration(&self, duration: f64) {
+        msg_void_f64(self.raw, sel(b"presentAfterMinimumDuration:\0"), duration);
+    }
+
+    pub fn presented_time(&self) -> f64 {
+        msg_f64(self.raw, sel(b"presentedTime\0"))
+    }
+
+    pub fn drawable_id(&self) -> usize {
+        msg_usize(self.raw, sel(b"drawableID\0"))
+    }
+
+    pub fn layer(&self) -> Option<MetalLayer> {
+        let ptr = retain(msg_id(self.raw, sel(b"layer\0")));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(MetalLayer { raw: ptr })
+        }
+    }
 }
 
 impl Drop for Drawable {

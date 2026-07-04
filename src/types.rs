@@ -1257,3 +1257,85 @@ pub struct AccelerationStructureInstanceDescriptor {
     pub intersection_function_table_offset: u32,
     pub acceleration_structure_index: u32,
 }
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct BarrierScope(pub usize);
+impl BarrierScope {
+    pub const BUFFERS: Self = Self(1 << 0);
+    pub const TEXTURES: Self = Self(1 << 1);
+    pub const RENDER_TARGETS: Self = Self(1 << 2);
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum DeviceLocation {
+    BuiltIn = 0,
+    Slot = 1,
+    External = 2,
+    Unspecified = 100,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ReadWriteTextureTier {
+    None = 0,
+    Tier1 = 1,
+    Tier2 = 2,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ArgumentBuffersTier {
+    Tier1 = 0,
+    Tier2 = 1,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum GPUFamily {
+    Apple1 = 1001,
+    Apple2 = 1002,
+    Apple3 = 1003,
+    Apple4 = 1004,
+    Apple5 = 1005,
+    Apple6 = 1006,
+    Apple7 = 1007,
+    Apple8 = 1008,
+    Apple9 = 1009,
+    Mac1 = 2001,
+    Mac2 = 2002,
+    Common1 = 3001,
+    Common2 = 3002,
+    Common3 = 3003,
+    Metal3 = 5001,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FeatureSet {
+    iOS_GPUFamily1_v1 = 0,
+    iOS_GPUFamily2_v1 = 1,
+    iOS_GPUFamily1_v2 = 2,
+    iOS_GPUFamily2_v2 = 3,
+    iOS_GPUFamily3_v1 = 4,
+    iOS_GPUFamily1_v3 = 5,
+    iOS_GPUFamily2_v3 = 6,
+    iOS_GPUFamily3_v2 = 7,
+    iOS_GPUFamily1_v4 = 8,
+    iOS_GPUFamily2_v4 = 9,
+    iOS_GPUFamily3_v3 = 10,
+    iOS_GPUFamily4_v1 = 11,
+    tvOS_GPUFamily1_v1 = 30000,
+    tvOS_GPUFamily1_v2 = 30001,
+    macOS_GPUFamily1_v1 = 10000,
+    macOS_GPUFamily1_v2 = 10001,
+    macOS_ReadWriteTextureTier2 = 10002,
+    macOS_GPUFamily1_v3 = 10003,
+    macOS_GPUFamily1_v4 = 10004,
+    macOS_GPUFamily2_v1 = 10005,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum DynamicLibraryError {
+    None = 0,
+    InvalidFile = 1,
+    CompilationFailure = 2,
+    UnresolvedInstallName = 3,
+    DependencyLoadFailure = 4,
+    Unsupported = 5,
+}
