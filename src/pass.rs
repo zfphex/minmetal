@@ -418,8 +418,16 @@ impl RenderPassDescriptor {
     ) {
         let attachment = self.color_attachments().object_at_indexed_subscript(index);
         msg_void_id(attachment.raw, sel(b"setTexture:\0"), texture.raw);
-        msg_void_usize(attachment.raw, sel(b"setLoadAction:\0"), load_action as usize);
-        msg_void_usize(attachment.raw, sel(b"setStoreAction:\0"), store_action as usize);
+        msg_void_usize(
+            attachment.raw,
+            sel(b"setLoadAction:\0"),
+            load_action as usize,
+        );
+        msg_void_usize(
+            attachment.raw,
+            sel(b"setStoreAction:\0"),
+            store_action as usize,
+        );
         msg_void_clear_color(attachment.raw, sel(b"setClearColor:\0"), clear_color);
     }
 
@@ -555,7 +563,9 @@ impl RenderPassDescriptor {
             msg_void_usize(self.raw, selector, count);
             Ok(())
         } else {
-            Err(MetalError::new("setDefaultRasterSampleCount: not supported"))
+            Err(MetalError::new(
+                "setDefaultRasterSampleCount: not supported",
+            ))
         }
     }
 
@@ -658,7 +668,10 @@ impl RenderPassDescriptor {
         }
     }
 
-    pub fn get_sample_positions(&self, positions: &mut [SamplePosition]) -> Result<usize, MetalError> {
+    pub fn get_sample_positions(
+        &self,
+        positions: &mut [SamplePosition],
+    ) -> Result<usize, MetalError> {
         let selector = sel(b"getSamplePositions:count:\0");
         if responds_to_selector(self.raw, selector) {
             let count = unsafe {
@@ -731,7 +744,10 @@ impl ComputePassSampleBufferAttachmentDescriptorArray {
         &self,
         index: usize,
     ) -> ComputePassSampleBufferAttachmentDescriptor {
-        assert!(index < 4, "ComputePass sample buffer attachment index must be < 4");
+        assert!(
+            index < 4,
+            "ComputePass sample buffer attachment index must be < 4"
+        );
         let attachment = msg_id_usize(self.raw, sel(b"objectAtIndexedSubscript:\0"), index);
         ComputePassSampleBufferAttachmentDescriptor { raw: attachment }
     }
@@ -741,7 +757,10 @@ impl ComputePassSampleBufferAttachmentDescriptorArray {
         index: usize,
         attachment: Option<&ComputePassSampleBufferAttachmentDescriptor>,
     ) {
-        assert!(index < 4, "ComputePass sample buffer attachment index must be < 4");
+        assert!(
+            index < 4,
+            "ComputePass sample buffer attachment index must be < 4"
+        );
         msg_void_id_usize(
             self.raw,
             sel(b"setObject:atIndexedSubscript:\0"),
@@ -853,7 +872,10 @@ impl BlitPassSampleBufferAttachmentDescriptorArray {
         &self,
         index: usize,
     ) -> BlitPassSampleBufferAttachmentDescriptor {
-        assert!(index < 4, "BlitPass sample buffer attachment index must be < 4");
+        assert!(
+            index < 4,
+            "BlitPass sample buffer attachment index must be < 4"
+        );
         let attachment = msg_id_usize(self.raw, sel(b"objectAtIndexedSubscript:\0"), index);
         BlitPassSampleBufferAttachmentDescriptor { raw: attachment }
     }
@@ -863,7 +885,10 @@ impl BlitPassSampleBufferAttachmentDescriptorArray {
         index: usize,
         attachment: Option<&BlitPassSampleBufferAttachmentDescriptor>,
     ) {
-        assert!(index < 4, "BlitPass sample buffer attachment index must be < 4");
+        assert!(
+            index < 4,
+            "BlitPass sample buffer attachment index must be < 4"
+        );
         msg_void_id_usize(
             self.raw,
             sel(b"setObject:atIndexedSubscript:\0"),
@@ -964,7 +989,10 @@ impl ResourceStatePassSampleBufferAttachmentDescriptorArray {
         &self,
         index: usize,
     ) -> ResourceStatePassSampleBufferAttachmentDescriptor {
-        assert!(index < 4, "ResourceStatePass sample buffer attachment index must be < 4");
+        assert!(
+            index < 4,
+            "ResourceStatePass sample buffer attachment index must be < 4"
+        );
         let attachment = msg_id_usize(self.raw, sel(b"objectAtIndexedSubscript:\0"), index);
         ResourceStatePassSampleBufferAttachmentDescriptor { raw: attachment }
     }
@@ -974,7 +1002,10 @@ impl ResourceStatePassSampleBufferAttachmentDescriptorArray {
         index: usize,
         attachment: Option<&ResourceStatePassSampleBufferAttachmentDescriptor>,
     ) {
-        assert!(index < 4, "ResourceStatePass sample buffer attachment index must be < 4");
+        assert!(
+            index < 4,
+            "ResourceStatePass sample buffer attachment index must be < 4"
+        );
         msg_void_id_usize(
             self.raw,
             sel(b"setObject:atIndexedSubscript:\0"),

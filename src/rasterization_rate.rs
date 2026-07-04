@@ -218,8 +218,11 @@ impl RasterizationRateLayerDescriptor {
     }
 
     pub fn set_horizontal_sample(&self, index: usize, value: f32) -> Result<(), MetalError> {
-        self.horizontal()
-            .set_object_at_indexed_subscript_checked(value, index, self.sample_count().width)
+        self.horizontal().set_object_at_indexed_subscript_checked(
+            value,
+            index,
+            self.sample_count().width,
+        )
     }
 
     pub fn vertical_sample(&self, index: usize) -> Result<f32, MetalError> {
@@ -228,8 +231,11 @@ impl RasterizationRateLayerDescriptor {
     }
 
     pub fn set_vertical_sample(&self, index: usize, value: f32) -> Result<(), MetalError> {
-        self.vertical()
-            .set_object_at_indexed_subscript_checked(value, index, self.sample_count().height)
+        self.vertical().set_object_at_indexed_subscript_checked(
+            value,
+            index,
+            self.sample_count().height,
+        )
     }
 }
 

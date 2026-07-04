@@ -89,9 +89,8 @@ impl ResourceStateCommandEncoder {
             ));
         }
         unsafe {
-            let selector = sel(
-                b"updateTextureMappings:mode:regions:mipLevels:slices:numRegions:\0",
-            );
+            let selector =
+                sel(b"updateTextureMappings:mode:regions:mipLevels:slices:numRegions:\0");
             if !responds_to_selector(self.raw, selector) {
                 return Err(MetalError::new(
                     "updateTextureMappings:mode:regions:mipLevels:slices:numRegions: not supported on this ResourceStateCommandEncoder",
@@ -129,9 +128,7 @@ impl ResourceStateCommandEncoder {
         indirect_buffer_offset: usize,
     ) -> Result<(), MetalError> {
         unsafe {
-            let selector = sel(
-                b"updateTextureMapping:mode:indirectBuffer:indirectBufferOffset:\0",
-            );
+            let selector = sel(b"updateTextureMapping:mode:indirectBuffer:indirectBufferOffset:\0");
             if !responds_to_selector(self.raw, selector) {
                 return Err(MetalError::new(
                     "updateTextureMapping:mode:indirectBuffer:indirectBufferOffset: not supported on this ResourceStateCommandEncoder",

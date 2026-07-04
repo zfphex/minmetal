@@ -113,7 +113,9 @@ thread_local! {
 unsafe extern "C" fn device_notification_block_invoke(_block: *mut c_void, device: id, name: id) {
     DEVICE_NOTIFICATION_HANDLER.with(|slot| {
         if let Some(handler_ptr) = *slot.borrow() {
-            let device = Device { raw: retain(device) };
+            let device = Device {
+                raw: retain(device),
+            };
             unsafe {
                 (*handler_ptr)(device, device_notification_name_from_raw(name));
             }
@@ -301,28 +303,40 @@ impl Device {
 
     pub fn supports_family(&self, family: GPUFamily) -> bool {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, isize) -> BOOL = transmute(objc_msgSend as *const c_void);
+            let f: unsafe extern "C" fn(id, SEL, isize) -> BOOL =
+                transmute(objc_msgSend as *const c_void);
             f(self.raw, sel(b"supportsFamily:\0"), family as isize) != 0
         }
     }
 
     pub fn supports_feature_set(&self, feature_set: FeatureSet) -> bool {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, usize) -> BOOL = transmute(objc_msgSend as *const c_void);
-            f(self.raw, sel(b"supportsFeatureSet:\0"), feature_set as usize) != 0
+            let f: unsafe extern "C" fn(id, SEL, usize) -> BOOL =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"supportsFeatureSet:\0"),
+                feature_set as usize,
+            ) != 0
         }
     }
 
     pub fn supports_texture_sample_count(&self, sample_count: usize) -> bool {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, usize) -> BOOL = transmute(objc_msgSend as *const c_void);
-            f(self.raw, sel(b"supportsTextureSampleCount:\0"), sample_count) != 0
+            let f: unsafe extern "C" fn(id, SEL, usize) -> BOOL =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"supportsTextureSampleCount:\0"),
+                sample_count,
+            ) != 0
         }
     }
 
     pub fn supports_vertex_amplification_count(&self, count: usize) -> bool {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, usize) -> BOOL = transmute(objc_msgSend as *const c_void);
+            let f: unsafe extern "C" fn(id, SEL, usize) -> BOOL =
+                transmute(objc_msgSend as *const c_void);
             f(self.raw, sel(b"supportsVertexAmplificationCount:\0"), count) != 0
         }
     }
@@ -357,7 +371,9 @@ impl Device {
                 NIL,
             ));
             if raw.is_null() {
-                Err(MetalError::new("failed to create buffer with bytes no copy"))
+                Err(MetalError::new(
+                    "failed to create buffer with bytes no copy",
+                ))
             } else {
                 Ok(Buffer { raw })
             }
@@ -390,7 +406,9 @@ impl Device {
             shared_handle.raw,
         ));
         if raw.is_null() {
-            Err(MetalError::new("failed to create new shared texture with handle"))
+            Err(MetalError::new(
+                "failed to create new shared texture with handle",
+            ))
         } else {
             Ok(Texture { raw })
         }
@@ -425,30 +443,48 @@ impl Device {
             let mut error = NIL;
             let f: unsafe extern "C" fn(id, SEL, id, *mut id) -> id =
                 transmute(objc_msgSend as *const c_void);
-            let raw = retain(f(self.raw, sel(b"newDynamicLibrary:error:\0"), library.raw, &mut error));
+            let raw = retain(f(
+                self.raw,
+                sel(b"newDynamicLibrary:error:\0"),
+                library.raw,
+                &mut error,
+            ));
             if raw.is_null() {
-                Err(MetalError::new(error_message(error, "failed to create dynamic library")))
+                Err(MetalError::new(error_message(
+                    error,
+                    "failed to create dynamic library",
+                )))
             } else {
                 Ok(DynamicLibrary { raw })
             }
         }
     }
 
-    pub fn new_dynamic_library_with_url(&self, url_path: &str) -> Result<DynamicLibrary, MetalError> {
+    pub fn new_dynamic_library_with_url(
+        &self,
+        url_path: &str,
+    ) -> Result<DynamicLibrary, MetalError> {
         unsafe {
             let url = ns_url_from_path(url_path);
             let mut error = NIL;
             let f: unsafe extern "C" fn(id, SEL, id, *mut id) -> id =
                 transmute(objc_msgSend as *const c_void);
-            let raw = retain(f(self.raw, sel(b"newDynamicLibraryWithURL:error:\0"), url, &mut error));
+            let raw = retain(f(
+                self.raw,
+                sel(b"newDynamicLibraryWithURL:error:\0"),
+                url,
+                &mut error,
+            ));
             if raw.is_null() {
-                Err(MetalError::new(error_message(error, "failed to create dynamic library from URL")))
+                Err(MetalError::new(error_message(
+                    error,
+                    "failed to create dynamic library from URL",
+                )))
             } else {
                 Ok(DynamicLibrary { raw })
             }
         }
     }
-
 
     pub fn new_command_queue(&self) -> Result<CommandQueue, MetalError> {
         let raw = msg_id(self.raw, sel(b"newCommandQueue\0"));
@@ -611,9 +647,7 @@ impl Device {
     pub fn new_library_with_data(&self, data: &[u8]) -> Result<Library, MetalError> {
         let ns_data = ns_data_from_bytes(data);
         if ns_data.is_null() {
-            return Err(MetalError::new(
-                "failed to create NSData for Metal library",
-            ));
+            return Err(MetalError::new("failed to create NSData for Metal library"));
         }
         let mut error = NIL;
         let raw = msg_id_id_err(

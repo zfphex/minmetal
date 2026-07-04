@@ -500,10 +500,7 @@ impl IndirectRenderCommand {
         Ok(())
     }
 
-    pub fn set_render_pipeline_state(
-        &self,
-        state: &RenderPipelineState,
-    ) -> Result<(), MetalError> {
+    pub fn set_render_pipeline_state(&self, state: &RenderPipelineState) -> Result<(), MetalError> {
         if self.config.max_command_count > 0 && self.config.inherit_pipeline_state {
             return Err(MetalError::new(
                 "cannot set render pipeline state when inheritPipelineState is enabled",
@@ -567,7 +564,11 @@ impl IndirectRenderCommand {
         buffer: &Buffer,
         offset: usize,
     ) -> Result<(), MetalError> {
-        self.validate_buffer_bind(index, self.config.max_fragment_buffer_bind_count, "fragment")?;
+        self.validate_buffer_bind(
+            index,
+            self.config.max_fragment_buffer_bind_count,
+            "fragment",
+        )?;
         msg_void_id_usize_usize(
             self.raw,
             sel(b"setFragmentBuffer:offset:atIndex:\0"),
@@ -694,7 +695,9 @@ impl IndirectRenderCommand {
             }
             Ok(())
         } else {
-            Err(MetalError::new("drawPatches: not supported on this indirect render command"))
+            Err(MetalError::new(
+                "drawPatches: not supported on this indirect render command",
+            ))
         }
     }
 
@@ -766,7 +769,9 @@ impl IndirectRenderCommand {
             msg_void(self.raw, selector);
             Ok(())
         } else {
-            Err(MetalError::new("setBarrier not supported on this indirect render command"))
+            Err(MetalError::new(
+                "setBarrier not supported on this indirect render command",
+            ))
         }
     }
 

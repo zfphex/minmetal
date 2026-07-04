@@ -170,12 +170,17 @@ impl CaptureManager {
         }
     }
 
-    pub fn new_capture_scope_with_device(&self, device: &Device) -> Result<CaptureScope, MetalError> {
+    pub fn new_capture_scope_with_device(
+        &self,
+        device: &Device,
+    ) -> Result<CaptureScope, MetalError> {
         let selector = sel(b"newCaptureScopeWithDevice:\0");
         if responds_to_selector(self.raw, selector) {
             let raw = msg_id_id(self.raw, selector, device.raw);
             if raw.is_null() {
-                Err(MetalError::new("failed to create capture scope with device"))
+                Err(MetalError::new(
+                    "failed to create capture scope with device",
+                ))
             } else {
                 Ok(CaptureScope { raw })
             }
@@ -184,17 +189,24 @@ impl CaptureManager {
         }
     }
 
-    pub fn new_capture_scope_with_command_queue(&self, queue: &CommandQueue) -> Result<CaptureScope, MetalError> {
+    pub fn new_capture_scope_with_command_queue(
+        &self,
+        queue: &CommandQueue,
+    ) -> Result<CaptureScope, MetalError> {
         let selector = sel(b"newCaptureScopeWithCommandQueue:\0");
         if responds_to_selector(self.raw, selector) {
             let raw = msg_id_id(self.raw, selector, queue.raw);
             if raw.is_null() {
-                Err(MetalError::new("failed to create capture scope with command queue"))
+                Err(MetalError::new(
+                    "failed to create capture scope with command queue",
+                ))
             } else {
                 Ok(CaptureScope { raw })
             }
         } else {
-            Err(MetalError::new("newCaptureScopeWithCommandQueue: not supported"))
+            Err(MetalError::new(
+                "newCaptureScopeWithCommandQueue: not supported",
+            ))
         }
     }
 

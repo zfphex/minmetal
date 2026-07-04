@@ -143,11 +143,7 @@ impl RenderCommandEncoder {
         }
     }
 
-    pub fn set_visibility_result_mode(
-        &self,
-        mode: VisibilityResultMode,
-        offset: usize,
-    ) {
+    pub fn set_visibility_result_mode(&self, mode: VisibilityResultMode, offset: usize) {
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, usize, usize) =
                 transmute(objc_msgSend as *const c_void);
@@ -206,11 +202,17 @@ impl RenderCommandEncoder {
             }
             Ok(())
         } else {
-            Err(MetalError::new("setVertexBufferOffset:atIndex: not supported"))
+            Err(MetalError::new(
+                "setVertexBufferOffset:atIndex: not supported",
+            ))
         }
     }
 
-    pub fn set_fragment_buffer_offset(&self, offset: usize, index: usize) -> Result<(), MetalError> {
+    pub fn set_fragment_buffer_offset(
+        &self,
+        offset: usize,
+        index: usize,
+    ) -> Result<(), MetalError> {
         let selector = sel(b"setFragmentBufferOffset:atIndex:\0");
         if responds_to_selector(self.raw, selector) {
             unsafe {
@@ -220,7 +222,9 @@ impl RenderCommandEncoder {
             }
             Ok(())
         } else {
-            Err(MetalError::new("setFragmentBufferOffset:atIndex: not supported"))
+            Err(MetalError::new(
+                "setFragmentBufferOffset:atIndex: not supported",
+            ))
         }
     }
 
@@ -284,17 +288,8 @@ impl RenderCommandEncoder {
         );
         if responds_to_selector(self.raw, selector) {
             unsafe {
-                let f: unsafe extern "C" fn(
-                    id,
-                    SEL,
-                    usize,
-                    usize,
-                    usize,
-                    id,
-                    usize,
-                    usize,
-                    usize,
-                ) = transmute(objc_msgSend as *const c_void);
+                let f: unsafe extern "C" fn(id, SEL, usize, usize, usize, id, usize, usize, usize) =
+                    transmute(objc_msgSend as *const c_void);
                 f(
                     self.raw,
                     selector,
@@ -1463,7 +1458,12 @@ impl ComputeCommandEncoder {
         }
     }
 
-    pub fn set_buffer_offset_with_attribute_stride(&self, offset: usize, stride: usize, index: usize) {
+    pub fn set_buffer_offset_with_attribute_stride(
+        &self,
+        offset: usize,
+        stride: usize,
+        index: usize,
+    ) {
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, usize, usize, usize) =
                 transmute(objc_msgSend as *const c_void);
@@ -1523,12 +1523,7 @@ impl ComputeCommandEncoder {
         }
     }
 
-    pub fn set_bytes_with_attribute_stride<T>(
-        &self,
-        index: usize,
-        value: &T,
-        stride: usize,
-    ) {
+    pub fn set_bytes_with_attribute_stride<T>(&self, index: usize, value: &T, stride: usize) {
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, *const c_void, usize, usize, usize) =
                 transmute(objc_msgSend as *const c_void);
@@ -1617,8 +1612,7 @@ impl ComputeCommandEncoder {
 
     pub fn set_stage_in_region(&self, region: Region) {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, Region) =
-                transmute(objc_msgSend as *const c_void);
+            let f: unsafe extern "C" fn(id, SEL, Region) = transmute(objc_msgSend as *const c_void);
             f(self.raw, sel(b"setStageInRegion:\0"), region);
         }
     }
@@ -1702,11 +1696,7 @@ impl ComputeCommandEncoder {
     }
 
     pub fn memory_barrier_with_scope(&self, scope: BarrierScope) {
-        msg_void_usize(
-            self.raw,
-            sel(b"memoryBarrierWithScope:\0"),
-            scope.0,
-        );
+        msg_void_usize(self.raw, sel(b"memoryBarrierWithScope:\0"), scope.0);
     }
 
     pub fn memory_barrier_with_resources(&self, resources: &[id]) {
@@ -1721,7 +1711,6 @@ impl ComputeCommandEncoder {
             );
         }
     }
-
 
     pub fn device(&self) -> Device {
         let ptr = retain(msg_id(self.raw, sel(b"device\0")));
@@ -1982,11 +1971,7 @@ impl BlitCommandEncoder {
         }
     }
 
-    pub fn copy_textures(
-        &self,
-        source: &Texture,
-        destination: &Texture,
-    ) -> Result<(), MetalError> {
+    pub fn copy_textures(&self, source: &Texture, destination: &Texture) -> Result<(), MetalError> {
         let selector = sel(b"copyFromTexture:toTexture:\0");
         if responds_to_selector(self.raw, selector) {
             unsafe {
@@ -2240,7 +2225,9 @@ impl BlitCommandEncoder {
             }
             Ok(())
         } else {
-            Err(MetalError::new("synchronizeTexture:slice:level: not supported"))
+            Err(MetalError::new(
+                "synchronizeTexture:slice:level: not supported",
+            ))
         }
     }
 
@@ -2321,7 +2308,9 @@ impl BlitCommandEncoder {
             msg_void_id_range(self.raw, selector, buffer.raw, range);
             Ok(())
         } else {
-            Err(MetalError::new("resetCommandsInBuffer:withRange: not supported"))
+            Err(MetalError::new(
+                "resetCommandsInBuffer:withRange: not supported",
+            ))
         }
     }
 
@@ -2332,9 +2321,8 @@ impl BlitCommandEncoder {
         destination: &IndirectCommandBuffer,
         destination_index: usize,
     ) -> Result<(), MetalError> {
-        let selector = sel(
-            b"copyIndirectCommandBuffer:sourceRange:destination:destinationIndex:\0",
-        );
+        let selector =
+            sel(b"copyIndirectCommandBuffer:sourceRange:destination:destinationIndex:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "copyIndirectCommandBuffer:sourceRange:destination:destinationIndex: not supported",

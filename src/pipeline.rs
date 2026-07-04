@@ -612,10 +612,7 @@ impl ComputePipelineDescriptor {
         }
     }
 
-    pub fn set_preloaded_libraries(
-        &self,
-        libraries: &[&DynamicLibrary],
-    ) -> Result<(), MetalError> {
+    pub fn set_preloaded_libraries(&self, libraries: &[&DynamicLibrary]) -> Result<(), MetalError> {
         let selector = sel(b"setPreloadedLibraries:\0");
         if responds_to_selector(self.raw, selector) {
             let raw: Vec<id> = libraries.iter().map(|library| library.raw).collect();

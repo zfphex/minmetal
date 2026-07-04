@@ -815,7 +815,6 @@ pub enum StepFunction {
     ThreadPositionInGridYIndexed = 8,
 }
 
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(usize)]
 pub enum IndexType {
@@ -996,35 +995,35 @@ impl DataType {
             DataType::Char2 | DataType::UChar2 | DataType::Bool2 => Some(2),
             DataType::Char3 | DataType::UChar3 | DataType::Bool3 => Some(4),
             DataType::Char4 | DataType::UChar4 | DataType::Bool4 => Some(4),
-            
+
             DataType::Short | DataType::UShort | DataType::Half | DataType::BFloat => Some(2),
             DataType::Short2 | DataType::UShort2 | DataType::Half2 | DataType::BFloat2 => Some(4),
             DataType::Short3 | DataType::UShort3 | DataType::Half3 | DataType::BFloat3 => Some(8),
             DataType::Short4 | DataType::UShort4 | DataType::Half4 | DataType::BFloat4 => Some(8),
-            
+
             DataType::Int | DataType::UInt | DataType::Float => Some(4),
             DataType::Int2 | DataType::UInt2 | DataType::Float2 => Some(8),
             DataType::Int3 | DataType::UInt3 | DataType::Float3 => Some(16),
             DataType::Int4 | DataType::UInt4 | DataType::Float4 => Some(16),
-            
+
             DataType::Long | DataType::ULong => Some(8),
             DataType::Long2 | DataType::ULong2 => Some(16),
             DataType::Long3 | DataType::ULong3 => Some(32),
             DataType::Long4 | DataType::ULong4 => Some(32),
-            
+
             DataType::Float2x2 | DataType::Half4x2 => Some(16),
             DataType::Float2x3 | DataType::Float2x4 => Some(32),
             DataType::Float3x2 => Some(24),
             DataType::Float3x3 | DataType::Float3x4 => Some(48),
             DataType::Float4x2 => Some(32),
             DataType::Float4x3 | DataType::Float4x4 => Some(64),
-            
+
             DataType::Half2x2 => Some(8),
             DataType::Half2x3 | DataType::Half2x4 => Some(16),
             DataType::Half3x2 => Some(12),
             DataType::Half3x3 | DataType::Half3x4 => Some(24),
             DataType::Half4x3 | DataType::Half4x4 => Some(32),
-            
+
             _ => None,
         }
     }

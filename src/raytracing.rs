@@ -106,11 +106,7 @@ fn geometry_descriptor_buffer(raw: id, selector: &[u8]) -> Option<Buffer> {
 }
 
 fn geometry_descriptor_set_buffer(raw: id, selector: &[u8], buffer: Option<&Buffer>) {
-    msg_void_id(
-        raw,
-        sel(selector),
-        buffer.map_or(NIL, |b| b.raw),
-    );
+    msg_void_id(raw, sel(selector), buffer.map_or(NIL, |b| b.raw));
 }
 
 #[derive(Debug)]
@@ -185,7 +181,11 @@ impl AccelerationStructureTriangleGeometryDescriptor {
     }
 
     pub fn set_intersection_function_table_offset(&self, offset: usize) {
-        msg_void_usize(self.raw, sel(b"setIntersectionFunctionTableOffset:\0"), offset);
+        msg_void_usize(
+            self.raw,
+            sel(b"setIntersectionFunctionTableOffset:\0"),
+            offset,
+        );
     }
 
     pub fn opaque(&self) -> bool {
@@ -440,7 +440,11 @@ impl AccelerationStructureBoundingBoxGeometryDescriptor {
     }
 
     pub fn set_intersection_function_table_offset(&self, offset: usize) {
-        msg_void_usize(self.raw, sel(b"setIntersectionFunctionTableOffset:\0"), offset);
+        msg_void_usize(
+            self.raw,
+            sel(b"setIntersectionFunctionTableOffset:\0"),
+            offset,
+        );
     }
 
     pub fn opaque(&self) -> bool {
@@ -1373,11 +1377,7 @@ impl IndirectInstanceAccelerationStructureDescriptor {
     }
 
     pub fn set_instance_count_buffer_offset(&self, offset: usize) {
-        msg_void_usize(
-            self.raw,
-            sel(b"setInstanceCountBufferOffset:\0"),
-            offset,
-        );
+        msg_void_usize(self.raw, sel(b"setInstanceCountBufferOffset:\0"), offset);
     }
 
     pub fn set_instance_descriptor_type(
@@ -1396,11 +1396,7 @@ impl IndirectInstanceAccelerationStructureDescriptor {
     }
 
     pub fn set_motion_transform_buffer_offset(&self, offset: usize) {
-        msg_void_usize(
-            self.raw,
-            sel(b"setMotionTransformBufferOffset:\0"),
-            offset,
-        );
+        msg_void_usize(self.raw, sel(b"setMotionTransformBufferOffset:\0"), offset);
     }
 
     pub fn set_max_motion_transform_count(&self, count: usize) {
@@ -1408,7 +1404,11 @@ impl IndirectInstanceAccelerationStructureDescriptor {
     }
 
     pub fn set_motion_transform_count_buffer(&self, buffer: &Buffer) {
-        msg_void_id(self.raw, sel(b"setMotionTransformCountBuffer:\0"), buffer.raw);
+        msg_void_id(
+            self.raw,
+            sel(b"setMotionTransformCountBuffer:\0"),
+            buffer.raw,
+        );
     }
 
     pub fn set_motion_transform_count_buffer_offset(&self, offset: usize) {
@@ -2002,9 +2002,8 @@ impl AccelerationStructureCommandEncoder {
         size_data_type: DataType,
     ) -> Result<(), MetalError> {
         unsafe {
-            let selector = sel(
-                b"writeCompactedAccelerationStructureSize:toBuffer:offset:sizeDataType:\0",
-            );
+            let selector =
+                sel(b"writeCompactedAccelerationStructureSize:toBuffer:offset:sizeDataType:\0");
             if !responds_to_selector(self.raw, selector) {
                 return Err(MetalError::new(
                     "writeCompactedAccelerationStructureSize:toBuffer:offset:sizeDataType: not supported",

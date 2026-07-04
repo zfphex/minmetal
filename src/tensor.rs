@@ -69,12 +69,7 @@ impl TensorExtents {
         let raw = unsafe {
             let f: unsafe extern "C" fn(id, SEL, usize, *const isize) -> id =
                 transmute(objc_msgSend as *const c_void);
-            f(
-                allocated,
-                sel(b"initWithRank:values:\0"),
-                rank,
-                values_ptr,
-            )
+            f(allocated, sel(b"initWithRank:values:\0"), rank, values_ptr)
         };
         if raw.is_null() {
             Err(MetalError::new("failed to create MTLTensorExtents"))
@@ -91,11 +86,7 @@ impl TensorExtents {
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, usize) -> isize =
                 transmute(objc_msgSend as *const c_void);
-            f(
-                self.raw,
-                sel(b"extentAtDimensionIndex:\0"),
-                dimension_index,
-            )
+            f(self.raw, sel(b"extentAtDimensionIndex:\0"), dimension_index)
         }
     }
 }
@@ -255,7 +246,9 @@ impl Tensor {
         if responds_to_selector(self.raw, selector) {
             Ok(msg_resource_id(self.raw, selector))
         } else {
-            Err(MetalError::new("gpuResourceID not supported on this Tensor"))
+            Err(MetalError::new(
+                "gpuResourceID not supported on this Tensor",
+            ))
         }
     }
 

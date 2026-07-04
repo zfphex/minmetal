@@ -221,13 +221,7 @@ impl Buffer {
             }
             let f: unsafe extern "C" fn(id, SEL, id, usize, usize) -> id =
                 transmute(objc_msgSend as *const c_void);
-            let raw = f(
-                self.raw,
-                selector,
-                descriptor.raw,
-                offset,
-                bytes_per_row,
-            );
+            let raw = f(self.raw, selector, descriptor.raw, offset, bytes_per_row);
             if raw.is_null() {
                 Err(MetalError::new("failed to create buffer-backed texture"))
             } else {
@@ -271,10 +265,7 @@ impl Buffer {
         }
     }
 
-    pub fn new_remote_buffer_view_for_device(
-        &self,
-        device: &Device,
-    ) -> Result<Buffer, MetalError> {
+    pub fn new_remote_buffer_view_for_device(&self, device: &Device) -> Result<Buffer, MetalError> {
         let selector = sel(b"newRemoteBufferViewForDevice:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
@@ -2000,7 +1991,9 @@ impl ArgumentEncoder {
             msg_void_id_usize(self.raw, selector, pipeline.map_or(NIL, |p| p.raw), index);
             Ok(())
         } else {
-            Err(MetalError::new("setRenderPipelineState:atIndex: not supported"))
+            Err(MetalError::new(
+                "setRenderPipelineState:atIndex: not supported",
+            ))
         }
     }
 
@@ -2200,7 +2193,12 @@ impl SharedEvent {
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, u64, u64) -> BOOL =
                 transmute(objc_msgSend as *const c_void);
-            f(self.raw, sel(b"waitUntilSignaledValue:timeoutMS:\0"), value, timeout_ms) != 0
+            f(
+                self.raw,
+                sel(b"waitUntilSignaledValue:timeoutMS:\0"),
+                value,
+                timeout_ms,
+            ) != 0
         }
     }
 }
@@ -2253,7 +2251,9 @@ impl SharedEventListener {
                 transmute(objc_msgSend as *const c_void);
             let raw = f(obj, sel(b"initWithDispatchQueue:\0"), queue);
             if raw.is_null() {
-                Err(MetalError::new("failed to create MTLSharedEventListener with dispatch queue"))
+                Err(MetalError::new(
+                    "failed to create MTLSharedEventListener with dispatch queue",
+                ))
             } else {
                 Ok(Self { raw })
             }

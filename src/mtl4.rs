@@ -290,11 +290,7 @@ impl M4PipelineDescriptor {
     }
 
     pub fn set_options(&self, options: Option<&M4PipelineOptions>) {
-        m4_set_optional_id(
-            self.raw,
-            sel(b"setOptions:\0"),
-            options.map(|o| o.raw),
-        );
+        m4_set_optional_id(self.raw, sel(b"setOptions:\0"), options.map(|o| o.raw));
     }
 }
 
@@ -365,11 +361,7 @@ impl M4LibraryDescriptor {
     }
 
     pub fn set_options(&self, options: Option<&CompileOptions>) {
-        m4_set_optional_id(
-            self.raw,
-            sel(b"setOptions:\0"),
-            options.map(|o| o.raw),
-        );
+        m4_set_optional_id(self.raw, sel(b"setOptions:\0"), options.map(|o| o.raw));
     }
 
     pub fn name(&self) -> Option<String> {
@@ -420,11 +412,7 @@ impl M4LibraryFunctionDescriptor {
     }
 
     pub fn set_library(&self, library: Option<&Library>) {
-        m4_set_optional_id(
-            self.raw,
-            sel(b"setLibrary:\0"),
-            library.map(|l| l.raw),
-        );
+        m4_set_optional_id(self.raw, sel(b"setLibrary:\0"), library.map(|l| l.raw));
     }
 }
 
@@ -538,8 +526,7 @@ impl M4SpecializedFunctionDescriptor {
     }
 
     pub fn constant_values(&self) -> Option<FunctionConstantValues> {
-        m4_optional_id(self.raw, sel(b"constantValues\0"))
-            .map(|raw| FunctionConstantValues { raw })
+        m4_optional_id(self.raw, sel(b"constantValues\0")).map(|raw| FunctionConstantValues { raw })
     }
 
     pub fn set_constant_values(&self, values: Option<&FunctionConstantValues>) {
@@ -576,16 +563,11 @@ impl M4StitchedFunctionDescriptor {
     }
 
     pub fn function_graph(&self) -> Option<FunctionStitchingGraph> {
-        m4_optional_id(self.raw, sel(b"functionGraph\0"))
-            .map(|raw| FunctionStitchingGraph { raw })
+        m4_optional_id(self.raw, sel(b"functionGraph\0")).map(|raw| FunctionStitchingGraph { raw })
     }
 
     pub fn set_function_graph(&self, graph: Option<&FunctionStitchingGraph>) {
-        m4_set_optional_id(
-            self.raw,
-            sel(b"setFunctionGraph:\0"),
-            graph.map(|g| g.raw),
-        );
+        m4_set_optional_id(self.raw, sel(b"setFunctionGraph:\0"), graph.map(|g| g.raw));
     }
 
     pub fn function_descriptors(&self) -> Vec<M4FunctionDescriptor> {
@@ -681,10 +663,7 @@ impl M4StaticLinkingDescriptor {
     }
 
     pub fn private_function_descriptors(&self) -> Vec<M4FunctionDescriptor> {
-        m4_function_descriptors_from_array(msg_id(
-            self.raw,
-            sel(b"privateFunctionDescriptors\0"),
-        ))
+        m4_function_descriptors_from_array(msg_id(self.raw, sel(b"privateFunctionDescriptors\0")))
     }
 
     pub fn set_private_function_descriptors(&self, descriptors: &[&M4FunctionDescriptor]) {
@@ -911,7 +890,11 @@ impl M4RenderPipelineColorAttachmentDescriptorArray {
         }
     }
 
-    pub fn set_object(&self, attachment: Option<&M4RenderPipelineColorAttachmentDescriptor>, index: usize) {
+    pub fn set_object(
+        &self,
+        attachment: Option<&M4RenderPipelineColorAttachmentDescriptor>,
+        index: usize,
+    ) {
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, id, usize) =
                 transmute(objc_msgSend as *const c_void);
@@ -1011,8 +994,7 @@ impl M4RenderPipelineDescriptor {
     }
 
     pub fn vertex_descriptor(&self) -> Option<VertexDescriptor> {
-        m4_optional_id(self.raw, sel(b"vertexDescriptor\0"))
-            .map(|raw| VertexDescriptor { raw })
+        m4_optional_id(self.raw, sel(b"vertexDescriptor\0")).map(|raw| VertexDescriptor { raw })
     }
 
     pub fn set_vertex_descriptor(&self, descriptor: Option<&VertexDescriptor>) {
@@ -1160,17 +1142,12 @@ impl M4ComputePipelineDescriptor {
     }
 
     pub fn set_max_total_threads_per_threadgroup(&self, count: usize) {
-        msg_void_usize(
-            self.raw,
-            sel(b"setMaxTotalThreadsPerThreadgroup:\0"),
-            count,
-        );
+        msg_void_usize(self.raw, sel(b"setMaxTotalThreadsPerThreadgroup:\0"), count);
     }
 
     pub fn required_threads_per_threadgroup(&self) -> Size {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL) -> Size =
-                transmute(objc_msgSend as *const c_void);
+            let f: unsafe extern "C" fn(id, SEL) -> Size = transmute(objc_msgSend as *const c_void);
             f(self.raw, sel(b"requiredThreadsPerThreadgroup\0"))
         }
     }
@@ -1406,7 +1383,10 @@ impl M4MachineLearningPipelineDescriptor {
             .map(|raw| M4FunctionDescriptor { raw })
     }
 
-    pub fn set_machine_learning_function_descriptor(&self, descriptor: Option<&M4FunctionDescriptor>) {
+    pub fn set_machine_learning_function_descriptor(
+        &self,
+        descriptor: Option<&M4FunctionDescriptor>,
+    ) {
         m4_set_optional_id(
             self.raw,
             sel(b"setMachineLearningFunctionDescriptor:\0"),
@@ -1669,11 +1649,7 @@ impl M4ArgumentTableDescriptor {
     }
 
     pub fn set_max_sampler_state_bind_count(&self, count: usize) {
-        msg_void_usize(
-            self.raw,
-            sel(b"setMaxSamplerStateBindCount:\0"),
-            count,
-        );
+        msg_void_usize(self.raw, sel(b"setMaxSamplerStateBindCount:\0"), count);
     }
 
     pub fn initialize_bindings(&self) -> bool {
@@ -1845,64 +1821,64 @@ impl M4Archive {
         &self,
         descriptor: &M4ComputePipelineDescriptor,
     ) -> Result<ComputePipelineState, MetalError> {
-            let mut error = NIL;
-            let raw = retain(msg_id_id_err(
-                self.raw,
-                sel(b"newComputePipelineStateWithDescriptor:error:\0"),
-                descriptor.raw,
-                &mut error,
-            ));
-            if raw.is_null() {
-                Err(MetalError::new(&error_message(
-                    error,
-                    "newComputePipelineStateWithDescriptor failed",
-                )))
-            } else {
-                Ok(ComputePipelineState { raw })
-            }
+        let mut error = NIL;
+        let raw = retain(msg_id_id_err(
+            self.raw,
+            sel(b"newComputePipelineStateWithDescriptor:error:\0"),
+            descriptor.raw,
+            &mut error,
+        ));
+        if raw.is_null() {
+            Err(MetalError::new(&error_message(
+                error,
+                "newComputePipelineStateWithDescriptor failed",
+            )))
+        } else {
+            Ok(ComputePipelineState { raw })
         }
+    }
 
     pub fn new_render_pipeline_state(
         &self,
         descriptor: &M4PipelineDescriptor,
     ) -> Result<RenderPipelineState, MetalError> {
-            let mut error = NIL;
-            let raw = retain(msg_id_id_err(
-                self.raw,
-                sel(b"newRenderPipelineStateWithDescriptor:error:\0"),
-                descriptor.raw,
-                &mut error,
-            ));
-            if raw.is_null() {
-                Err(MetalError::new(&error_message(
-                    error,
-                    "newRenderPipelineStateWithDescriptor failed",
-                )))
-            } else {
-                Ok(RenderPipelineState { raw })
-            }
+        let mut error = NIL;
+        let raw = retain(msg_id_id_err(
+            self.raw,
+            sel(b"newRenderPipelineStateWithDescriptor:error:\0"),
+            descriptor.raw,
+            &mut error,
+        ));
+        if raw.is_null() {
+            Err(MetalError::new(&error_message(
+                error,
+                "newRenderPipelineStateWithDescriptor failed",
+            )))
+        } else {
+            Ok(RenderPipelineState { raw })
         }
+    }
 
     pub fn new_binary_function(
         &self,
         descriptor: &M4BinaryFunctionDescriptor,
     ) -> Result<M4BinaryFunction, MetalError> {
-            let mut error = NIL;
-            let raw = retain(msg_id_id_err(
-                self.raw,
-                sel(b"newBinaryFunctionWithDescriptor:error:\0"),
-                descriptor.raw,
-                &mut error,
-            ));
-            if raw.is_null() {
-                Err(MetalError::new(&error_message(
-                    error,
-                    "newBinaryFunctionWithDescriptor failed",
-                )))
-            } else {
-                Ok(M4BinaryFunction { raw })
-            }
+        let mut error = NIL;
+        let raw = retain(msg_id_id_err(
+            self.raw,
+            sel(b"newBinaryFunctionWithDescriptor:error:\0"),
+            descriptor.raw,
+            &mut error,
+        ));
+        if raw.is_null() {
+            Err(MetalError::new(&error_message(
+                error,
+                "newBinaryFunctionWithDescriptor failed",
+            )))
+        } else {
+            Ok(M4BinaryFunction { raw })
         }
+    }
 }
 
 impl Drop for M4Archive {
@@ -2004,11 +1980,7 @@ impl M4CommandBufferOptions {
     }
 
     pub fn set_log_state(&self, log_state: Option<&LogState>) {
-        m4_set_optional_id(
-            self.raw,
-            sel(b"setLogState:\0"),
-            log_state.map(|s| s.raw),
-        );
+        m4_set_optional_id(self.raw, sel(b"setLogState:\0"), log_state.map(|s| s.raw));
     }
 }
 
@@ -2062,8 +2034,7 @@ impl M4CommandBuffer {
         options: &M4CommandBufferOptions,
     ) {
         unsafe {
-            let f: unsafe extern "C" fn(id, SEL, id, id) =
-                transmute(objc_msgSend as *const c_void);
+            let f: unsafe extern "C" fn(id, SEL, id, id) = transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
                 sel(b"beginCommandBufferWithAllocator:options:\0"),
@@ -2100,11 +2071,7 @@ impl M4CommandBuffer {
     }
 
     pub fn use_residency_set(&self, residency_set: &ResidencySet) {
-        msg_void_id(
-            self.raw,
-            sel(b"useResidencySet:\0"),
-            residency_set.raw,
-        );
+        msg_void_id(self.raw, sel(b"useResidencySet:\0"), residency_set.raw);
     }
 
     pub fn write_timestamp_into_heap(&self, counter_heap: &M4CounterHeap, index: usize) {
@@ -2187,8 +2154,7 @@ impl M4CommandEncoder {
     }
 
     pub fn command_buffer(&self) -> Option<M4CommandBuffer> {
-        m4_optional_id(self.raw, sel(b"commandBuffer\0"))
-            .map(|raw| M4CommandBuffer { raw })
+        m4_optional_id(self.raw, sel(b"commandBuffer\0")).map(|raw| M4CommandBuffer { raw })
     }
 
     pub fn end_encoding(&self) {
@@ -2380,12 +2346,7 @@ impl M4CommandQueue {
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, *const id, usize) =
                 transmute(objc_msgSend as *const c_void);
-            f(
-                self.raw,
-                sel(b"commit:count:\0"),
-                raw.as_ptr(),
-                raw.len(),
-            );
+            f(self.raw, sel(b"commit:count:\0"), raw.as_ptr(), raw.len());
         }
     }
 
@@ -2420,19 +2381,11 @@ impl M4CommandQueue {
     }
 
     pub fn add_residency_set(&self, residency_set: &ResidencySet) {
-        msg_void_id(
-            self.raw,
-            sel(b"addResidencySet:\0"),
-            residency_set.raw,
-        );
+        msg_void_id(self.raw, sel(b"addResidencySet:\0"), residency_set.raw);
     }
 
     pub fn remove_residency_set(&self, residency_set: &ResidencySet) {
-        msg_void_id(
-            self.raw,
-            sel(b"removeResidencySet:\0"),
-            residency_set.raw,
-        );
+        msg_void_id(self.raw, sel(b"removeResidencySet:\0"), residency_set.raw);
     }
 }
 
@@ -2645,19 +2598,22 @@ impl M4Compiler {
         &self,
         descriptor: &M4LibraryDescriptor,
     ) -> Result<Library, MetalError> {
-            let mut error = NIL;
-            let raw = retain(msg_id_id_err(
-                self.raw,
-                sel(b"newLibraryWithDescriptor:error:\0"),
-                descriptor.raw,
-                &mut error,
-            ));
-            if raw.is_null() {
-                Err(MetalError::new(&error_message(error, "newLibraryWithDescriptor failed")))
-            } else {
-                Ok(Library { raw })
-            }
+        let mut error = NIL;
+        let raw = retain(msg_id_id_err(
+            self.raw,
+            sel(b"newLibraryWithDescriptor:error:\0"),
+            descriptor.raw,
+            &mut error,
+        ));
+        if raw.is_null() {
+            Err(MetalError::new(&error_message(
+                error,
+                "newLibraryWithDescriptor failed",
+            )))
+        } else {
+            Ok(Library { raw })
         }
+    }
 
     pub fn new_compute_pipeline_state(
         &self,
@@ -2744,22 +2700,22 @@ impl M4Compiler {
         &self,
         descriptor: &M4MachineLearningPipelineDescriptor,
     ) -> Result<M4MachineLearningPipelineState, MetalError> {
-            let mut error = NIL;
-            let raw = retain(msg_id_id_err(
-                self.raw,
-                sel(b"newMachineLearningPipelineStateWithDescriptor:error:\0"),
-                descriptor.raw,
-                &mut error,
-            ));
-            if raw.is_null() {
-                Err(MetalError::new(&error_message(
-                    error,
-                    "newMachineLearningPipelineStateWithDescriptor failed",
-                )))
-            } else {
-                Ok(M4MachineLearningPipelineState { raw })
-            }
+        let mut error = NIL;
+        let raw = retain(msg_id_id_err(
+            self.raw,
+            sel(b"newMachineLearningPipelineStateWithDescriptor:error:\0"),
+            descriptor.raw,
+            &mut error,
+        ));
+        if raw.is_null() {
+            Err(MetalError::new(&error_message(
+                error,
+                "newMachineLearningPipelineStateWithDescriptor failed",
+            )))
+        } else {
+            Ok(M4MachineLearningPipelineState { raw })
         }
+    }
 }
 
 impl Drop for M4Compiler {
@@ -2793,10 +2749,7 @@ impl M4PipelineDataSetSerializerDescriptor {
     }
 
     pub fn configuration(&self) -> M4PipelineDataSetSerializerConfiguration {
-        M4PipelineDataSetSerializerConfiguration(msg_usize(
-            self.raw,
-            sel(b"configuration\0"),
-        ))
+        M4PipelineDataSetSerializerConfiguration(msg_usize(self.raw, sel(b"configuration\0")))
     }
 
     pub fn set_configuration(&self, configuration: M4PipelineDataSetSerializerConfiguration) {
@@ -2827,23 +2780,23 @@ impl M4PipelineDataSetSerializer {
     }
 
     pub fn serialize_as_archive_and_flush_to_url(&self, url_path: &str) -> Result<(), MetalError> {
-            let mut error = NIL;
-            let url = ns_url_from_path(url_path);
-            let ok = msg_bool_id_err(
-                self.raw,
-                sel(b"serializeAsArchiveAndFlushToURL:error:\0"),
-                url,
-                &mut error,
-            );
-            if ok == NO {
-                Err(MetalError::new(&error_message(
-                    error,
-                    "serializeAsArchiveAndFlushToURL failed",
-                )))
-            } else {
-                Ok(())
-            }
+        let mut error = NIL;
+        let url = ns_url_from_path(url_path);
+        let ok = msg_bool_id_err(
+            self.raw,
+            sel(b"serializeAsArchiveAndFlushToURL:error:\0"),
+            url,
+            &mut error,
+        );
+        if ok == NO {
+            Err(MetalError::new(&error_message(
+                error,
+                "serializeAsArchiveAndFlushToURL failed",
+            )))
+        } else {
+            Ok(())
         }
+    }
 
     pub fn serialize_as_pipelines_script(&self) -> Result<Vec<u8>, MetalError> {
         unsafe {
@@ -2976,11 +2929,7 @@ impl M4ComputeCommandEncoder {
     }
 
     pub fn set_compute_pipeline_state(&self, state: &ComputePipelineState) {
-        msg_void_id(
-            self.raw,
-            sel(b"setComputePipelineState:\0"),
-            state.raw,
-        );
+        msg_void_id(self.raw, sel(b"setComputePipelineState:\0"), state.raw);
     }
 
     pub fn set_argument_table(&self, argument_table: Option<&M4ArgumentTable>) {
@@ -3100,11 +3049,7 @@ impl M4RenderCommandEncoder {
     }
 
     pub fn set_argument_table(&self, argument_table: &M4ArgumentTable) {
-        msg_void_id(
-            self.raw,
-            sel(b"setArgumentTable:\0"),
-            argument_table.raw,
-        );
+        msg_void_id(self.raw, sel(b"setArgumentTable:\0"), argument_table.raw);
     }
 
     pub fn set_viewport(&self, viewport: Viewport) {
@@ -3179,19 +3124,11 @@ impl M4MachineLearningCommandEncoder {
     }
 
     pub fn set_pipeline_state(&self, pipeline_state: &M4MachineLearningPipelineState) {
-        msg_void_id(
-            self.raw,
-            sel(b"setPipelineState:\0"),
-            pipeline_state.raw,
-        );
+        msg_void_id(self.raw, sel(b"setPipelineState:\0"), pipeline_state.raw);
     }
 
     pub fn set_argument_table(&self, argument_table: &M4ArgumentTable) {
-        msg_void_id(
-            self.raw,
-            sel(b"setArgumentTable:\0"),
-            argument_table.raw,
-        );
+        msg_void_id(self.raw, sel(b"setArgumentTable:\0"), argument_table.raw);
     }
 
     pub fn dispatch_network_with_intermediates_heap(&self, heap: &Heap) {
@@ -3552,28 +3489,28 @@ impl Device {
         &self,
         descriptor: &M4CommandAllocatorDescriptor,
     ) -> Result<M4CommandAllocator, MetalError> {
-            let mut error = NIL;
-            let selector = sel(b"newCommandAllocatorWithDescriptor:error:\0");
-            if !responds_to_selector(self.raw, selector) {
-                return Err(MetalError::new(
-                    "newCommandAllocatorWithDescriptor:error: not supported",
-                ));
-            }
-            let raw = retain(msg_id_id_err(
-                self.raw,
-                selector,
-                descriptor.raw,
-                &mut error,
+        let mut error = NIL;
+        let selector = sel(b"newCommandAllocatorWithDescriptor:error:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "newCommandAllocatorWithDescriptor:error: not supported",
             ));
-            if raw.is_null() {
-                Err(MetalError::new(&error_message(
-                    error,
-                    "newCommandAllocatorWithDescriptor failed",
-                )))
-            } else {
-                Ok(M4CommandAllocator { raw })
-            }
         }
+        let raw = retain(msg_id_id_err(
+            self.raw,
+            selector,
+            descriptor.raw,
+            &mut error,
+        ));
+        if raw.is_null() {
+            Err(MetalError::new(&error_message(
+                error,
+                "newCommandAllocatorWithDescriptor failed",
+            )))
+        } else {
+            Ok(M4CommandAllocator { raw })
+        }
+    }
 
     pub fn new_m4_command_queue(&self) -> Option<M4CommandQueue> {
         let selector = sel(b"newMTL4CommandQueue\0");
@@ -3588,28 +3525,28 @@ impl Device {
         &self,
         descriptor: &M4CommandQueueDescriptor,
     ) -> Result<M4CommandQueue, MetalError> {
-            let mut error = NIL;
-            let selector = sel(b"newMTL4CommandQueueWithDescriptor:error:\0");
-            if !responds_to_selector(self.raw, selector) {
-                return Err(MetalError::new(
-                    "newMTL4CommandQueueWithDescriptor:error: not supported",
-                ));
-            }
-            let raw = retain(msg_id_id_err(
-                self.raw,
-                selector,
-                descriptor.raw,
-                &mut error,
+        let mut error = NIL;
+        let selector = sel(b"newMTL4CommandQueueWithDescriptor:error:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "newMTL4CommandQueueWithDescriptor:error: not supported",
             ));
-            if raw.is_null() {
-                Err(MetalError::new(&error_message(
-                    error,
-                    "newMTL4CommandQueueWithDescriptor failed",
-                )))
-            } else {
-                Ok(M4CommandQueue { raw })
-            }
         }
+        let raw = retain(msg_id_id_err(
+            self.raw,
+            selector,
+            descriptor.raw,
+            &mut error,
+        ));
+        if raw.is_null() {
+            Err(MetalError::new(&error_message(
+                error,
+                "newMTL4CommandQueueWithDescriptor failed",
+            )))
+        } else {
+            Ok(M4CommandQueue { raw })
+        }
+    }
 
     pub fn new_m4_command_buffer(&self) -> Option<M4CommandBuffer> {
         let selector = sel(b"newCommandBuffer\0");
@@ -3624,70 +3561,73 @@ impl Device {
         &self,
         descriptor: &M4ArgumentTableDescriptor,
     ) -> Result<M4ArgumentTable, MetalError> {
-            let mut error = NIL;
-            let selector = sel(b"newArgumentTableWithDescriptor:error:\0");
-            if !responds_to_selector(self.raw, selector) {
-                return Err(MetalError::new(
-                    "newArgumentTableWithDescriptor:error: not supported",
-                ));
-            }
-            let raw = retain(msg_id_id_err(
-                self.raw,
-                selector,
-                descriptor.raw,
-                &mut error,
+        let mut error = NIL;
+        let selector = sel(b"newArgumentTableWithDescriptor:error:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "newArgumentTableWithDescriptor:error: not supported",
             ));
-            if raw.is_null() {
-                Err(MetalError::new(&error_message(
-                    error,
-                    "newArgumentTableWithDescriptor failed",
-                )))
-            } else {
-                Ok(M4ArgumentTable { raw })
-            }
         }
+        let raw = retain(msg_id_id_err(
+            self.raw,
+            selector,
+            descriptor.raw,
+            &mut error,
+        ));
+        if raw.is_null() {
+            Err(MetalError::new(&error_message(
+                error,
+                "newArgumentTableWithDescriptor failed",
+            )))
+        } else {
+            Ok(M4ArgumentTable { raw })
+        }
+    }
 
     pub fn new_m4_compiler_with_descriptor(
         &self,
         descriptor: &M4CompilerDescriptor,
     ) -> Result<M4Compiler, MetalError> {
-            let mut error = NIL;
-            let selector = sel(b"newCompilerWithDescriptor:error:\0");
-            if !responds_to_selector(self.raw, selector) {
-                return Err(MetalError::new(
-                    "newCompilerWithDescriptor:error: not supported",
-                ));
-            }
-            let raw = retain(msg_id_id_err(
-                self.raw,
-                selector,
-                descriptor.raw,
-                &mut error,
+        let mut error = NIL;
+        let selector = sel(b"newCompilerWithDescriptor:error:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "newCompilerWithDescriptor:error: not supported",
             ));
-            if raw.is_null() {
-                Err(MetalError::new(&error_message(
-                    error,
-                    "newCompilerWithDescriptor failed",
-                )))
-            } else {
-                Ok(M4Compiler { raw })
-            }
         }
+        let raw = retain(msg_id_id_err(
+            self.raw,
+            selector,
+            descriptor.raw,
+            &mut error,
+        ));
+        if raw.is_null() {
+            Err(MetalError::new(&error_message(
+                error,
+                "newCompilerWithDescriptor failed",
+            )))
+        } else {
+            Ok(M4Compiler { raw })
+        }
+    }
 
     pub fn new_m4_archive_with_url(&self, url_path: &str) -> Result<M4Archive, MetalError> {
-            let mut error = NIL;
-            let selector = sel(b"newArchiveWithURL:error:\0");
-            if !responds_to_selector(self.raw, selector) {
-                return Err(MetalError::new("newArchiveWithURL:error: not supported"));
-            }
-            let url = ns_url_from_path(url_path);
-            let raw = retain(msg_id_id_err(self.raw, selector, url, &mut error));
-            if raw.is_null() {
-                Err(MetalError::new(&error_message(error, "newArchiveWithURL failed")))
-            } else {
-                Ok(M4Archive { raw })
-            }
+        let mut error = NIL;
+        let selector = sel(b"newArchiveWithURL:error:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new("newArchiveWithURL:error: not supported"));
         }
+        let url = ns_url_from_path(url_path);
+        let raw = retain(msg_id_id_err(self.raw, selector, url, &mut error));
+        if raw.is_null() {
+            Err(MetalError::new(&error_message(
+                error,
+                "newArchiveWithURL failed",
+            )))
+        } else {
+            Ok(M4Archive { raw })
+        }
+    }
 
     pub fn new_m4_pipeline_data_set_serializer_with_descriptor(
         &self,
@@ -3699,11 +3639,7 @@ impl Device {
                 "newPipelineDataSetSerializerWithDescriptor: not supported",
             ));
         }
-        let raw = retain(msg_id_id(
-            self.raw,
-            selector,
-            descriptor.raw,
-        ));
+        let raw = retain(msg_id_id(self.raw, selector, descriptor.raw));
         if raw.is_null() {
             Err(MetalError::new(
                 "newPipelineDataSetSerializerWithDescriptor failed",
@@ -3717,28 +3653,28 @@ impl Device {
         &self,
         descriptor: &M4CounterHeapDescriptor,
     ) -> Result<M4CounterHeap, MetalError> {
-            let mut error = NIL;
-            let selector = sel(b"newCounterHeapWithDescriptor:error:\0");
-            if !responds_to_selector(self.raw, selector) {
-                return Err(MetalError::new(
-                    "newCounterHeapWithDescriptor:error: not supported",
-                ));
-            }
-            let raw = retain(msg_id_id_err(
-                self.raw,
-                selector,
-                descriptor.raw,
-                &mut error,
+        let mut error = NIL;
+        let selector = sel(b"newCounterHeapWithDescriptor:error:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "newCounterHeapWithDescriptor:error: not supported",
             ));
-            if raw.is_null() {
-                Err(MetalError::new(&error_message(
-                    error,
-                    "newCounterHeapWithDescriptor failed",
-                )))
-            } else {
-                Ok(M4CounterHeap { raw })
-            }
         }
+        let raw = retain(msg_id_id_err(
+            self.raw,
+            selector,
+            descriptor.raw,
+            &mut error,
+        ));
+        if raw.is_null() {
+            Err(MetalError::new(&error_message(
+                error,
+                "newCounterHeapWithDescriptor failed",
+            )))
+        } else {
+            Ok(M4CounterHeap { raw })
+        }
+    }
 
     pub fn size_of_m4_counter_heap_entry(&self, heap_type: M4CounterHeapType) -> usize {
         let selector = sel(b"sizeOfCounterHeapEntry:\0");
@@ -3752,26 +3688,21 @@ impl Device {
         &self,
         function: &M4BinaryFunction,
     ) -> Result<FunctionHandle, MetalError> {
-            let mut error = NIL;
-            let selector = sel(b"functionHandleWithBinaryFunction:error:\0");
-            if !responds_to_selector(self.raw, selector) {
-                return Err(MetalError::new(
-                    "functionHandleWithBinaryFunction:error: not supported",
-                ));
-            }
-            let raw = retain(msg_id_id_err(
-                self.raw,
-                selector,
-                function.raw,
-                &mut error,
+        let mut error = NIL;
+        let selector = sel(b"functionHandleWithBinaryFunction:error:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "functionHandleWithBinaryFunction:error: not supported",
             ));
-            if raw.is_null() {
-                Err(MetalError::new(&error_message(
-                    error,
-                    "functionHandleWithBinaryFunction failed",
-                )))
-            } else {
-                Ok(FunctionHandle { raw })
-            }
         }
+        let raw = retain(msg_id_id_err(self.raw, selector, function.raw, &mut error));
+        if raw.is_null() {
+            Err(MetalError::new(&error_message(
+                error,
+                "functionHandleWithBinaryFunction failed",
+            )))
+        } else {
+            Ok(FunctionHandle { raw })
+        }
+    }
 }

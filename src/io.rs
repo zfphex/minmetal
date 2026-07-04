@@ -297,11 +297,7 @@ impl IOFileHandle {
         let selector = sel(b"URL\0");
         if responds_to_selector(self.raw, selector) {
             let url = msg_id(self.raw, selector);
-            if url.is_null() {
-                None
-            } else {
-                Some(url)
-            }
+            if url.is_null() { None } else { Some(url) }
         } else {
             None
         }
@@ -384,7 +380,9 @@ impl IOCommandQueue {
     pub fn device(&self) -> Result<Device, MetalError> {
         let selector = sel(b"device\0");
         if !responds_to_selector(self.raw, selector) {
-            return Err(MetalError::new("device is not supported on IO command queue"));
+            return Err(MetalError::new(
+                "device is not supported on IO command queue",
+            ));
         }
         let raw = retain(msg_id(self.raw, selector));
         if raw.is_null() {
@@ -406,7 +404,9 @@ impl IOCommandQueue {
     pub fn priority(&self) -> Result<IOPriority, MetalError> {
         let selector = sel(b"priority\0");
         if !responds_to_selector(self.raw, selector) {
-            return Err(MetalError::new("priority is not supported on IO command queue"));
+            return Err(MetalError::new(
+                "priority is not supported on IO command queue",
+            ));
         }
         IOPriority::from_raw(msg_usize(self.raw, selector))
             .ok_or_else(|| MetalError::new("invalid IOPriority value from Metal"))
@@ -434,7 +434,9 @@ impl IOCommandBuffer {
     ) -> Result<(), MetalError> {
         validate_io_load_range(source_handle_offset, size)?;
         if pointer.is_null() {
-            return Err(MetalError::new("IO load destination pointer must not be null"));
+            return Err(MetalError::new(
+                "IO load destination pointer must not be null",
+            ));
         }
         let selector = sel(b"loadBytes:size:sourceHandle:sourceHandleOffset:\0");
         if !responds_to_selector(self.raw, selector) {

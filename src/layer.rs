@@ -160,7 +160,9 @@ impl MetalLayer {
     pub fn allows_next_drawable_timeout(&self) -> Result<bool, MetalError> {
         let selector = sel(b"allowsNextDrawableTimeout\0");
         if !responds_to_selector(self.raw, selector) {
-            return Err(MetalError::new("allowsNextDrawableTimeout is not supported"));
+            return Err(MetalError::new(
+                "allowsNextDrawableTimeout is not supported",
+            ));
         }
         Ok(msg_bool(self.raw, selector) != 0)
     }
@@ -168,7 +170,9 @@ impl MetalLayer {
     pub fn set_allows_next_drawable_timeout(&self, allows: bool) -> Result<(), MetalError> {
         let selector = sel(b"setAllowsNextDrawableTimeout:\0");
         if !responds_to_selector(self.raw, selector) {
-            return Err(MetalError::new("setAllowsNextDrawableTimeout: is not supported"));
+            return Err(MetalError::new(
+                "setAllowsNextDrawableTimeout: is not supported",
+            ));
         }
         msg_void_bool(self.raw, selector, if allows { YES } else { NO });
         Ok(())
