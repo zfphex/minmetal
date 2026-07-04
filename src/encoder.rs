@@ -459,13 +459,19 @@ impl RenderCommandEncoder {
         }
     }
 
-    pub fn execute_commands_in_buffer(&self, buffer: &IndirectCommandBuffer, range: Range) {
+    pub fn execute_commands_in_buffer(
+        &self,
+        buffer: &IndirectCommandBuffer,
+        range: Range,
+    ) -> Result<(), MetalError> {
+        buffer.validate_reset_range(range)?;
         msg_void_id_range(
             self.raw,
             sel(b"executeCommandsInBuffer:withRange:\0"),
             buffer.raw,
             range,
         );
+        Ok(())
     }
 
     pub fn set_tile_buffer(&self, index: usize, buffer: &Buffer, offset: usize) {
@@ -1086,13 +1092,19 @@ impl ComputeCommandEncoder {
         msg_void_id(self.raw, sel(b"useHeap:\0"), heap.raw);
     }
 
-    pub fn execute_commands_in_buffer(&self, buffer: &IndirectCommandBuffer, range: Range) {
+    pub fn execute_commands_in_buffer(
+        &self,
+        buffer: &IndirectCommandBuffer,
+        range: Range,
+    ) -> Result<(), MetalError> {
+        buffer.validate_reset_range(range)?;
         msg_void_id_range(
             self.raw,
             sel(b"executeCommandsInBuffer:withRange:\0"),
             buffer.raw,
             range,
         );
+        Ok(())
     }
 
     pub fn set_acceleration_structure(&self, structure: &AccelerationStructure, index: usize) {

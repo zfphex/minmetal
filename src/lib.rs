@@ -108,9 +108,7 @@ mod tests {
 
     #[test]
     fn test_nil_indirect_command_access() {
-        let icb = IndirectCommandBuffer {
-            raw: std::ptr::null_mut(),
-        };
+        let icb = IndirectCommandBuffer::from_raw(std::ptr::null_mut());
         let result = icb.render_command(0);
         assert!(result.is_err());
     }

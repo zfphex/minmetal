@@ -962,6 +962,10 @@ impl AccelerationStructurePassSampleBufferAttachmentDescriptorArray {
         &self,
         index: usize,
     ) -> Option<AccelerationStructurePassSampleBufferAttachmentDescriptor> {
+        assert!(
+            index < 4,
+            "AccelerationStructurePass sample buffer attachment index must be < 4"
+        );
         let ptr = msg_id_usize(self.raw, sel(b"objectAtIndexedSubscript:\0"), index);
         if ptr.is_null() {
             None
@@ -975,6 +979,10 @@ impl AccelerationStructurePassSampleBufferAttachmentDescriptorArray {
         attachment: Option<&AccelerationStructurePassSampleBufferAttachmentDescriptor>,
         index: usize,
     ) {
+        assert!(
+            index < 4,
+            "AccelerationStructurePass sample buffer attachment index must be < 4"
+        );
         let ptr = attachment.map(|a| a.raw).unwrap_or(std::ptr::null_mut());
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, id, usize) =

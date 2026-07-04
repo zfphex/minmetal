@@ -940,9 +940,30 @@ impl IndirectCommandType {
     pub const DRAW_INDEXED_PATCH: Self = Self(1 << 3);
     pub const CONCURRENT_DISPATCH: Self = Self(1 << 5);
     pub const CONCURRENT_DISPATCH_THREADS: Self = Self(1 << 6);
+    pub const DRAW_MESH_THREADGROUPS: Self = Self(1 << 7);
+    pub const DRAW_MESH_THREADS: Self = Self(1 << 8);
+
+    pub const fn from_raw(raw: usize) -> Self {
+        Self(raw)
+    }
 
     pub const fn as_raw(self) -> usize {
         self.0
+    }
+
+    pub const fn is_render(self) -> bool {
+        self.0
+            & (Self::DRAW.0
+                | Self::DRAW_INDEXED.0
+                | Self::DRAW_PATCH.0
+                | Self::DRAW_INDEXED_PATCH.0
+                | Self::DRAW_MESH_THREADGROUPS.0
+                | Self::DRAW_MESH_THREADS.0)
+            != 0
+    }
+
+    pub const fn is_compute(self) -> bool {
+        self.0 & (Self::CONCURRENT_DISPATCH.0 | Self::CONCURRENT_DISPATCH_THREADS.0) != 0
     }
 }
 

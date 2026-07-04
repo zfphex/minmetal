@@ -653,6 +653,7 @@ impl Device {
         max_command_count: usize,
         options: IndirectCommandBufferOptions,
     ) -> Result<IndirectCommandBuffer, MetalError> {
+        descriptor.validate()?;
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, id, usize, usize) -> id =
                 transmute(objc_msgSend as *const c_void);
@@ -668,7 +669,10 @@ impl Device {
                     "failed to create Metal indirect command buffer",
                 ))
             } else {
-                Ok(IndirectCommandBuffer { raw })
+                Ok(IndirectCommandBuffer::with_config(
+                    raw,
+                    descriptor.snapshot_config(max_command_count),
+                ))
             }
         }
     }

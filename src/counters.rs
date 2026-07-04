@@ -115,6 +115,78 @@ pub struct CounterSampleBuffer {
     pub raw: id,
 }
 
+impl CounterSampleBuffer {
+    pub fn sample_count(&self) -> Result<usize, MetalError> {
+        if self.raw.is_null() {
+            return Err(MetalError::new("counter sample buffer is null"));
+        }
+        Ok(msg_usize(self.raw, sel(b"sampleCount\0")))
+    }
+
+    pub fn label(&self) -> Option<String> {
+        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    }
+
+    pub fn device(&self) -> Result<Device, MetalError> {
+        if self.raw.is_null() {
+            return Err(MetalError::new("counter sample buffer is null"));
+        }
+        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        if ptr.is_null() {
+            Err(MetalError::new("counter sample buffer device is null"))
+        } else {
+            Ok(Device { raw: ptr })
+        }
+    }
+
+    pub fn storage_mode(&self) -> Result<StorageMode, MetalError> {
+        if self.raw.is_null() {
+            return Err(MetalError::new("counter sample buffer is null"));
+        }
+        let val = msg_usize(self.raw, sel(b"storageMode\0"));
+        match val {
+            0 => Ok(StorageMode::Shared),
+            1 => Ok(StorageMode::Managed),
+            2 => Ok(StorageMode::Private),
+            3 => Ok(StorageMode::Memoryless),
+            _ => Err(MetalError::new(format!(
+                "invalid counter sample buffer storage mode: {}",
+                val
+            ))),
+        }
+    }
+
+    pub fn validate_sample_index(&self, sample_index: usize) -> Result<(), MetalError> {
+        let sample_count = self.sample_count()?;
+        if sample_index >= sample_count {
+            return Err(MetalError::new(format!(
+                "counter sample index {} is out of bounds for sample count {}",
+                sample_index, sample_count
+            )));
+        }
+        Ok(())
+    }
+
+    pub fn validate_resolve_range(&self, range: Range) -> Result<(), MetalError> {
+        let sample_count = self.sample_count()?;
+        let end = range.location.saturating_add(range.length);
+        if end > sample_count {
+            return Err(MetalError::new(format!(
+                "counter resolve range [{}, {}) exceeds sample count {}",
+                range.location, end, sample_count
+            )));
+        }
+        Ok(())
+    }
+}
+
+fn validate_counter_sampling(
+    sample_buffer: &CounterSampleBuffer,
+    sample_index: usize,
+) -> Result<(), MetalError> {
+    sample_buffer.validate_sample_index(sample_index)
+}
+
 impl Drop for CounterSampleBuffer {
     fn drop(&mut self) {
         release(self.raw);
@@ -187,6 +259,7 @@ impl RenderCommandEncoder {
         sample_index: usize,
         barrier: bool,
     ) -> Result<(), MetalError> {
+        validate_counter_sampling(sample_buffer, sample_index)?;
         unsafe {
             let selector = sel(b"sampleCountersInBuffer:atSampleIndex:withBarrier:\0");
             if !responds_to_selector(self.raw, selector) {
@@ -215,6 +288,7 @@ impl ComputeCommandEncoder {
         sample_index: usize,
         barrier: bool,
     ) -> Result<(), MetalError> {
+        validate_counter_sampling(sample_buffer, sample_index)?;
         unsafe {
             let selector = sel(b"sampleCountersInBuffer:atSampleIndex:withBarrier:\0");
             if !responds_to_selector(self.raw, selector) {
@@ -243,6 +317,7 @@ impl BlitCommandEncoder {
         sample_index: usize,
         barrier: bool,
     ) -> Result<(), MetalError> {
+        validate_counter_sampling(sample_buffer, sample_index)?;
         unsafe {
             let selector = sel(b"sampleCountersInBuffer:atSampleIndex:withBarrier:\0");
             if !responds_to_selector(self.raw, selector) {
@@ -270,6 +345,7 @@ impl BlitCommandEncoder {
         destination_buffer: &Buffer,
         destination_offset: usize,
     ) -> Result<(), MetalError> {
+        sample_buffer.validate_resolve_range(range)?;
         unsafe {
             let selector = sel(b"resolveCounters:inRange:destinationBuffer:destinationOffset:\0");
             if !responds_to_selector(self.raw, selector) {

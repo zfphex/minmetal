@@ -43,7 +43,7 @@ This inventory is organized by SDK area. It should be treated as a living checkl
   - sparse texture metadata
   - compression type and optimization flags
   - sampler border color, normalized coordinates, LOD average, and remaining descriptor/state getters
-- [ ] Safe validation for APIs that can currently crash Metal when misused:
+- [x] Safe validation for APIs that can currently crash Metal when misused:
   - indirect command buffer descriptor invariants
   - indirect render/compute command setter compatibility
   - command index bounds
@@ -54,59 +54,59 @@ This inventory is organized by SDK area. It should be treated as a living checkl
 
 ### `MTLAccelerationStructure.h`
 
-- [ ] `MTLAccelerationStructureDescriptor` base properties:
+- [x] `MTLAccelerationStructureDescriptor` base properties:
   - usage getters/setters
   - motion properties where available
-- [ ] `MTLPrimitiveAccelerationStructureDescriptor` completeness:
+- [x] `MTLPrimitiveAccelerationStructureDescriptor` completeness:
   - geometry descriptor getters
   - motion start/end time
   - motion keyframe count
   - motion transform support
-- [ ] `MTLAccelerationStructureTriangleGeometryDescriptor` completeness:
+- [x] `MTLAccelerationStructureTriangleGeometryDescriptor` completeness:
   - transformation matrix buffer/offset
   - primitive data buffer/stride/element size
   - allow duplicate intersection function invocation
   - getter coverage for all configured properties
-- [ ] `MTLAccelerationStructureBoundingBoxGeometryDescriptor` completeness:
+- [x] `MTLAccelerationStructureBoundingBoxGeometryDescriptor` completeness:
   - primitive data buffer/stride/element size
   - getter coverage
-- [ ] Motion geometry:
+- [x] Motion geometry:
   - `MTLMotionKeyframeData`
   - `MTLAccelerationStructureMotionTriangleGeometryDescriptor`
   - `MTLAccelerationStructureMotionBoundingBoxGeometryDescriptor`
-- [ ] Curve geometry:
+- [x] Curve geometry:
   - `MTLCurveType`
   - `MTLCurveBasis`
   - `MTLCurveEndCaps`
   - `MTLAccelerationStructureCurveGeometryDescriptor`
   - `MTLAccelerationStructureMotionCurveGeometryDescriptor`
-- [ ] Instance descriptor variants:
+- [x] Instance descriptor variants:
   - `MTLAccelerationStructureInstanceDescriptorType`
   - user ID/options/mask coverage for all descriptor layouts
   - motion instance descriptors
   - indirect instance descriptors
-- [ ] Transform support:
+- [x] Transform support:
   - `MTLMatrixLayout`
   - `MTLTransformType`
   - transform buffer/offset/count/stride APIs
-- [ ] Acceleration structure object getters:
+- [x] Acceleration structure object getters:
   - device
   - label
   - allocated size/resource metadata inherited from `MTLResource`
 
 ### `MTLAccelerationStructureCommandEncoder.h`
 
-- [ ] Acceleration-structure pass descriptors:
+- [x] Acceleration-structure pass descriptors:
   - `MTLAccelerationStructurePassDescriptor`
   - `MTLAccelerationStructurePassSampleBufferAttachmentDescriptor`
   - `MTLAccelerationStructurePassSampleBufferAttachmentDescriptorArray`
-- [ ] Command buffer creation overload using an acceleration-structure pass descriptor.
+- [x] Command buffer creation overload using an acceleration-structure pass descriptor.
 - [ ] Full encoder coverage:
   - write serialized acceleration structure size
   - serialize/deserialize acceleration structures if available in the target SDK
   - refit/copy/compact overload variants not currently wrapped
-  - sample counter support for acceleration-structure passes
-  - label/debug group methods inherited from `MTLCommandEncoder`
+- [x] sample counter support for acceleration-structure passes
+- [x] label/debug group methods inherited from `MTLCommandEncoder`
 
 ### `MTLAllocation.h`
 

@@ -60,9 +60,7 @@ fn indirect_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     drop(desc_default);
 
     // 3. Nil-safe / Out-of-bounds error behavior
-    let nil_icb = IndirectCommandBuffer {
-        raw: std::ptr::null_mut(),
-    };
+    let nil_icb = IndirectCommandBuffer::from_raw(std::ptr::null_mut());
     assert!(nil_icb.render_command(0).is_err());
     assert!(nil_icb.compute_command(0).is_err());
 
@@ -95,7 +93,7 @@ fn indirect_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     // Reset buffer
-    icb.reset(Range::new(0, 2));
+    icb.reset(Range::new(0, 2))?;
 
     // Get compute commands
     let comp_cmd0 = icb.compute_command(0)?;
@@ -120,19 +118,19 @@ fn indirect_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     )?;
 
     // Configure dispatch commands
-    comp_cmd0.set_compute_pipeline_state(&pipeline);
-    comp_cmd0.set_kernel_buffer(0, &values, 0);
+    comp_cmd0.set_compute_pipeline_state(&pipeline)?;
+    comp_cmd0.set_kernel_buffer(0, &values, 0)?;
     comp_cmd0.dispatch_threadgroups(Size::new(1, 1, 1), Size::new(8, 1, 1));
 
     // Exercise dispatch_threads path
-    comp_cmd1.set_compute_pipeline_state(&pipeline);
-    comp_cmd1.set_kernel_buffer(0, &values, 0);
+    comp_cmd1.set_compute_pipeline_state(&pipeline)?;
+    comp_cmd1.set_kernel_buffer(0, &values, 0)?;
     comp_cmd1.dispatch_threads(Size::new(8, 1, 1), Size::new(8, 1, 1));
 
     // Execution
     let command_buffer = queue.command_buffer()?;
     let encoder = command_buffer.compute_command_encoder()?;
-    encoder.execute_commands_in_buffer(&icb, Range::new(0, 1));
+    encoder.execute_commands_in_buffer(&icb, Range::new(0, 1))?;
     encoder.end_encoding();
     command_buffer.commit();
     command_buffer.wait_until_completed();
@@ -169,7 +167,7 @@ fn indirect_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     if let Ok(render_icb) =
         device.new_indirect_command_buffer(&render_desc, 1, IndirectCommandBufferOptions::NONE)
     {
-        render_icb.reset(Range::new(0, 1));
+        render_icb.reset(Range::new(0, 1))?;
         if let Ok(render_cmd) = render_icb.render_command(0) {
             let vertex_lib = device.new_library_with_source(
                 r#"
@@ -186,9 +184,9 @@ fn indirect_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
             pipe_desc.set_fragment_function(&fs_func);
             pipe_desc.set_support_indirect_command_buffers(true);
             if let Ok(render_pipeline) = device.new_render_pipeline_state(&pipe_desc) {
-                render_cmd.set_render_pipeline_state(&render_pipeline);
+                render_cmd.set_render_pipeline_state(&render_pipeline)?;
                 let dummy_buf = device.new_buffer(256, ResourceOptions::STORAGE_MODE_SHARED)?;
-                render_cmd.set_vertex_buffer(0, &dummy_buf, 0);
+                render_cmd.set_vertex_buffer(0, &dummy_buf, 0)?;
                 render_cmd.draw_primitives(PrimitiveType::Triangle, 0, 3, 1, 0);
                 render_cmd.draw_indexed_primitives(
                     PrimitiveType::Triangle,
