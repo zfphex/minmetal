@@ -1,4 +1,4 @@
-use miniwin::{Event, Key, Window, WindowStyle, create_window};
+use miniwin::*;
 use minmetal::*;
 
 #[repr(C)]
@@ -140,7 +140,14 @@ fragment float4 fragment_main(VertexOut in [[stage_in]],
 "#;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut window = create_window("Metal 3D Cube Demo", None, 800, 600, true, WindowStyle::Standard);
+    let mut window = create_window(
+        "Metal 3D Cube Demo",
+        None,
+        800,
+        600,
+        true,
+        WindowStyle::Standard,
+    );
 
     let device = Device::required_system_default()?;
     eprintln!("Using device: {}", device.name());
@@ -233,12 +240,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let offset = (y * texture_width + x) * 4;
             let check = ((x / 32) + (y / 32)) % 2 == 0;
             if check {
-                texture_data[offset] = 255;     // B
+                texture_data[offset] = 255; // B
                 texture_data[offset + 1] = 255; // G
                 texture_data[offset + 2] = 255; // R
                 texture_data[offset + 3] = 255; // A
             } else {
-                texture_data[offset] = 100;     // B
+                texture_data[offset] = 100; // B
                 texture_data[offset + 1] = 100; // G
                 texture_data[offset + 2] = 200; // R
                 texture_data[offset + 3] = 255; // A
@@ -288,10 +295,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut depth_texture = device.new_texture(&depth_desc)?;
 
     let mut angle = 0.0f32;
-    let mut running = true;
 
-    while running {
+    while window.open() {
         let _pool = AutoreleasePool::new();
+
+        if window.pressed(Key::Escape) {
+            window.close();
+        }
 
         window.draw(|win| {
             let win_scale = win.scale_factor();
@@ -391,17 +401,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             angle += 0.02;
         });
-
-        while let Some(event) = window.event() {
-            match event {
-                Event::Quit
-                | Event::CloseRequested
-                | Event::KeyDown {
-                    key: Key::Escape, ..
-                } => running = false,
-                _ => {}
-            }
-        }
 
         window.wait_for_vsync();
     }
