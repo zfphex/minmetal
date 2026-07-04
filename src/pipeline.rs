@@ -145,6 +145,16 @@ impl BinaryArchiveDescriptor {
             raw: msg_id(allocated, sel(b"init\0")),
         }
     }
+
+    pub fn url(&self) -> Option<String> {
+        let url = msg_id(self.raw, sel(b"url\0"));
+        ns_url_to_path(url)
+    }
+
+    pub fn set_url(&self, path: Option<&str>) {
+        let url = path.map(ns_url_from_path).unwrap_or(NIL);
+        msg_void_id(self.raw, sel(b"setUrl:\0"), url);
+    }
 }
 
 impl Default for BinaryArchiveDescriptor {
@@ -165,6 +175,38 @@ pub struct BinaryArchive {
 }
 
 impl BinaryArchive {
+    pub fn device(&self) -> Device {
+        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        Device { raw: ptr }
+    }
+
+    pub fn label(&self) -> Option<String> {
+        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    }
+
+    pub fn set_label(&self, label: &str) {
+        let ns_label = NSString::new(label);
+        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+    }
+
+    pub fn serialize_to_url(&self, url_path: &str) -> Result<(), MetalError> {
+        unsafe {
+            let url = ns_url_from_path(url_path);
+            let mut error = NIL;
+            let f: unsafe extern "C" fn(id, SEL, id, *mut id) -> BOOL =
+                transmute(objc_msgSend as *const c_void);
+            let ok = f(self.raw, sel(b"serializeToURL:error:\0"), url, &mut error);
+            if ok == NO {
+                Err(MetalError::new(error_message(
+                    error,
+                    "failed to serialize Metal binary archive",
+                )))
+            } else {
+                Ok(())
+            }
+        }
+    }
+
     pub fn add_render_pipeline_functions(
         &self,
         descriptor: &RenderPipelineDescriptor,
@@ -208,6 +250,111 @@ impl BinaryArchive {
                 Err(MetalError::new(error_message(
                     error,
                     "failed to add compute pipeline functions to Metal binary archive",
+                )))
+            } else {
+                Ok(())
+            }
+        }
+    }
+
+    pub fn add_tile_render_pipeline_functions(
+        &self,
+        descriptor: &TileRenderPipelineDescriptor,
+    ) -> Result<(), MetalError> {
+        unsafe {
+            let mut error = NIL;
+            let selector = sel(b"addTileRenderPipelineFunctionsWithDescriptor:error:\0");
+            if !responds_to_selector(self.raw, selector) {
+                return Err(MetalError::new(
+                    "addTileRenderPipelineFunctionsWithDescriptor:error: not supported",
+                ));
+            }
+            let f: unsafe extern "C" fn(id, SEL, id, *mut id) -> BOOL =
+                transmute(objc_msgSend as *const c_void);
+            let ok = f(self.raw, selector, descriptor.raw, &mut error);
+            if ok == NO {
+                Err(MetalError::new(error_message(
+                    error,
+                    "failed to add tile render pipeline functions to Metal binary archive",
+                )))
+            } else {
+                Ok(())
+            }
+        }
+    }
+
+    pub fn add_mesh_render_pipeline_functions(
+        &self,
+        descriptor: &MeshRenderPipelineDescriptor,
+    ) -> Result<(), MetalError> {
+        unsafe {
+            let mut error = NIL;
+            let selector = sel(b"addMeshRenderPipelineFunctionsWithDescriptor:error:\0");
+            if !responds_to_selector(self.raw, selector) {
+                return Err(MetalError::new(
+                    "addMeshRenderPipelineFunctionsWithDescriptor:error: not supported",
+                ));
+            }
+            let f: unsafe extern "C" fn(id, SEL, id, *mut id) -> BOOL =
+                transmute(objc_msgSend as *const c_void);
+            let ok = f(self.raw, selector, descriptor.raw, &mut error);
+            if ok == NO {
+                Err(MetalError::new(error_message(
+                    error,
+                    "failed to add mesh render pipeline functions to Metal binary archive",
+                )))
+            } else {
+                Ok(())
+            }
+        }
+    }
+
+    pub fn add_library_with_descriptor(
+        &self,
+        descriptor: &StitchedLibraryDescriptor,
+    ) -> Result<(), MetalError> {
+        unsafe {
+            let mut error = NIL;
+            let selector = sel(b"addLibraryWithDescriptor:error:\0");
+            if !responds_to_selector(self.raw, selector) {
+                return Err(MetalError::new(
+                    "addLibraryWithDescriptor:error: not supported",
+                ));
+            }
+            let f: unsafe extern "C" fn(id, SEL, id, *mut id) -> BOOL =
+                transmute(objc_msgSend as *const c_void);
+            let ok = f(self.raw, selector, descriptor.raw, &mut error);
+            if ok == NO {
+                Err(MetalError::new(error_message(
+                    error,
+                    "failed to add stitched library to Metal binary archive",
+                )))
+            } else {
+                Ok(())
+            }
+        }
+    }
+
+    pub fn add_function_with_descriptor(
+        &self,
+        descriptor: &FunctionDescriptor,
+        library: &Library,
+    ) -> Result<(), MetalError> {
+        unsafe {
+            let mut error = NIL;
+            let selector = sel(b"addFunctionWithDescriptor:library:error:\0");
+            if !responds_to_selector(self.raw, selector) {
+                return Err(MetalError::new(
+                    "addFunctionWithDescriptor:library:error: not supported",
+                ));
+            }
+            let f: unsafe extern "C" fn(id, SEL, id, id, *mut id) -> BOOL =
+                transmute(objc_msgSend as *const c_void);
+            let ok = f(self.raw, selector, descriptor.raw, library.raw, &mut error);
+            if ok == NO {
+                Err(MetalError::new(error_message(
+                    error,
+                    "failed to add function to Metal binary archive",
                 )))
             } else {
                 Ok(())
@@ -759,6 +906,74 @@ impl Default for RenderPipelineDescriptor {
 }
 
 impl Drop for RenderPipelineDescriptor {
+    fn drop(&mut self) {
+        release(self.raw);
+    }
+}
+
+#[derive(Debug)]
+pub struct TileRenderPipelineDescriptor {
+    pub raw: id,
+}
+
+impl TileRenderPipelineDescriptor {
+    pub fn new() -> Self {
+        let allocated = msg_id(class(b"MTLTileRenderPipelineDescriptor\0"), sel(b"alloc\0"));
+        Self {
+            raw: msg_id(allocated, sel(b"init\0")),
+        }
+    }
+
+    pub fn set_tile_function(&self, function: &Function) {
+        msg_void_id(self.raw, sel(b"setTileFunction:\0"), function.raw);
+    }
+}
+
+impl Default for TileRenderPipelineDescriptor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Drop for TileRenderPipelineDescriptor {
+    fn drop(&mut self) {
+        release(self.raw);
+    }
+}
+
+#[derive(Debug)]
+pub struct MeshRenderPipelineDescriptor {
+    pub raw: id,
+}
+
+impl MeshRenderPipelineDescriptor {
+    pub fn new() -> Self {
+        let allocated = msg_id(class(b"MTLMeshRenderPipelineDescriptor\0"), sel(b"alloc\0"));
+        Self {
+            raw: msg_id(allocated, sel(b"init\0")),
+        }
+    }
+
+    pub fn set_mesh_function(&self, function: &Function) {
+        msg_void_id(self.raw, sel(b"setMeshFunction:\0"), function.raw);
+    }
+
+    pub fn set_object_function(&self, function: &Function) {
+        msg_void_id(self.raw, sel(b"setObjectFunction:\0"), function.raw);
+    }
+
+    pub fn set_fragment_function(&self, function: &Function) {
+        msg_void_id(self.raw, sel(b"setFragmentFunction:\0"), function.raw);
+    }
+}
+
+impl Default for MeshRenderPipelineDescriptor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Drop for MeshRenderPipelineDescriptor {
     fn drop(&mut self) {
         release(self.raw);
     }

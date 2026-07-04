@@ -205,6 +205,89 @@ impl Buffer {
             0
         }
     }
+
+    pub fn new_texture_with_descriptor(
+        &self,
+        descriptor: &TextureDescriptor,
+        offset: usize,
+        bytes_per_row: usize,
+    ) -> Result<Texture, MetalError> {
+        unsafe {
+            let selector = sel(b"newTextureWithDescriptor:offset:bytesPerRow:\0");
+            if !responds_to_selector(self.raw, selector) {
+                return Err(MetalError::new(
+                    "newTextureWithDescriptor:offset:bytesPerRow: not supported",
+                ));
+            }
+            let f: unsafe extern "C" fn(id, SEL, id, usize, usize) -> id =
+                transmute(objc_msgSend as *const c_void);
+            let raw = f(
+                self.raw,
+                selector,
+                descriptor.raw,
+                offset,
+                bytes_per_row,
+            );
+            if raw.is_null() {
+                Err(MetalError::new("failed to create buffer-backed texture"))
+            } else {
+                Ok(Texture { raw })
+            }
+        }
+    }
+
+    pub fn add_debug_marker(&self, marker: &str, range: Range) -> Result<(), MetalError> {
+        let selector = sel(b"addDebugMarker:range:\0");
+        if responds_to_selector(self.raw, selector) {
+            let ns_marker = NSString::new(marker);
+            msg_void_id_range(self.raw, selector, ns_marker.raw(), range);
+            Ok(())
+        } else {
+            Err(MetalError::new("addDebugMarker:range: not supported"))
+        }
+    }
+
+    pub fn remove_all_debug_markers(&self) -> Result<(), MetalError> {
+        let selector = sel(b"removeAllDebugMarkers\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void(self.raw, selector);
+            Ok(())
+        } else {
+            Err(MetalError::new("removeAllDebugMarkers not supported"))
+        }
+    }
+
+    pub fn remote_storage_buffer(&self) -> Option<Buffer> {
+        let selector = sel(b"remoteStorageBuffer\0");
+        if responds_to_selector(self.raw, selector) {
+            let ptr = msg_id(self.raw, selector);
+            if ptr.is_null() {
+                None
+            } else {
+                Some(Buffer { raw: retain(ptr) })
+            }
+        } else {
+            None
+        }
+    }
+
+    pub fn new_remote_buffer_view_for_device(
+        &self,
+        device: &Device,
+    ) -> Result<Buffer, MetalError> {
+        let selector = sel(b"newRemoteBufferViewForDevice:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "newRemoteBufferViewForDevice: not supported",
+            ));
+        }
+        let raw = msg_id_id(self.raw, selector, device.raw);
+        if raw.is_null() {
+            Err(MetalError::new("failed to create remote buffer view"))
+        } else {
+            Ok(Buffer { raw })
+        }
+    }
 }
 
 impl Drop for Buffer {
@@ -1560,6 +1643,32 @@ pub struct ArgumentEncoder {
 }
 
 impl ArgumentEncoder {
+    fn validate_range(&self, range: Range, count: usize) -> Result<(), MetalError> {
+        if count != range.length {
+            return Err(MetalError::new(format!(
+                "array length {} does not match range length {}",
+                count, range.length
+            )));
+        }
+        Ok(())
+    }
+
+    fn validate_argument_buffer_offset(&self, offset: usize) -> Result<(), MetalError> {
+        let alignment = self.alignment();
+        if alignment > 0 && offset % alignment != 0 {
+            return Err(MetalError::new(format!(
+                "argument buffer offset {} is not aligned to required alignment {}",
+                offset, alignment
+            )));
+        }
+        Ok(())
+    }
+
+    pub fn device(&self) -> Device {
+        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        Device { raw: ptr }
+    }
+
     pub fn encoded_length(&self) -> usize {
         msg_usize(self.raw, sel(b"encodedLength\0"))
     }
@@ -1568,31 +1677,70 @@ impl ArgumentEncoder {
         msg_usize(self.raw, sel(b"alignment\0"))
     }
 
-    pub fn set_argument_buffer(&self, buffer: &Buffer, offset: usize) {
+    pub fn set_argument_buffer(
+        &self,
+        buffer: Option<&Buffer>,
+        offset: usize,
+    ) -> Result<(), MetalError> {
+        self.validate_argument_buffer_offset(offset)?;
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, id, usize) =
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
                 sel(b"setArgumentBuffer:offset:\0"),
-                buffer.raw,
+                buffer.map_or(NIL, |b| b.raw),
                 offset,
             );
         }
+        Ok(())
     }
 
-    pub fn set_buffer(&self, index: usize, buffer: &Buffer, offset: usize) {
+    pub fn set_argument_buffer_at_array_element(
+        &self,
+        buffer: Option<&Buffer>,
+        start_offset: usize,
+        array_element: usize,
+    ) -> Result<(), MetalError> {
+        self.validate_argument_buffer_offset(start_offset)?;
+        let selector = sel(b"setArgumentBuffer:startOffset:arrayElement:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "setArgumentBuffer:startOffset:arrayElement: not supported",
+            ));
+        }
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, usize, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                selector,
+                buffer.map_or(NIL, |b| b.raw),
+                start_offset,
+                array_element,
+            );
+        }
+        Ok(())
+    }
+
+    pub fn set_buffer(
+        &self,
+        index: usize,
+        buffer: Option<&Buffer>,
+        offset: usize,
+    ) -> Result<(), MetalError> {
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, id, usize, usize) =
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
                 sel(b"setBuffer:offset:atIndex:\0"),
-                buffer.raw,
+                buffer.map_or(NIL, |b| b.raw),
                 offset,
                 index,
             );
         }
+        Ok(())
     }
 
     pub fn set_texture(&self, index: usize, texture: &Texture) {
@@ -1639,7 +1787,20 @@ impl ArgumentEncoder {
         msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
     }
 
-    pub fn set_buffers(&self, buffers: &[Option<&Buffer>], offsets: &[usize], range: Range) {
+    pub fn set_buffers(
+        &self,
+        buffers: &[Option<&Buffer>],
+        offsets: &[usize],
+        range: Range,
+    ) -> Result<(), MetalError> {
+        self.validate_range(range, buffers.len())?;
+        if offsets.len() != range.length {
+            return Err(MetalError::new(format!(
+                "offset array length {} does not match range length {}",
+                offsets.len(),
+                range.length
+            )));
+        }
         let raw_buffers: Vec<id> = buffers
             .iter()
             .map(|b| b.map_or(NIL, |buf| buf.raw))
@@ -1651,9 +1812,15 @@ impl ArgumentEncoder {
             offsets.as_ptr(),
             range,
         );
+        Ok(())
     }
 
-    pub fn set_textures(&self, textures: &[Option<&Texture>], range: Range) {
+    pub fn set_textures(
+        &self,
+        textures: &[Option<&Texture>],
+        range: Range,
+    ) -> Result<(), MetalError> {
+        self.validate_range(range, textures.len())?;
         let raw_textures: Vec<id> = textures
             .iter()
             .map(|t| t.map_or(NIL, |tex| tex.raw))
@@ -1664,9 +1831,15 @@ impl ArgumentEncoder {
             raw_textures.as_ptr(),
             range,
         );
+        Ok(())
     }
 
-    pub fn set_sampler_states(&self, samplers: &[Option<&SamplerState>], range: Range) {
+    pub fn set_sampler_states(
+        &self,
+        samplers: &[Option<&SamplerState>],
+        range: Range,
+    ) -> Result<(), MetalError> {
+        self.validate_range(range, samplers.len())?;
         let raw_samplers: Vec<id> = samplers
             .iter()
             .map(|s| s.map_or(NIL, |sm| sm.raw))
@@ -1677,6 +1850,7 @@ impl ArgumentEncoder {
             raw_samplers.as_ptr(),
             range,
         );
+        Ok(())
     }
 
     pub fn set_visible_function_table(
@@ -1700,6 +1874,7 @@ impl ArgumentEncoder {
         tables: &[Option<&VisibleFunctionTable>],
         range: Range,
     ) -> Result<(), MetalError> {
+        self.validate_range(range, tables.len())?;
         let selector = sel(b"setVisibleFunctionTables:withRange:\0");
         if responds_to_selector(self.raw, selector) {
             let raw_tables: Vec<id> = tables
@@ -1736,6 +1911,7 @@ impl ArgumentEncoder {
         tables: &[Option<&IntersectionFunctionTable>],
         range: Range,
     ) -> Result<(), MetalError> {
+        self.validate_range(range, tables.len())?;
         let selector = sel(b"setIntersectionFunctionTables:withRange:\0");
         if responds_to_selector(self.raw, selector) {
             let raw_tables: Vec<id> = tables
@@ -1764,6 +1940,153 @@ impl ArgumentEncoder {
             Err(MetalError::new(
                 "setAccelerationStructure:atIndex: not supported",
             ))
+        }
+    }
+
+    pub fn constant_data_at_index(&self, index: usize) -> Result<*mut c_void, MetalError> {
+        let selector = sel(b"constantDataAtIndex:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new("constantDataAtIndex: not supported"));
+        }
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, usize) -> *mut c_void =
+                transmute(objc_msgSend as *const c_void);
+            let ptr = f(self.raw, selector, index);
+            if ptr.is_null() {
+                Err(MetalError::new(format!(
+                    "constantDataAtIndex: returned null for index {}",
+                    index
+                )))
+            } else {
+                Ok(ptr)
+            }
+        }
+    }
+
+    pub fn set_render_pipeline_state(
+        &self,
+        pipeline: Option<&RenderPipelineState>,
+        index: usize,
+    ) -> Result<(), MetalError> {
+        let selector = sel(b"setRenderPipelineState:atIndex:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_id_usize(self.raw, selector, pipeline.map_or(NIL, |p| p.raw), index);
+            Ok(())
+        } else {
+            Err(MetalError::new("setRenderPipelineState:atIndex: not supported"))
+        }
+    }
+
+    pub fn set_render_pipeline_states(
+        &self,
+        pipelines: &[Option<&RenderPipelineState>],
+        range: Range,
+    ) -> Result<(), MetalError> {
+        self.validate_range(range, pipelines.len())?;
+        let selector = sel(b"setRenderPipelineStates:withRange:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "setRenderPipelineStates:withRange: not supported",
+            ));
+        }
+        let raw_pipelines: Vec<id> = pipelines
+            .iter()
+            .map(|p| p.map_or(NIL, |pipe| pipe.raw))
+            .collect();
+        msg_void_ptr_range(self.raw, selector, raw_pipelines.as_ptr(), range);
+        Ok(())
+    }
+
+    pub fn set_compute_pipeline_state(
+        &self,
+        pipeline: Option<&ComputePipelineState>,
+        index: usize,
+    ) -> Result<(), MetalError> {
+        let selector = sel(b"setComputePipelineState:atIndex:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_id_usize(self.raw, selector, pipeline.map_or(NIL, |p| p.raw), index);
+            Ok(())
+        } else {
+            Err(MetalError::new(
+                "setComputePipelineState:atIndex: not supported",
+            ))
+        }
+    }
+
+    pub fn set_compute_pipeline_states(
+        &self,
+        pipelines: &[Option<&ComputePipelineState>],
+        range: Range,
+    ) -> Result<(), MetalError> {
+        self.validate_range(range, pipelines.len())?;
+        let selector = sel(b"setComputePipelineStates:withRange:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "setComputePipelineStates:withRange: not supported",
+            ));
+        }
+        let raw_pipelines: Vec<id> = pipelines
+            .iter()
+            .map(|p| p.map_or(NIL, |pipe| pipe.raw))
+            .collect();
+        msg_void_ptr_range(self.raw, selector, raw_pipelines.as_ptr(), range);
+        Ok(())
+    }
+
+    pub fn set_indirect_command_buffer(
+        &self,
+        buffer: Option<&IndirectCommandBuffer>,
+        index: usize,
+    ) -> Result<(), MetalError> {
+        let selector = sel(b"setIndirectCommandBuffer:atIndex:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_id_usize(self.raw, selector, buffer.map_or(NIL, |b| b.raw), index);
+            Ok(())
+        } else {
+            Err(MetalError::new(
+                "setIndirectCommandBuffer:atIndex: not supported",
+            ))
+        }
+    }
+
+    pub fn set_indirect_command_buffers(
+        &self,
+        buffers: &[Option<&IndirectCommandBuffer>],
+        range: Range,
+    ) -> Result<(), MetalError> {
+        self.validate_range(range, buffers.len())?;
+        let selector = sel(b"setIndirectCommandBuffers:withRange:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "setIndirectCommandBuffers:withRange: not supported",
+            ));
+        }
+        let raw_buffers: Vec<id> = buffers
+            .iter()
+            .map(|b| b.map_or(NIL, |buf| buf.raw))
+            .collect();
+        msg_void_ptr_range(self.raw, selector, raw_buffers.as_ptr(), range);
+        Ok(())
+    }
+
+    pub fn new_argument_encoder_for_buffer_at_index(
+        &self,
+        index: usize,
+    ) -> Result<ArgumentEncoder, MetalError> {
+        let selector = sel(b"newArgumentEncoderForBufferAtIndex:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "newArgumentEncoderForBufferAtIndex: not supported",
+            ));
+        }
+        let raw = msg_id_usize(self.raw, selector, index);
+        if raw.is_null() {
+            Err(MetalError::new(format!(
+                "newArgumentEncoderForBufferAtIndex: returned null for index {}",
+                index
+            )))
+        } else {
+            Ok(ArgumentEncoder { raw })
         }
     }
 }

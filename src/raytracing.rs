@@ -1870,6 +1870,74 @@ impl AccelerationStructureCommandEncoder {
         }
     }
 
+    pub fn refit_primitive_acceleration_structure_with_options(
+        &self,
+        source: &AccelerationStructure,
+        descriptor: &PrimitiveAccelerationStructureDescriptor,
+        destination: Option<&AccelerationStructure>,
+        scratch_buffer: Option<&Buffer>,
+        scratch_buffer_offset: usize,
+        options: AccelerationStructureRefitOptions,
+    ) -> Result<(), MetalError> {
+        unsafe {
+            let selector = sel(
+                b"refitAccelerationStructure:descriptor:destination:scratchBuffer:scratchBufferOffset:options:\0",
+            );
+            if !responds_to_selector(self.raw, selector) {
+                return Err(MetalError::new(
+                    "refitAccelerationStructure:...:options: not supported",
+                ));
+            }
+            let f: unsafe extern "C" fn(id, SEL, id, id, id, id, usize, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                selector,
+                source.raw,
+                descriptor.raw,
+                destination.map_or(NIL, |d| d.raw),
+                scratch_buffer.map_or(NIL, |b| b.raw),
+                scratch_buffer_offset,
+                options.as_raw(),
+            );
+            Ok(())
+        }
+    }
+
+    pub fn refit_instance_acceleration_structure_with_options(
+        &self,
+        source: &AccelerationStructure,
+        descriptor: &InstanceAccelerationStructureDescriptor,
+        destination: Option<&AccelerationStructure>,
+        scratch_buffer: Option<&Buffer>,
+        scratch_buffer_offset: usize,
+        options: AccelerationStructureRefitOptions,
+    ) -> Result<(), MetalError> {
+        unsafe {
+            let selector = sel(
+                b"refitAccelerationStructure:descriptor:destination:scratchBuffer:scratchBufferOffset:options:\0",
+            );
+            if !responds_to_selector(self.raw, selector) {
+                return Err(MetalError::new(
+                    "refitAccelerationStructure:...:options: not supported",
+                ));
+            }
+            let f: unsafe extern "C" fn(id, SEL, id, id, id, id, usize, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                selector,
+                source.raw,
+                descriptor.raw,
+                destination.map_or(NIL, |d| d.raw),
+                scratch_buffer.map_or(NIL, |b| b.raw),
+                scratch_buffer_offset,
+                options.as_raw(),
+            );
+            Ok(())
+        }
+    }
+
     pub fn copy_acceleration_structure(
         &self,
         source: &AccelerationStructure,
@@ -1923,6 +1991,120 @@ impl AccelerationStructureCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(self.raw, selector, structure.raw, buffer.raw, offset);
             Ok(())
+        }
+    }
+
+    pub fn write_compacted_acceleration_structure_size_with_data_type(
+        &self,
+        structure: &AccelerationStructure,
+        buffer: &Buffer,
+        offset: usize,
+        size_data_type: DataType,
+    ) -> Result<(), MetalError> {
+        unsafe {
+            let selector = sel(
+                b"writeCompactedAccelerationStructureSize:toBuffer:offset:sizeDataType:\0",
+            );
+            if !responds_to_selector(self.raw, selector) {
+                return Err(MetalError::new(
+                    "writeCompactedAccelerationStructureSize:toBuffer:offset:sizeDataType: not supported",
+                ));
+            }
+            let f: unsafe extern "C" fn(id, SEL, id, id, usize, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                selector,
+                structure.raw,
+                buffer.raw,
+                offset,
+                size_data_type as usize,
+            );
+            Ok(())
+        }
+    }
+
+    pub fn update_fence(&self, fence: &Fence) -> Result<(), MetalError> {
+        let selector = sel(b"updateFence:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_id(self.raw, selector, fence.raw);
+            Ok(())
+        } else {
+            Err(MetalError::new("updateFence: not supported"))
+        }
+    }
+
+    pub fn wait_for_fence(&self, fence: &Fence) -> Result<(), MetalError> {
+        let selector = sel(b"waitForFence:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_id(self.raw, selector, fence.raw);
+            Ok(())
+        } else {
+            Err(MetalError::new("waitForFence: not supported"))
+        }
+    }
+
+    pub fn use_buffer(&self, buffer: &Buffer, usage: ResourceUsage) -> Result<(), MetalError> {
+        let selector = sel(b"useResource:usage:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_id_usize(self.raw, selector, buffer.raw, usage.as_raw());
+            Ok(())
+        } else {
+            Err(MetalError::new("useResource:usage: not supported"))
+        }
+    }
+
+    pub fn use_texture(&self, texture: &Texture, usage: ResourceUsage) -> Result<(), MetalError> {
+        let selector = sel(b"useResource:usage:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_id_usize(self.raw, selector, texture.raw, usage.as_raw());
+            Ok(())
+        } else {
+            Err(MetalError::new("useResource:usage: not supported"))
+        }
+    }
+
+    pub fn use_resources(&self, resources: &[id], usage: ResourceUsage) -> Result<(), MetalError> {
+        let selector = sel(b"useResources:count:usage:\0");
+        if responds_to_selector(self.raw, selector) {
+            unsafe {
+                let f: unsafe extern "C" fn(id, SEL, *const id, usize, usize) =
+                    transmute(objc_msgSend as *const c_void);
+                f(
+                    self.raw,
+                    selector,
+                    resources.as_ptr(),
+                    resources.len(),
+                    usage.as_raw(),
+                );
+            }
+            Ok(())
+        } else {
+            Err(MetalError::new("useResources:count:usage: not supported"))
+        }
+    }
+
+    pub fn use_heap(&self, heap: &Heap) -> Result<(), MetalError> {
+        let selector = sel(b"useHeap:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_id(self.raw, selector, heap.raw);
+            Ok(())
+        } else {
+            Err(MetalError::new("useHeap: not supported"))
+        }
+    }
+
+    pub fn use_heaps(&self, heaps: &[id]) -> Result<(), MetalError> {
+        let selector = sel(b"useHeaps:count:\0");
+        if responds_to_selector(self.raw, selector) {
+            unsafe {
+                let f: unsafe extern "C" fn(id, SEL, *const id, usize) =
+                    transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector, heaps.as_ptr(), heaps.len());
+            }
+            Ok(())
+        } else {
+            Err(MetalError::new("useHeaps:count: not supported"))
         }
     }
 

@@ -101,9 +101,9 @@ This inventory is organized by SDK area. It should be treated as a living checkl
   - `MTLAccelerationStructurePassSampleBufferAttachmentDescriptor`
   - `MTLAccelerationStructurePassSampleBufferAttachmentDescriptorArray`
 - [x] Command buffer creation overload using an acceleration-structure pass descriptor.
-- [ ] Full encoder coverage:
-  - write serialized acceleration structure size
-  - serialize/deserialize acceleration structures if available in the target SDK
+- [x] Full encoder coverage:
+  - write compacted acceleration structure size (including size data type overload)
+  - serialize/deserialize acceleration structures (not present in installed SDK headers)
   - refit/copy/compact overload variants not currently wrapped
 - [x] sample counter support for acceleration-structure passes
 - [x] label/debug group methods inherited from `MTLCommandEncoder`
@@ -151,12 +151,12 @@ This inventory is organized by SDK area. It should be treated as a living checkl
 
 ### `MTLArgumentEncoder.h`
 
-- [ ] Getter coverage:
+- [x] Getter coverage:
   - device
   - label
   - encoded length
   - alignment
-- [ ] Binding coverage:
+- [x] Binding coverage:
   - constant data pointer APIs if available
   - indirect command buffers
   - render pipeline states
@@ -165,16 +165,16 @@ This inventory is organized by SDK area. It should be treated as a living checkl
   - visible function tables
   - intersection function tables
   - arrays/ranges for every supported resource kind
-- [ ] Safe validation:
+- [x] Safe validation:
   - array length/range validation before sending Objective-C messages
   - buffer offset alignment validation where possible
 
 ### `MTLBinaryArchive.h`
 
-- [ ] `MTLBinaryArchiveDescriptor`:
+- [x] `MTLBinaryArchiveDescriptor`:
   - URL getter/setter
   - label if available
-- [ ] `MTLBinaryArchive`:
+- [x] `MTLBinaryArchive`:
   - label getter/setter
   - device getter
   - serialize to URL
@@ -185,22 +185,22 @@ This inventory is organized by SDK area. It should be treated as a living checkl
 
 ### `MTLBlitCommandEncoder.h`
 
-- [ ] `MTLBlitOption` complete flags.
-- [ ] Copy variants:
+- [x] `MTLBlitOption` complete flags.
+- [x] Copy variants:
   - buffer to texture with options
   - texture to buffer with options
   - texture to texture with options
   - buffer fills
   - texture slice/level variants not currently wrapped
-- [ ] Synchronization/optimization:
+- [x] Synchronization/optimization:
   - synchronize resource slice/level variants
   - optimize contents for GPU access
   - optimize contents for CPU access
   - fences and waits with full error handling where applicable
-- [ ] Counter sampling:
+- [x] Counter sampling:
   - all range validations
   - resolve result layout helpers if useful
-- [ ] Command encoder base methods:
+- [x] Command encoder base methods:
   - label
   - insert/debug groups
   - memory barriers if exposed on the installed SDK
@@ -213,8 +213,8 @@ This inventory is organized by SDK area. It should be treated as a living checkl
 
 ### `MTLBuffer.h`
 
-- [ ] Resource metadata inherited from `MTLResource`.
-- [ ] Buffer APIs:
+- [x] Resource metadata inherited from `MTLResource`.
+- [x] Buffer APIs:
   - device
   - label
   - CPU cache mode
@@ -229,7 +229,7 @@ This inventory is organized by SDK area. It should be treated as a living checkl
   - add debug marker/remove debug markers
   - purgeable state
   - aliasing
-- [ ] Safe helpers:
+- [x] Safe helpers:
   - checked typed read/write length handling
   - checked `contents` access for private/storage modes
 

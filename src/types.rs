@@ -1267,6 +1267,37 @@ pub struct AccelerationStructureRefitOptions(pub usize);
 impl AccelerationStructureRefitOptions {
     pub const VERTEX_DATA: Self = Self(1 << 0);
     pub const PER_PRIMITIVE_DATA: Self = Self(1 << 1);
+
+    pub const fn as_raw(self) -> usize {
+        self.0
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct BlitOption(pub usize);
+impl BlitOption {
+    pub const NONE: Self = Self(0);
+    pub const DEPTH_FROM_DEPTH_STENCIL: Self = Self(1 << 0);
+    pub const STENCIL_FROM_DEPTH_STENCIL: Self = Self(1 << 1);
+    pub const ROW_LINEAR_PVRTC: Self = Self(1 << 2);
+
+    pub const fn from_raw(raw: usize) -> Self {
+        Self(raw)
+    }
+
+    pub const fn as_raw(self) -> usize {
+        self.0
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(usize)]
+pub enum BinaryArchiveError {
+    None = 0,
+    InvalidFile = 1,
+    UnexpectedElement = 2,
+    CompilationFailure = 3,
+    InternalError = 4,
 }
 
 #[repr(C)]

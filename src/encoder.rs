@@ -1590,6 +1590,31 @@ impl BlitCommandEncoder {
         destination: &Texture,
         destination_origin: Origin,
     ) {
+        self.copy_texture_to_texture_with_slices(
+            source,
+            0,
+            0,
+            source_origin,
+            source_size,
+            destination,
+            0,
+            0,
+            destination_origin,
+        );
+    }
+
+    pub fn copy_texture_to_texture_with_slices(
+        &self,
+        source: &Texture,
+        source_slice: usize,
+        source_level: usize,
+        source_origin: Origin,
+        source_size: Size,
+        destination: &Texture,
+        destination_slice: usize,
+        destination_level: usize,
+        destination_origin: Origin,
+    ) {
         unsafe {
             let f: unsafe extern "C" fn(
                 id,
@@ -1608,15 +1633,71 @@ impl BlitCommandEncoder {
                 self.raw,
                 sel(b"copyFromTexture:sourceSlice:sourceLevel:sourceOrigin:sourceSize:toTexture:destinationSlice:destinationLevel:destinationOrigin:\0"),
                 source.raw,
-                0,
-                0,
+                source_slice,
+                source_level,
                 source_origin,
                 source_size,
                 destination.raw,
-                0,
-                0,
+                destination_slice,
+                destination_level,
                 destination_origin,
             );
+        }
+    }
+
+    pub fn copy_textures(
+        &self,
+        source: &Texture,
+        destination: &Texture,
+    ) -> Result<(), MetalError> {
+        let selector = sel(b"copyFromTexture:toTexture:\0");
+        if responds_to_selector(self.raw, selector) {
+            unsafe {
+                let f: unsafe extern "C" fn(id, SEL, id, id) =
+                    transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector, source.raw, destination.raw);
+            }
+            Ok(())
+        } else {
+            Err(MetalError::new("copyFromTexture:toTexture: not supported"))
+        }
+    }
+
+    pub fn copy_texture_surfaces(
+        &self,
+        source: &Texture,
+        source_slice: usize,
+        source_level: usize,
+        destination: &Texture,
+        destination_slice: usize,
+        destination_level: usize,
+        slice_count: usize,
+        level_count: usize,
+    ) -> Result<(), MetalError> {
+        unsafe {
+            let selector = sel(
+                b"copyFromTexture:sourceSlice:sourceLevel:toTexture:destinationSlice:destinationLevel:sliceCount:levelCount:\0",
+            );
+            if !responds_to_selector(self.raw, selector) {
+                return Err(MetalError::new(
+                    "copyFromTexture:sourceSlice:sourceLevel:toTexture:... not supported",
+                ));
+            }
+            let f: unsafe extern "C" fn(id, SEL, id, usize, usize, id, usize, usize, usize, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                selector,
+                source.raw,
+                source_slice,
+                source_level,
+                destination.raw,
+                destination_slice,
+                destination_level,
+                slice_count,
+                level_count,
+            );
+            Ok(())
         }
     }
 
@@ -1653,6 +1734,33 @@ impl BlitCommandEncoder {
         destination: &Texture,
         destination_origin: Origin,
     ) {
+        self.copy_buffer_to_texture_with_slices(
+            source,
+            source_offset,
+            source_bytes_per_row,
+            source_bytes_per_image,
+            source_size,
+            destination,
+            0,
+            0,
+            destination_origin,
+            BlitOption::NONE,
+        );
+    }
+
+    pub fn copy_buffer_to_texture_with_slices(
+        &self,
+        source: &Buffer,
+        source_offset: usize,
+        source_bytes_per_row: usize,
+        source_bytes_per_image: usize,
+        source_size: Size,
+        destination: &Texture,
+        destination_slice: usize,
+        destination_level: usize,
+        destination_origin: Origin,
+        options: BlitOption,
+    ) {
         unsafe {
             let f: unsafe extern "C" fn(
                 id,
@@ -1666,19 +1774,104 @@ impl BlitCommandEncoder {
                 usize,
                 usize,
                 Origin,
+                usize,
             ) = transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"copyFromBuffer:sourceOffset:sourceBytesPerRow:sourceBytesPerImage:sourceSize:toTexture:destinationSlice:destinationLevel:destinationOrigin:\0"),
+                sel(b"copyFromBuffer:sourceOffset:sourceBytesPerRow:sourceBytesPerImage:sourceSize:toTexture:destinationSlice:destinationLevel:destinationOrigin:options:\0"),
                 source.raw,
                 source_offset,
                 source_bytes_per_row,
                 source_bytes_per_image,
                 source_size,
                 destination.raw,
-                0,
-                0,
+                destination_slice,
+                destination_level,
                 destination_origin,
+                options.as_raw(),
+            );
+        }
+    }
+
+    pub fn copy_texture_to_buffer(
+        &self,
+        source: &Texture,
+        source_origin: Origin,
+        source_size: Size,
+        destination: &Buffer,
+        destination_offset: usize,
+        destination_bytes_per_row: usize,
+        destination_bytes_per_image: usize,
+    ) {
+        self.copy_texture_to_buffer_with_slices(
+            source,
+            0,
+            0,
+            source_origin,
+            source_size,
+            destination,
+            destination_offset,
+            destination_bytes_per_row,
+            destination_bytes_per_image,
+            BlitOption::NONE,
+        );
+    }
+
+    pub fn copy_texture_to_buffer_with_slices(
+        &self,
+        source: &Texture,
+        source_slice: usize,
+        source_level: usize,
+        source_origin: Origin,
+        source_size: Size,
+        destination: &Buffer,
+        destination_offset: usize,
+        destination_bytes_per_row: usize,
+        destination_bytes_per_image: usize,
+        options: BlitOption,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(
+                id,
+                SEL,
+                id,
+                usize,
+                usize,
+                Origin,
+                Size,
+                id,
+                usize,
+                usize,
+                usize,
+                usize,
+            ) = transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"copyFromTexture:sourceSlice:sourceLevel:sourceOrigin:sourceSize:toBuffer:destinationOffset:destinationBytesPerRow:destinationBytesPerImage:options:\0"),
+                source.raw,
+                source_slice,
+                source_level,
+                source_origin,
+                source_size,
+                destination.raw,
+                destination_offset,
+                destination_bytes_per_row,
+                destination_bytes_per_image,
+                options.as_raw(),
+            );
+        }
+    }
+
+    pub fn fill_buffer(&self, buffer: &Buffer, range: Range, value: u8) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, Range, u8) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"fillBuffer:range:value:\0"),
+                buffer.raw,
+                range,
+                value,
             );
         }
     }
@@ -1695,12 +1888,171 @@ impl BlitCommandEncoder {
         msg_void_id(self.raw, sel(b"synchronizeResource:\0"), texture.raw);
     }
 
-    pub fn update_fence(&self, fence: &Fence) {
-        msg_void_id(self.raw, sel(b"updateFence:\0"), fence.raw);
+    pub fn synchronize_texture_slice_level(
+        &self,
+        texture: &Texture,
+        slice: usize,
+        level: usize,
+    ) -> Result<(), MetalError> {
+        let selector = sel(b"synchronizeTexture:slice:level:\0");
+        if responds_to_selector(self.raw, selector) {
+            unsafe {
+                let f: unsafe extern "C" fn(id, SEL, id, usize, usize) =
+                    transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector, texture.raw, slice, level);
+            }
+            Ok(())
+        } else {
+            Err(MetalError::new("synchronizeTexture:slice:level: not supported"))
+        }
     }
 
-    pub fn wait_for_fence(&self, fence: &Fence) {
-        msg_void_id(self.raw, sel(b"waitForFence:\0"), fence.raw);
+    pub fn optimize_contents_for_gpu_access(&self, texture: &Texture) -> Result<(), MetalError> {
+        let selector = sel(b"optimizeContentsForGPUAccess:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_id(self.raw, selector, texture.raw);
+            Ok(())
+        } else {
+            Err(MetalError::new(
+                "optimizeContentsForGPUAccess: not supported",
+            ))
+        }
+    }
+
+    pub fn optimize_contents_for_gpu_access_slice_level(
+        &self,
+        texture: &Texture,
+        slice: usize,
+        level: usize,
+    ) -> Result<(), MetalError> {
+        let selector = sel(b"optimizeContentsForGPUAccess:slice:level:\0");
+        if responds_to_selector(self.raw, selector) {
+            unsafe {
+                let f: unsafe extern "C" fn(id, SEL, id, usize, usize) =
+                    transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector, texture.raw, slice, level);
+            }
+            Ok(())
+        } else {
+            Err(MetalError::new(
+                "optimizeContentsForGPUAccess:slice:level: not supported",
+            ))
+        }
+    }
+
+    pub fn optimize_contents_for_cpu_access(&self, texture: &Texture) -> Result<(), MetalError> {
+        let selector = sel(b"optimizeContentsForCPUAccess:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_id(self.raw, selector, texture.raw);
+            Ok(())
+        } else {
+            Err(MetalError::new(
+                "optimizeContentsForCPUAccess: not supported",
+            ))
+        }
+    }
+
+    pub fn optimize_contents_for_cpu_access_slice_level(
+        &self,
+        texture: &Texture,
+        slice: usize,
+        level: usize,
+    ) -> Result<(), MetalError> {
+        let selector = sel(b"optimizeContentsForCPUAccess:slice:level:\0");
+        if responds_to_selector(self.raw, selector) {
+            unsafe {
+                let f: unsafe extern "C" fn(id, SEL, id, usize, usize) =
+                    transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector, texture.raw, slice, level);
+            }
+            Ok(())
+        } else {
+            Err(MetalError::new(
+                "optimizeContentsForCPUAccess:slice:level: not supported",
+            ))
+        }
+    }
+
+    pub fn reset_commands_in_buffer(
+        &self,
+        buffer: &IndirectCommandBuffer,
+        range: Range,
+    ) -> Result<(), MetalError> {
+        buffer.validate_reset_range(range)?;
+        let selector = sel(b"resetCommandsInBuffer:withRange:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_id_range(self.raw, selector, buffer.raw, range);
+            Ok(())
+        } else {
+            Err(MetalError::new("resetCommandsInBuffer:withRange: not supported"))
+        }
+    }
+
+    pub fn copy_indirect_command_buffer(
+        &self,
+        source: &IndirectCommandBuffer,
+        source_range: Range,
+        destination: &IndirectCommandBuffer,
+        destination_index: usize,
+    ) -> Result<(), MetalError> {
+        let selector = sel(
+            b"copyIndirectCommandBuffer:sourceRange:destination:destinationIndex:\0",
+        );
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "copyIndirectCommandBuffer:sourceRange:destination:destinationIndex: not supported",
+            ));
+        }
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, Range, id, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                selector,
+                source.raw,
+                source_range,
+                destination.raw,
+                destination_index,
+            );
+        }
+        Ok(())
+    }
+
+    pub fn optimize_indirect_command_buffer(
+        &self,
+        buffer: &IndirectCommandBuffer,
+        range: Range,
+    ) -> Result<(), MetalError> {
+        buffer.validate_reset_range(range)?;
+        let selector = sel(b"optimizeIndirectCommandBuffer:withRange:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_id_range(self.raw, selector, buffer.raw, range);
+            Ok(())
+        } else {
+            Err(MetalError::new(
+                "optimizeIndirectCommandBuffer:withRange: not supported",
+            ))
+        }
+    }
+
+    pub fn update_fence(&self, fence: &Fence) -> Result<(), MetalError> {
+        let selector = sel(b"updateFence:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_id(self.raw, selector, fence.raw);
+            Ok(())
+        } else {
+            Err(MetalError::new("updateFence: not supported"))
+        }
+    }
+
+    pub fn wait_for_fence(&self, fence: &Fence) -> Result<(), MetalError> {
+        let selector = sel(b"waitForFence:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_id(self.raw, selector, fence.raw);
+            Ok(())
+        } else {
+            Err(MetalError::new("waitForFence: not supported"))
+        }
     }
 
     pub fn device(&self) -> Device {

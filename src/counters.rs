@@ -317,6 +317,11 @@ impl BlitCommandEncoder {
         sample_index: usize,
         barrier: bool,
     ) -> Result<(), MetalError> {
+        if self.raw.is_null() {
+            return Err(MetalError::new(
+                "sampleCountersInBuffer:atSampleIndex:withBarrier: not supported on this BlitCommandEncoder",
+            ));
+        }
         validate_counter_sampling(sample_buffer, sample_index)?;
         unsafe {
             let selector = sel(b"sampleCountersInBuffer:atSampleIndex:withBarrier:\0");

@@ -249,10 +249,10 @@ fn resource_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     )?;
 
     println!("Step 14.1: set_argument_buffer");
-    arg_encoder.set_argument_buffer(&arg_buf, 0);
+    arg_encoder.set_argument_buffer(Some(&arg_buf), 0)?;
 
     println!("Step 14.2: set_buffer");
-    arg_encoder.set_buffer(0, &buffer, 0);
+    arg_encoder.set_buffer(0, Some(&buffer), 0)?;
 
     println!("Step 14.3: set_texture");
     arg_encoder.set_texture(2, &texture);
@@ -261,13 +261,13 @@ fn resource_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     arg_encoder.set_sampler_state(4, &sampler_state);
 
     println!("Step 14.5: set_buffers range");
-    arg_encoder.set_buffers(&[Some(&buffer), None], &[0, 0], Range::new(0, 2));
+    arg_encoder.set_buffers(&[Some(&buffer), None], &[0, 0], Range::new(0, 2))?;
 
     println!("Step 14.6: set_textures range");
-    arg_encoder.set_textures(&[Some(&texture), None], Range::new(2, 2));
+    arg_encoder.set_textures(&[Some(&texture), None], Range::new(2, 2))?;
 
     println!("Step 14.7: set_sampler_states range");
-    arg_encoder.set_sampler_states(&[Some(&sampler_state), None], Range::new(4, 2));
+    arg_encoder.set_sampler_states(&[Some(&sampler_state), None], Range::new(4, 2))?;
 
     println!("Step 14.8: set_bytes");
     println!(

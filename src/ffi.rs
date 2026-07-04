@@ -478,3 +478,10 @@ pub fn ns_url_from_path(path: &str) -> id {
     let ns_path = NSString::new(path);
     msg_id_id(class(b"NSURL\0"), sel(b"fileURLWithPath:\0"), ns_path.raw())
 }
+
+pub fn ns_url_to_path(url: id) -> Option<String> {
+    if url.is_null() {
+        return None;
+    }
+    ns_string_to_string(msg_id(url, sel(b"path\0")))
+}
