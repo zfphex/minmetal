@@ -340,7 +340,21 @@ pub(crate) fn error_message(error: id, fallback: &str) -> String {
         return fallback.to_string();
     }
     let description = msg_id(error, sel(b"localizedDescription\0"));
-    ns_string_to_string(description).unwrap_or_else(|| fallback.to_string())
+    if let Some(msg) = ns_string_to_string(description) {
+        if let Some(domain) = error_domain(error) {
+            return format!("{} (domain: {}, code: {})", msg, domain, error_code(error));
+        }
+        return msg;
+    }
+    let user_info = error_user_info(error);
+    if !user_info.is_null() {
+        let key = NSString::new("NSLocalizedDescriptionKey");
+        let value = ns_dictionary_object_for_key(user_info, key.raw());
+        if let Some(msg) = ns_string_to_string(value) {
+            return msg;
+        }
+    }
+    fallback.to_string()
 }
 
 pub struct AutoreleasePool {
@@ -543,21 +557,6 @@ pub(crate) fn ns_data_to_bytes(data: id) -> Vec<u8> {
         );
     }
     out
-}
-
-pub(crate) fn ns_dictionary_from_keys_and_values(keys: &[id], values: &[id]) -> id {
-    debug_assert_eq!(keys.len(), values.len());
-    unsafe {
-        let f: unsafe extern "C" fn(id, SEL, *const id, *const id, usize) -> id =
-            transmute(objc_msgSend as *const c_void);
-        f(
-            class(b"NSDictionary\0"),
-            sel(b"dictionaryWithObjects:forKeys:count:\0"),
-            values.as_ptr(),
-            keys.as_ptr(),
-            keys.len(),
-        )
-    }
 }
 
 pub(crate) fn ns_dictionary_count(dictionary: id) -> usize {

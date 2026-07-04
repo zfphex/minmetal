@@ -1845,7 +1845,6 @@ impl M4Archive {
         &self,
         descriptor: &M4ComputePipelineDescriptor,
     ) -> Result<ComputePipelineState, MetalError> {
-        unsafe {
             let mut error = NIL;
             let raw = retain(msg_id_id_err(
                 self.raw,
@@ -1862,13 +1861,11 @@ impl M4Archive {
                 Ok(ComputePipelineState { raw })
             }
         }
-    }
 
     pub fn new_render_pipeline_state(
         &self,
         descriptor: &M4PipelineDescriptor,
     ) -> Result<RenderPipelineState, MetalError> {
-        unsafe {
             let mut error = NIL;
             let raw = retain(msg_id_id_err(
                 self.raw,
@@ -1885,13 +1882,11 @@ impl M4Archive {
                 Ok(RenderPipelineState { raw })
             }
         }
-    }
 
     pub fn new_binary_function(
         &self,
         descriptor: &M4BinaryFunctionDescriptor,
     ) -> Result<M4BinaryFunction, MetalError> {
-        unsafe {
             let mut error = NIL;
             let raw = retain(msg_id_id_err(
                 self.raw,
@@ -1908,7 +1903,6 @@ impl M4Archive {
                 Ok(M4BinaryFunction { raw })
             }
         }
-    }
 }
 
 impl Drop for M4Archive {
@@ -2651,7 +2645,6 @@ impl M4Compiler {
         &self,
         descriptor: &M4LibraryDescriptor,
     ) -> Result<Library, MetalError> {
-        unsafe {
             let mut error = NIL;
             let raw = retain(msg_id_id_err(
                 self.raw,
@@ -2665,7 +2658,6 @@ impl M4Compiler {
                 Ok(Library { raw })
             }
         }
-    }
 
     pub fn new_compute_pipeline_state(
         &self,
@@ -2752,7 +2744,6 @@ impl M4Compiler {
         &self,
         descriptor: &M4MachineLearningPipelineDescriptor,
     ) -> Result<M4MachineLearningPipelineState, MetalError> {
-        unsafe {
             let mut error = NIL;
             let raw = retain(msg_id_id_err(
                 self.raw,
@@ -2769,7 +2760,6 @@ impl M4Compiler {
                 Ok(M4MachineLearningPipelineState { raw })
             }
         }
-    }
 }
 
 impl Drop for M4Compiler {
@@ -2837,7 +2827,6 @@ impl M4PipelineDataSetSerializer {
     }
 
     pub fn serialize_as_archive_and_flush_to_url(&self, url_path: &str) -> Result<(), MetalError> {
-        unsafe {
             let mut error = NIL;
             let url = ns_url_from_path(url_path);
             let ok = msg_bool_id_err(
@@ -2855,7 +2844,6 @@ impl M4PipelineDataSetSerializer {
                 Ok(())
             }
         }
-    }
 
     pub fn serialize_as_pipelines_script(&self) -> Result<Vec<u8>, MetalError> {
         unsafe {
@@ -3564,7 +3552,6 @@ impl Device {
         &self,
         descriptor: &M4CommandAllocatorDescriptor,
     ) -> Result<M4CommandAllocator, MetalError> {
-        unsafe {
             let mut error = NIL;
             let selector = sel(b"newCommandAllocatorWithDescriptor:error:\0");
             if !responds_to_selector(self.raw, selector) {
@@ -3587,7 +3574,6 @@ impl Device {
                 Ok(M4CommandAllocator { raw })
             }
         }
-    }
 
     pub fn new_m4_command_queue(&self) -> Option<M4CommandQueue> {
         let selector = sel(b"newMTL4CommandQueue\0");
@@ -3602,7 +3588,6 @@ impl Device {
         &self,
         descriptor: &M4CommandQueueDescriptor,
     ) -> Result<M4CommandQueue, MetalError> {
-        unsafe {
             let mut error = NIL;
             let selector = sel(b"newMTL4CommandQueueWithDescriptor:error:\0");
             if !responds_to_selector(self.raw, selector) {
@@ -3625,7 +3610,6 @@ impl Device {
                 Ok(M4CommandQueue { raw })
             }
         }
-    }
 
     pub fn new_m4_command_buffer(&self) -> Option<M4CommandBuffer> {
         let selector = sel(b"newCommandBuffer\0");
@@ -3640,7 +3624,6 @@ impl Device {
         &self,
         descriptor: &M4ArgumentTableDescriptor,
     ) -> Result<M4ArgumentTable, MetalError> {
-        unsafe {
             let mut error = NIL;
             let selector = sel(b"newArgumentTableWithDescriptor:error:\0");
             if !responds_to_selector(self.raw, selector) {
@@ -3663,13 +3646,11 @@ impl Device {
                 Ok(M4ArgumentTable { raw })
             }
         }
-    }
 
     pub fn new_m4_compiler_with_descriptor(
         &self,
         descriptor: &M4CompilerDescriptor,
     ) -> Result<M4Compiler, MetalError> {
-        unsafe {
             let mut error = NIL;
             let selector = sel(b"newCompilerWithDescriptor:error:\0");
             if !responds_to_selector(self.raw, selector) {
@@ -3692,10 +3673,8 @@ impl Device {
                 Ok(M4Compiler { raw })
             }
         }
-    }
 
     pub fn new_m4_archive_with_url(&self, url_path: &str) -> Result<M4Archive, MetalError> {
-        unsafe {
             let mut error = NIL;
             let selector = sel(b"newArchiveWithURL:error:\0");
             if !responds_to_selector(self.raw, selector) {
@@ -3709,7 +3688,6 @@ impl Device {
                 Ok(M4Archive { raw })
             }
         }
-    }
 
     pub fn new_m4_pipeline_data_set_serializer_with_descriptor(
         &self,
@@ -3739,7 +3717,6 @@ impl Device {
         &self,
         descriptor: &M4CounterHeapDescriptor,
     ) -> Result<M4CounterHeap, MetalError> {
-        unsafe {
             let mut error = NIL;
             let selector = sel(b"newCounterHeapWithDescriptor:error:\0");
             if !responds_to_selector(self.raw, selector) {
@@ -3762,7 +3739,6 @@ impl Device {
                 Ok(M4CounterHeap { raw })
             }
         }
-    }
 
     pub fn size_of_m4_counter_heap_entry(&self, heap_type: M4CounterHeapType) -> usize {
         let selector = sel(b"sizeOfCounterHeapEntry:\0");
@@ -3776,7 +3752,6 @@ impl Device {
         &self,
         function: &M4BinaryFunction,
     ) -> Result<FunctionHandle, MetalError> {
-        unsafe {
             let mut error = NIL;
             let selector = sel(b"functionHandleWithBinaryFunction:error:\0");
             if !responds_to_selector(self.raw, selector) {
@@ -3799,5 +3774,4 @@ impl Device {
                 Ok(FunctionHandle { raw })
             }
         }
-    }
 }

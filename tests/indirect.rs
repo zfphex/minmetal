@@ -72,7 +72,9 @@ fn indirect_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
 
     // Verify support/creation with descriptor
     let desc_run = IndirectCommandBufferDescriptor::new();
-    desc_run.set_command_types(IndirectCommandType::CONCURRENT_DISPATCH);
+    desc_run.set_command_types(
+        IndirectCommandType::CONCURRENT_DISPATCH | IndirectCommandType::CONCURRENT_DISPATCH_THREADS,
+    );
     desc_run.set_inherit_pipeline_state(false);
     desc_run.set_inherit_buffers(false);
     desc_run.set_max_kernel_buffer_bind_count(1);
@@ -120,12 +122,12 @@ fn indirect_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     // Configure dispatch commands
     comp_cmd0.set_compute_pipeline_state(&pipeline)?;
     comp_cmd0.set_kernel_buffer(0, &values, 0)?;
-    comp_cmd0.dispatch_threadgroups(Size::new(1, 1, 1), Size::new(8, 1, 1));
+    comp_cmd0.dispatch_threadgroups(Size::new(1, 1, 1), Size::new(8, 1, 1))?;
 
     // Exercise dispatch_threads path
     comp_cmd1.set_compute_pipeline_state(&pipeline)?;
     comp_cmd1.set_kernel_buffer(0, &values, 0)?;
-    comp_cmd1.dispatch_threads(Size::new(8, 1, 1), Size::new(8, 1, 1));
+    comp_cmd1.dispatch_threads(Size::new(8, 1, 1), Size::new(8, 1, 1))?;
 
     // Execution
     let command_buffer = queue.command_buffer()?;
@@ -189,7 +191,7 @@ fn indirect_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
                 render_cmd.set_render_pipeline_state(&render_pipeline)?;
                 let dummy_buf = device.new_buffer(256, ResourceOptions::STORAGE_MODE_SHARED)?;
                 render_cmd.set_vertex_buffer(0, &dummy_buf, 0)?;
-                render_cmd.draw_primitives(PrimitiveType::Triangle, 0, 3, 1, 0);
+                render_cmd.draw_primitives(PrimitiveType::Triangle, 0, 3, 1, 0)?;
                 render_cmd.draw_indexed_primitives(
                     PrimitiveType::Triangle,
                     3,
@@ -199,7 +201,7 @@ fn indirect_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
                     1,
                     0,
                     0,
-                );
+                )?;
                 render_cmd.reset();
             }
         }

@@ -235,14 +235,7 @@ impl CounterSampleBuffer {
             if data.is_null() {
                 return Err(MetalError::new("resolveCounterRange: returned null data"));
             }
-            let len = msg_usize(data, sel(b"length\0"));
-            let bytes = msg_id(data, sel(b"bytes\0")) as *const u8;
-            if bytes.is_null() && len > 0 {
-                return Err(MetalError::new(
-                    "resolveCounterRange: returned null bytes with non-zero length",
-                ));
-            }
-            Ok(std::slice::from_raw_parts(bytes, len).to_vec())
+            Ok(ns_data_to_bytes(data))
         }
     }
 }

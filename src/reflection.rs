@@ -915,6 +915,55 @@ impl FunctionReflection {
             None
         }
     }
+
+    pub fn user_annotation_value(&self, key: &str) -> Option<String> {
+        if self.raw.is_null() {
+            return None;
+        }
+        let selector = sel(b"userAnnotation\0");
+        if !responds_to_selector(self.raw, selector) {
+            return None;
+        }
+        let annotation = msg_id(self.raw, selector);
+        if annotation.is_null() {
+            return None;
+        }
+        if responds_to_selector(annotation, sel(b"objectForKey:")) {
+            let ns_key = NSString::new(key);
+            ns_string_to_string(ns_dictionary_object_for_key(annotation, ns_key.raw()))
+        } else if key.is_empty() {
+            ns_string_to_string(annotation)
+        } else {
+            None
+        }
+    }
+
+    pub fn user_annotation_keys(&self) -> Vec<String> {
+        if self.raw.is_null() {
+            return Vec::new();
+        }
+        let selector = sel(b"userAnnotation\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Vec::new();
+        }
+        let annotation = msg_id(self.raw, selector);
+        if annotation.is_null() || !responds_to_selector(annotation, sel(b"allKeys")) {
+            return Vec::new();
+        }
+        let keys = ns_dictionary_all_keys(annotation);
+        if keys.is_null() {
+            return Vec::new();
+        }
+        let count = ns_dictionary_count(annotation);
+        let mut result = Vec::with_capacity(count);
+        for i in 0..count {
+            let key = msg_id_usize(keys, sel(b"objectAtIndex:\0"), i);
+            if let Some(name) = ns_string_to_string(key) {
+                result.push(name);
+            }
+        }
+        result
+    }
 }
 
 impl Clone for FunctionReflection {

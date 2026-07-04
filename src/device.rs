@@ -13,13 +13,6 @@ unsafe extern "C" {
     static MTLDeviceWasAddedNotification: id;
     static MTLDeviceRemovalRequestedNotification: id;
     static MTLDeviceWasRemovedNotification: id;
-    fn dispatch_data_create(
-        buffer: *const c_void,
-        size: usize,
-        queue: id,
-        destructor: *const c_void,
-    ) -> id;
-    fn dispatch_release(object: id);
     static _NSConcreteGlobalBlock: *const c_void;
 }
 
@@ -616,34 +609,26 @@ impl Device {
     }
 
     pub fn new_library_with_data(&self, data: &[u8]) -> Result<Library, MetalError> {
-        unsafe {
-            let dispatch_data = dispatch_data_create(
-                data.as_ptr() as *const c_void,
-                data.len(),
-                ptr::null_mut(),
-                ptr::null_mut(),
-            );
-            if dispatch_data.is_null() {
-                return Err(MetalError::new(
-                    "failed to create dispatch data for Metal library",
-                ));
-            }
-            let mut error = NIL;
-            let raw = msg_id_id_err(
-                self.raw,
-                sel(b"newLibraryWithData:error:\0"),
-                dispatch_data,
-                &mut error,
-            );
-            dispatch_release(dispatch_data);
-            if raw.is_null() {
-                Err(MetalError::new(error_message(
-                    error,
-                    "failed to load Metal library from data",
-                )))
-            } else {
-                Ok(Library { raw })
-            }
+        let ns_data = ns_data_from_bytes(data);
+        if ns_data.is_null() {
+            return Err(MetalError::new(
+                "failed to create NSData for Metal library",
+            ));
+        }
+        let mut error = NIL;
+        let raw = msg_id_id_err(
+            self.raw,
+            sel(b"newLibraryWithData:error:\0"),
+            ns_data,
+            &mut error,
+        );
+        if raw.is_null() {
+            Err(MetalError::new(error_message(
+                error,
+                "failed to load Metal library from data",
+            )))
+        } else {
+            Ok(Library { raw })
         }
     }
 
@@ -654,6 +639,10 @@ impl Device {
         } else {
             Ok(Library { raw })
         }
+    }
+
+    pub fn new_default_library_from_main_bundle(&self) -> Result<Library, MetalError> {
+        self.new_default_library_with_bundle(ns_bundle_main())
     }
 
     pub fn new_default_library_with_bundle(&self, raw_bundle: id) -> Result<Library, MetalError> {
