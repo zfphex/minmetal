@@ -570,6 +570,80 @@ pub enum VertexStepFunction {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(usize)]
+pub enum AttributeFormat {
+    Invalid = 0,
+    UChar2 = 1,
+    UChar3 = 2,
+    UChar4 = 3,
+    Char2 = 4,
+    Char3 = 5,
+    Char4 = 6,
+    UChar2Normalized = 7,
+    UChar3Normalized = 8,
+    UChar4Normalized = 9,
+    Char2Normalized = 10,
+    Char3Normalized = 11,
+    Char4Normalized = 12,
+    UShort2 = 13,
+    UShort3 = 14,
+    UShort4 = 15,
+    Short2 = 16,
+    Short3 = 17,
+    Short4 = 18,
+    UShort2Normalized = 19,
+    UShort3Normalized = 20,
+    UShort4Normalized = 21,
+    Short2Normalized = 22,
+    Short3Normalized = 23,
+    Short4Normalized = 24,
+    Half2 = 25,
+    Half3 = 26,
+    Half4 = 27,
+    Float = 28,
+    Float2 = 29,
+    Float3 = 30,
+    Float4 = 31,
+    Int = 32,
+    Int2 = 33,
+    Int3 = 34,
+    Int4 = 35,
+    UInt = 36,
+    UInt2 = 37,
+    UInt3 = 38,
+    UInt4 = 39,
+    Int1010102Normalized = 40,
+    UInt1010102Normalized = 41,
+    UChar4Normalized_BGRA = 42,
+    UChar = 45,
+    Char = 46,
+    UCharNormalized = 47,
+    CharNormalized = 48,
+    UShort = 49,
+    Short = 50,
+    UShortNormalized = 51,
+    ShortNormalized = 52,
+    Half = 53,
+    FloatRG11B10 = 54,
+    FloatRGB9E5 = 55,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(usize)]
+pub enum StepFunction {
+    Constant = 0,
+    PerVertex = 1,
+    PerInstance = 2,
+    PerPatch = 3,
+    PerPatchControlPoint = 4,
+    ThreadPositionInGridX = 5,
+    ThreadPositionInGridY = 6,
+    ThreadPositionInGridXIndexed = 7,
+    ThreadPositionInGridYIndexed = 8,
+}
+
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(usize)]
 pub enum IndexType {
     UInt16 = 0,
     UInt32 = 1,
@@ -739,6 +813,73 @@ pub enum DataType {
     BFloat4 = 124,
     DepthStencilState = 139,
     Tensor = 140,
+}
+
+impl DataType {
+    pub fn size(&self) -> Option<usize> {
+        match self {
+            DataType::Char | DataType::UChar | DataType::Bool => Some(1),
+            DataType::Char2 | DataType::UChar2 | DataType::Bool2 => Some(2),
+            DataType::Char3 | DataType::UChar3 | DataType::Bool3 => Some(4),
+            DataType::Char4 | DataType::UChar4 | DataType::Bool4 => Some(4),
+            
+            DataType::Short | DataType::UShort | DataType::Half | DataType::BFloat => Some(2),
+            DataType::Short2 | DataType::UShort2 | DataType::Half2 | DataType::BFloat2 => Some(4),
+            DataType::Short3 | DataType::UShort3 | DataType::Half3 | DataType::BFloat3 => Some(8),
+            DataType::Short4 | DataType::UShort4 | DataType::Half4 | DataType::BFloat4 => Some(8),
+            
+            DataType::Int | DataType::UInt | DataType::Float => Some(4),
+            DataType::Int2 | DataType::UInt2 | DataType::Float2 => Some(8),
+            DataType::Int3 | DataType::UInt3 | DataType::Float3 => Some(16),
+            DataType::Int4 | DataType::UInt4 | DataType::Float4 => Some(16),
+            
+            DataType::Long | DataType::ULong => Some(8),
+            DataType::Long2 | DataType::ULong2 => Some(16),
+            DataType::Long3 | DataType::ULong3 => Some(32),
+            DataType::Long4 | DataType::ULong4 => Some(32),
+            
+            DataType::Float2x2 | DataType::Half4x2 => Some(16),
+            DataType::Float2x3 | DataType::Float2x4 => Some(32),
+            DataType::Float3x2 => Some(24),
+            DataType::Float3x3 | DataType::Float3x4 => Some(48),
+            DataType::Float4x2 => Some(32),
+            DataType::Float4x3 | DataType::Float4x4 => Some(64),
+            
+            DataType::Half2x2 => Some(8),
+            DataType::Half2x3 | DataType::Half2x4 => Some(16),
+            DataType::Half3x2 => Some(12),
+            DataType::Half3x3 | DataType::Half3x4 => Some(24),
+            DataType::Half4x3 | DataType::Half4x4 => Some(32),
+            
+            _ => None,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(usize)]
+pub enum FunctionType {
+    Vertex = 1,
+    Fragment = 2,
+    Kernel = 3,
+    Visible = 5,
+    Intersection = 6,
+    Mesh = 7,
+    Object = 8,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(usize)]
+pub enum FunctionLogType {
+    Validation = 0,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(isize)]
+pub enum CaptureError {
+    NotSupported = 1,
+    AlreadyCapturing = 2,
+    InvalidDescriptor = 3,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

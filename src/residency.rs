@@ -24,6 +24,15 @@ impl Allocation {
     pub fn from_acceleration_structure(structure: &AccelerationStructure) -> Self {
         Self { raw: structure.raw }
     }
+
+    pub fn allocated_size(&self) -> usize {
+        let selector = sel(b"allocatedSize\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_usize(self.raw, selector)
+        } else {
+            0
+        }
+    }
 }
 
 #[derive(Debug)]

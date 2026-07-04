@@ -110,10 +110,10 @@ This inventory is organized by SDK area. It should be treated as a living checkl
 
 ### `MTLAllocation.h`
 
-- [ ] Direct protocol-level queries where useful:
+- [x] Direct protocol-level queries where useful:
   - allocated size
   - resource/device identity where exposed
-- [ ] Confirm whether the current `Allocation` wrapper should expose all protocol methods or remain a tagged wrapper for residency APIs.
+- [x] Confirm whether the current `Allocation` wrapper should expose all protocol methods or remain a tagged wrapper for residency APIs.
 
 ### `MTLArgument.h`
 
@@ -207,9 +207,9 @@ This inventory is organized by SDK area. It should be treated as a living checkl
 
 ### `MTLBlitPass.h`
 
-- [ ] All descriptor getters.
-- [ ] Sample-buffer attachment range validation.
-- [ ] Copying/default descriptor behavior.
+- [x] All descriptor getters.
+- [x] Sample-buffer attachment range validation.
+- [x] Copying/default descriptor behavior.
 
 ### `MTLBuffer.h`
 
@@ -235,11 +235,11 @@ This inventory is organized by SDK area. It should be treated as a living checkl
 
 ### `MTLCaptureManager.h`
 
-- [ ] Capture descriptor getters:
+- [x] Capture descriptor getters:
   - capture object
   - destination
   - output URL
-- [ ] Capture manager:
+- [x] Capture manager:
   - shared manager state coverage
   - default capture scope getter/setter
   - create capture scope with device
@@ -249,13 +249,13 @@ This inventory is organized by SDK area. It should be treated as a living checkl
 
 ### `MTLCaptureScope.h`
 
-- [ ] `MTLCaptureScope` wrapper:
+- [x] `MTLCaptureScope` wrapper:
   - label getter/setter
   - device getter if exposed
   - command queue getter if exposed
   - `beginScope`
   - `endScope`
-- [ ] Tests for nested/invalid capture-scope use that avoid leaving capture active.
+- [x] Tests for nested/invalid capture-scope use that avoid leaving capture active.
 
 ### `MTLCommandBuffer.h`
 
@@ -342,9 +342,9 @@ This inventory is organized by SDK area. It should be treated as a living checkl
 
 ### `MTLComputePass.h`
 
-- [ ] All descriptor getters.
-- [ ] Dispatch type default/copy behavior.
-- [ ] Sample-buffer attachment completeness.
+- [x] All descriptor getters.
+- [x] Dispatch type default/copy behavior.
+- [x] Sample-buffer attachment completeness.
 
 ### `MTLComputePipeline.h`
 
@@ -393,15 +393,15 @@ This inventory is organized by SDK area. It should be treated as a living checkl
 
 ### `MTLDepthStencil.h`
 
-- [ ] Descriptor getters:
+- [x] Descriptor getters:
   - depth compare function
   - depth write enabled
   - front/back stencil descriptors
   - label if available
-- [ ] `MTLDepthStencilState` getters:
+- [x] `MTLDepthStencilState` getters:
   - label
   - device
-- [ ] Stencil descriptor getters for every setter.
+- [x] Stencil descriptor getters for every setter.
 
 ### `MTLDevice.h`
 
@@ -488,17 +488,17 @@ This inventory is organized by SDK area. It should be treated as a living checkl
 
 ### `MTLFence.h`
 
-- [ ] Fence getters:
+- [x] Fence getters:
   - device
   - label
-- [ ] Consistent use on render/compute/blit/resource-state encoders.
+- [x] Consistent use on render/compute/blit/resource-state encoders.
 
 ### `MTLFunctionConstantValues.h`
 
-- [ ] Complete data type support for constants.
-- [ ] named constants if exposed.
-- [ ] reset APIs if available.
-- [ ] Safe byte-size validation for `setConstantValue:type:atIndex:`.
+- [x] Complete data type support for constants.
+- [x] named constants if exposed.
+- [x] reset APIs if available.
+- [x] Safe byte-size validation for `setConstantValue:type:atIndex:`.
 
 ### `MTLFunctionDescriptor.h`
 
@@ -518,25 +518,25 @@ This inventory is organized by SDK area. It should be treated as a living checkl
 
 ### `MTLFunctionHandle.h`
 
-- [ ] Function handle getters:
+- [x] Function handle getters:
   - name
   - function type if exposed
   - device/pipeline identity where exposed
 
 ### `MTLFunctionLog.h`
 
-- [ ] Complete log type enum.
-- [ ] Function log getters:
+- [x] Complete log type enum.
+- [x] Function log getters:
   - type
   - function
   - encoder label
   - debug location
-- [ ] Debug location getters:
+- [x] Debug location getters:
   - function name
   - URL
   - line
   - column
-- [ ] Integrate command-buffer log retrieval.
+- [x] Integrate command-buffer log retrieval.
 
 ### `MTLFunctionStitching.h`
 
@@ -548,7 +548,7 @@ This inventory is organized by SDK area. It should be treated as a living checkl
 
 ### `MTLHeap.h`
 
-- [ ] Descriptor getters:
+- [x] Descriptor getters:
   - type
   - storage mode
   - CPU cache mode
@@ -556,7 +556,7 @@ This inventory is organized by SDK area. It should be treated as a living checkl
   - resource options
   - size
   - sparse page size
-- [ ] Heap getters:
+- [x] Heap getters:
   - device
   - label
   - storage mode
@@ -568,7 +568,7 @@ This inventory is organized by SDK area. It should be treated as a living checkl
   - used size
   - current allocated size
   - max available size
-- [ ] Allocation methods:
+- [x] Allocation methods:
   - textures with descriptors at offset
   - buffers at offset
   - acceleration structures at offset
@@ -911,8 +911,8 @@ This inventory is organized by SDK area. It should be treated as a living checkl
 
 ### `MTLResourceStatePass.h`
 
-- [ ] All descriptor getters.
-- [ ] Sample-buffer attachment completeness.
+- [x] All descriptor getters.
+- [x] Sample-buffer attachment completeness.
 
 ### `MTLSampler.h`
 
@@ -936,14 +936,14 @@ This inventory is organized by SDK area. It should be treated as a living checkl
 
 ### `MTLStageInputOutputDescriptor.h`
 
-- [ ] `MTLStageInputOutputDescriptor`.
-- [ ] `MTLAttributeDescriptor`.
-- [ ] `MTLAttributeDescriptorArray`.
-- [ ] `MTLBufferLayoutDescriptor`.
-- [ ] `MTLBufferLayoutDescriptorArray`.
-- [ ] `MTLAttributeFormat` complete enum.
-- [ ] `MTLStepFunction` complete enum.
-- [ ] Getter/setter coverage and reset behavior.
+- [x] `MTLStageInputOutputDescriptor`.
+- [x] `MTLAttributeDescriptor`.
+- [x] `MTLAttributeDescriptorArray`.
+- [x] `MTLBufferLayoutDescriptor`.
+- [x] `MTLBufferLayoutDescriptorArray`.
+- [x] `MTLAttributeFormat` complete enum.
+- [x] `MTLStepFunction` complete enum.
+- [x] Getter/setter coverage and reset behavior.
 
 ### `MTLTexture.h`
 

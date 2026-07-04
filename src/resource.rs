@@ -1061,12 +1061,45 @@ impl HeapDescriptor {
         }
     }
 
+    pub fn heap_type(&self) -> HeapType {
+        let selector = sel(b"type\0");
+        if responds_to_selector(self.raw, selector) {
+            let val = msg_usize(self.raw, selector);
+            match val {
+                1 => HeapType::Placement,
+                2 => HeapType::Sparse,
+                _ => HeapType::Automatic,
+            }
+        } else {
+            HeapType::Automatic
+        }
+    }
+
     pub fn set_heap_type(&self, heap_type: HeapType) {
         msg_void_usize(self.raw, sel(b"setType:\0"), heap_type as usize);
     }
 
+    pub fn storage_mode(&self) -> StorageMode {
+        let val = msg_usize(self.raw, sel(b"storageMode\0"));
+        match val {
+            0 => StorageMode::Shared,
+            1 => StorageMode::Managed,
+            2 => StorageMode::Private,
+            3 => StorageMode::Memoryless,
+            _ => StorageMode::Shared,
+        }
+    }
+
     pub fn set_storage_mode(&self, storage_mode: StorageMode) {
         msg_void_usize(self.raw, sel(b"setStorageMode:\0"), storage_mode as usize);
+    }
+
+    pub fn cpu_cache_mode(&self) -> CpuCacheMode {
+        let val = msg_usize(self.raw, sel(b"cpuCacheMode\0"));
+        match val {
+            1 => CpuCacheMode::WriteCombined,
+            _ => CpuCacheMode::DefaultCache,
+        }
     }
 
     pub fn set_cpu_cache_mode(&self, cpu_cache_mode: CpuCacheMode) {
@@ -1077,6 +1110,20 @@ impl HeapDescriptor {
         );
     }
 
+    pub fn hazard_tracking_mode(&self) -> HazardTrackingMode {
+        let selector = sel(b"hazardTrackingMode\0");
+        if responds_to_selector(self.raw, selector) {
+            let val = msg_usize(self.raw, selector);
+            match val {
+                1 => HazardTrackingMode::Untracked,
+                2 => HazardTrackingMode::Tracked,
+                _ => HazardTrackingMode::Default,
+            }
+        } else {
+            HazardTrackingMode::Default
+        }
+    }
+
     pub fn set_hazard_tracking_mode(&self, hazard_tracking_mode: HazardTrackingMode) {
         msg_void_usize(
             self.raw,
@@ -1085,8 +1132,38 @@ impl HeapDescriptor {
         );
     }
 
+    pub fn resource_options(&self) -> ResourceOptions {
+        let selector = sel(b"resourceOptions\0");
+        if responds_to_selector(self.raw, selector) {
+            ResourceOptions::from_raw(msg_usize(self.raw, selector))
+        } else {
+            ResourceOptions::from_raw(0)
+        }
+    }
+
+    pub fn set_resource_options(&self, resource_options: ResourceOptions) {
+        msg_void_usize(
+            self.raw,
+            sel(b"setResourceOptions:\0"),
+            resource_options.as_raw(),
+        );
+    }
+
+    pub fn size(&self) -> usize {
+        msg_usize(self.raw, sel(b"size\0"))
+    }
+
     pub fn set_size(&self, size: usize) {
         msg_void_usize(self.raw, sel(b"setSize:\0"), size);
+    }
+
+    pub fn sparse_page_size(&self) -> SparsePageSize {
+        let val = msg_usize(self.raw, sel(b"sparsePageSize\0"));
+        match val {
+            102 => SparsePageSize::Size64,
+            103 => SparsePageSize::Size256,
+            _ => SparsePageSize::Size16,
+        }
     }
 
     pub fn set_sparse_page_size(&self, size: SparsePageSize) {

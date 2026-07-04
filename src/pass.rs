@@ -475,8 +475,23 @@ impl ComputePassSampleBufferAttachmentDescriptorArray {
         &self,
         index: usize,
     ) -> ComputePassSampleBufferAttachmentDescriptor {
+        assert!(index < 4, "ComputePass sample buffer attachment index must be < 4");
         let attachment = msg_id_usize(self.raw, sel(b"objectAtIndexedSubscript:\0"), index);
         ComputePassSampleBufferAttachmentDescriptor { raw: attachment }
+    }
+
+    pub fn set_object_at_indexed_subscript(
+        &self,
+        index: usize,
+        attachment: Option<&ComputePassSampleBufferAttachmentDescriptor>,
+    ) {
+        assert!(index < 4, "ComputePass sample buffer attachment index must be < 4");
+        msg_void_id_usize(
+            self.raw,
+            sel(b"setObject:atIndexedSubscript:\0"),
+            attachment.map_or(NIL, |a| a.raw),
+            index,
+        );
     }
 }
 
@@ -513,6 +528,20 @@ impl ComputePassDescriptor {
     pub fn sample_buffer_attachments(&self) -> ComputePassSampleBufferAttachmentDescriptorArray {
         let array = msg_id(self.raw, sel(b"sampleBufferAttachments\0"));
         ComputePassSampleBufferAttachmentDescriptorArray { raw: array }
+    }
+}
+
+impl Default for ComputePassDescriptor {
+    fn default() -> Self {
+        Self::new().expect("Failed to create default ComputePassDescriptor")
+    }
+}
+
+impl Clone for ComputePassDescriptor {
+    fn clone(&self) -> Self {
+        Self {
+            raw: retain(msg_id(self.raw, sel(b"copy\0"))),
+        }
     }
 }
 
@@ -568,8 +597,23 @@ impl BlitPassSampleBufferAttachmentDescriptorArray {
         &self,
         index: usize,
     ) -> BlitPassSampleBufferAttachmentDescriptor {
+        assert!(index < 4, "BlitPass sample buffer attachment index must be < 4");
         let attachment = msg_id_usize(self.raw, sel(b"objectAtIndexedSubscript:\0"), index);
         BlitPassSampleBufferAttachmentDescriptor { raw: attachment }
+    }
+
+    pub fn set_object_at_indexed_subscript(
+        &self,
+        index: usize,
+        attachment: Option<&BlitPassSampleBufferAttachmentDescriptor>,
+    ) {
+        assert!(index < 4, "BlitPass sample buffer attachment index must be < 4");
+        msg_void_id_usize(
+            self.raw,
+            sel(b"setObject:atIndexedSubscript:\0"),
+            attachment.map_or(NIL, |a| a.raw),
+            index,
+        );
     }
 }
 
@@ -595,6 +639,20 @@ impl BlitPassDescriptor {
     pub fn sample_buffer_attachments(&self) -> BlitPassSampleBufferAttachmentDescriptorArray {
         let array = msg_id(self.raw, sel(b"sampleBufferAttachments\0"));
         BlitPassSampleBufferAttachmentDescriptorArray { raw: array }
+    }
+}
+
+impl Default for BlitPassDescriptor {
+    fn default() -> Self {
+        Self::new().expect("Failed to create default BlitPassDescriptor")
+    }
+}
+
+impl Clone for BlitPassDescriptor {
+    fn clone(&self) -> Self {
+        Self {
+            raw: retain(msg_id(self.raw, sel(b"copy\0"))),
+        }
     }
 }
 
@@ -650,8 +708,23 @@ impl ResourceStatePassSampleBufferAttachmentDescriptorArray {
         &self,
         index: usize,
     ) -> ResourceStatePassSampleBufferAttachmentDescriptor {
+        assert!(index < 4, "ResourceStatePass sample buffer attachment index must be < 4");
         let attachment = msg_id_usize(self.raw, sel(b"objectAtIndexedSubscript:\0"), index);
         ResourceStatePassSampleBufferAttachmentDescriptor { raw: attachment }
+    }
+
+    pub fn set_object_at_indexed_subscript(
+        &self,
+        index: usize,
+        attachment: Option<&ResourceStatePassSampleBufferAttachmentDescriptor>,
+    ) {
+        assert!(index < 4, "ResourceStatePass sample buffer attachment index must be < 4");
+        msg_void_id_usize(
+            self.raw,
+            sel(b"setObject:atIndexedSubscript:\0"),
+            attachment.map_or(NIL, |a| a.raw),
+            index,
+        );
     }
 }
 
@@ -683,6 +756,20 @@ impl ResourceStatePassDescriptor {
     ) -> ResourceStatePassSampleBufferAttachmentDescriptorArray {
         let array = msg_id(self.raw, sel(b"sampleBufferAttachments\0"));
         ResourceStatePassSampleBufferAttachmentDescriptorArray { raw: array }
+    }
+}
+
+impl Default for ResourceStatePassDescriptor {
+    fn default() -> Self {
+        Self::new().expect("Failed to create default ResourceStatePassDescriptor")
+    }
+}
+
+impl Clone for ResourceStatePassDescriptor {
+    fn clone(&self) -> Self {
+        Self {
+            raw: retain(msg_id(self.raw, sel(b"copy\0"))),
+        }
     }
 }
 

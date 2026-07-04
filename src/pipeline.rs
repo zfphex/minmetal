@@ -41,7 +41,69 @@ impl FunctionConstantValues {
     }
 
     pub fn set_bytes(&self, index: usize, data_type: DataType, bytes: &[u8]) {
+        if let Some(expected_size) = data_type.size() {
+            assert!(
+                bytes.len() >= expected_size,
+                "set_bytes: byte slice length ({}) is less than the expected size for {:?} ({})",
+                bytes.len(),
+                data_type,
+                expected_size
+            );
+        }
         self.set_raw(index, data_type, bytes.as_ptr() as *const c_void);
+    }
+
+    pub fn set_constant_values_in_range(&self, data_type: DataType, bytes: &[u8], range: Range) {
+        if let Some(expected_size) = data_type.size() {
+            let total_expected_size = expected_size * range.length;
+            assert!(
+                bytes.len() >= total_expected_size,
+                "set_constant_values_in_range: byte slice length ({}) is less than the expected size for {} elements of {:?} ({})",
+                bytes.len(),
+                range.length,
+                data_type,
+                total_expected_size
+            );
+        }
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, *const c_void, usize, Range) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"setConstantValues:type:withRange:\0"),
+                bytes.as_ptr() as *const c_void,
+                data_type as usize,
+                range,
+            );
+        }
+    }
+
+    pub fn set_constant_value_with_name(&self, name: &str, data_type: DataType, bytes: &[u8]) {
+        if let Some(expected_size) = data_type.size() {
+            assert!(
+                bytes.len() >= expected_size,
+                "set_constant_value_with_name: byte slice length ({}) is less than the expected size for {:?} ({})",
+                bytes.len(),
+                data_type,
+                expected_size
+            );
+        }
+        let ns_name = NSString::new(name);
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, *const c_void, usize, id) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"setConstantValue:type:withName:\0"),
+                bytes.as_ptr() as *const c_void,
+                data_type as usize,
+                ns_name.raw(),
+            );
+        }
+    }
+
+    pub fn reset(&self) {
+        msg_void(self.raw, sel(b"reset\0"));
     }
 
     fn set_raw(&self, index: usize, data_type: DataType, ptr: *const c_void) {
@@ -417,6 +479,93 @@ impl Drop for VertexDescriptor {
 }
 
 #[derive(Debug)]
+pub struct StageInputOutputDescriptor {
+    pub raw: id,
+}
+
+impl StageInputOutputDescriptor {
+    pub fn new() -> Self {
+        let raw = retain(msg_id(
+            class(b"MTLStageInputOutputDescriptor\0"),
+            sel(b"stageInputOutputDescriptor\0"),
+        ));
+        Self { raw }
+    }
+
+    pub fn set_attribute(
+        &self,
+        index: usize,
+        format: AttributeFormat,
+        offset: usize,
+        buffer_index: usize,
+    ) {
+        let attributes = msg_id(self.raw, sel(b"attributes\0"));
+        let attribute = msg_id_usize(attributes, sel(b"objectAtIndexedSubscript:\0"), index);
+        msg_void_usize(attribute, sel(b"setFormat:\0"), format as usize);
+        msg_void_usize(attribute, sel(b"setOffset:\0"), offset);
+        msg_void_usize(attribute, sel(b"setBufferIndex:\0"), buffer_index);
+    }
+
+    pub fn set_layout(
+        &self,
+        index: usize,
+        stride: usize,
+        step_function: StepFunction,
+        step_rate: usize,
+    ) {
+        let layouts = msg_id(self.raw, sel(b"layouts\0"));
+        let layout = msg_id_usize(layouts, sel(b"objectAtIndexedSubscript:\0"), index);
+        msg_void_usize(layout, sel(b"setStride:\0"), stride);
+        msg_void_usize(layout, sel(b"setStepFunction:\0"), step_function as usize);
+        msg_void_usize(layout, sel(b"setStepRate:\0"), step_rate);
+    }
+
+    pub fn index_type(&self) -> IndexType {
+        let val = msg_usize(self.raw, sel(b"indexType\0"));
+        match val {
+            1 => IndexType::UInt32,
+            _ => IndexType::UInt16,
+        }
+    }
+
+    pub fn set_index_type(&self, index_type: IndexType) {
+        msg_void_usize(self.raw, sel(b"setIndexType:\0"), index_type as usize);
+    }
+
+    pub fn index_buffer_index(&self) -> usize {
+        msg_usize(self.raw, sel(b"indexBufferIndex\0"))
+    }
+
+    pub fn set_index_buffer_index(&self, index: usize) {
+        msg_void_usize(self.raw, sel(b"setIndexBufferIndex:\0"), index);
+    }
+
+    pub fn reset(&self) {
+        msg_void(self.raw, sel(b"reset\0"));
+    }
+}
+
+impl Default for StageInputOutputDescriptor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Clone for StageInputOutputDescriptor {
+    fn clone(&self) -> Self {
+        Self {
+            raw: retain(msg_id(self.raw, sel(b"copy\0"))),
+        }
+    }
+}
+
+impl Drop for StageInputOutputDescriptor {
+    fn drop(&mut self) {
+        release(self.raw);
+    }
+}
+
+#[derive(Debug)]
 pub struct RenderPipelineDescriptor {
     pub raw: id,
 }
@@ -774,12 +923,42 @@ impl StencilDescriptor {
         Self { raw }
     }
 
+    pub fn stencil_compare_function(&self) -> CompareFunction {
+        let val = msg_usize(self.raw, sel(b"stencilCompareFunction\0"));
+        match val {
+            0 => CompareFunction::Never,
+            1 => CompareFunction::Less,
+            2 => CompareFunction::Equal,
+            3 => CompareFunction::LessEqual,
+            4 => CompareFunction::Greater,
+            5 => CompareFunction::NotEqual,
+            6 => CompareFunction::GreaterEqual,
+            7 => CompareFunction::Always,
+            _ => CompareFunction::Always,
+        }
+    }
+
     pub fn set_stencil_compare_function(&self, compare_function: CompareFunction) {
         msg_void_usize(
             self.raw,
             sel(b"setStencilCompareFunction:\0"),
             compare_function as usize,
         );
+    }
+
+    pub fn stencil_failure_operation(&self) -> StencilOperation {
+        let val = msg_usize(self.raw, sel(b"stencilFailureOperation\0"));
+        match val {
+            0 => StencilOperation::Keep,
+            1 => StencilOperation::Zero,
+            2 => StencilOperation::Replace,
+            3 => StencilOperation::IncrementClamp,
+            4 => StencilOperation::DecrementClamp,
+            5 => StencilOperation::Invert,
+            6 => StencilOperation::IncrementWrap,
+            7 => StencilOperation::DecrementWrap,
+            _ => StencilOperation::Keep,
+        }
     }
 
     pub fn set_stencil_failure_operation(&self, operation: StencilOperation) {
@@ -790,12 +969,42 @@ impl StencilDescriptor {
         );
     }
 
+    pub fn depth_failure_operation(&self) -> StencilOperation {
+        let val = msg_usize(self.raw, sel(b"depthFailureOperation\0"));
+        match val {
+            0 => StencilOperation::Keep,
+            1 => StencilOperation::Zero,
+            2 => StencilOperation::Replace,
+            3 => StencilOperation::IncrementClamp,
+            4 => StencilOperation::DecrementClamp,
+            5 => StencilOperation::Invert,
+            6 => StencilOperation::IncrementWrap,
+            7 => StencilOperation::DecrementWrap,
+            _ => StencilOperation::Keep,
+        }
+    }
+
     pub fn set_depth_failure_operation(&self, operation: StencilOperation) {
         msg_void_usize(
             self.raw,
             sel(b"setDepthFailureOperation:\0"),
             operation as usize,
         );
+    }
+
+    pub fn depth_stencil_pass_operation(&self) -> StencilOperation {
+        let val = msg_usize(self.raw, sel(b"depthStencilPassOperation\0"));
+        match val {
+            0 => StencilOperation::Keep,
+            1 => StencilOperation::Zero,
+            2 => StencilOperation::Replace,
+            3 => StencilOperation::IncrementClamp,
+            4 => StencilOperation::DecrementClamp,
+            5 => StencilOperation::Invert,
+            6 => StencilOperation::IncrementWrap,
+            7 => StencilOperation::DecrementWrap,
+            _ => StencilOperation::Keep,
+        }
     }
 
     pub fn set_depth_stencil_pass_operation(&self, operation: StencilOperation) {
@@ -806,8 +1015,16 @@ impl StencilDescriptor {
         );
     }
 
+    pub fn read_mask(&self) -> u32 {
+        msg_usize(self.raw, sel(b"readMask\0")) as u32
+    }
+
     pub fn set_read_mask(&self, mask: u32) {
         msg_void_usize(self.raw, sel(b"setReadMask:\0"), mask as usize);
+    }
+
+    pub fn write_mask(&self) -> u32 {
+        msg_usize(self.raw, sel(b"writeMask\0")) as u32
     }
 
     pub fn set_write_mask(&self, mask: u32) {
@@ -828,12 +1045,31 @@ impl DepthStencilDescriptor {
         }
     }
 
+    pub fn depth_compare_function(&self) -> CompareFunction {
+        let val = msg_usize(self.raw, sel(b"depthCompareFunction\0"));
+        match val {
+            0 => CompareFunction::Never,
+            1 => CompareFunction::Less,
+            2 => CompareFunction::Equal,
+            3 => CompareFunction::LessEqual,
+            4 => CompareFunction::Greater,
+            5 => CompareFunction::NotEqual,
+            6 => CompareFunction::GreaterEqual,
+            7 => CompareFunction::Always,
+            _ => CompareFunction::Always,
+        }
+    }
+
     pub fn set_depth_compare_function(&self, compare_function: CompareFunction) {
         msg_void_usize(
             self.raw,
             sel(b"setDepthCompareFunction:\0"),
             compare_function as usize,
         );
+    }
+
+    pub fn is_depth_write_enabled(&self) -> bool {
+        msg_bool(self.raw, sel(b"isDepthWriteEnabled\0")) == YES
     }
 
     pub fn set_depth_write_enabled(&self, enabled: bool) {
@@ -850,6 +1086,15 @@ impl DepthStencilDescriptor {
 
     pub fn back_face_stencil(&self) -> StencilDescriptor {
         StencilDescriptor::borrowed(msg_id(self.raw, sel(b"backFaceStencil\0")))
+    }
+
+    pub fn label(&self) -> Option<String> {
+        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    }
+
+    pub fn set_label(&self, label: &str) {
+        let ns_label = NSString::new(label);
+        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
     }
 }
 
@@ -868,6 +1113,28 @@ impl Drop for DepthStencilDescriptor {
 #[derive(Debug)]
 pub struct DepthStencilState {
     pub raw: id,
+}
+
+impl DepthStencilState {
+    pub fn label(&self) -> Option<String> {
+        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    }
+
+    pub fn device(&self) -> Device {
+        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        Device { raw: ptr }
+    }
+
+    pub fn gpu_resource_id(&self) -> Result<ResourceID, MetalError> {
+        let selector = sel(b"gpuResourceID\0");
+        if responds_to_selector(self.raw, selector) {
+            Ok(msg_resource_id(self.raw, selector))
+        } else {
+            Err(MetalError::new(
+                "gpuResourceID not supported on DepthStencilState",
+            ))
+        }
+    }
 }
 
 impl Drop for DepthStencilState {
@@ -1197,6 +1464,22 @@ pub struct Fence {
     pub raw: id,
 }
 
+impl Fence {
+    pub fn device(&self) -> Device {
+        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        Device { raw: ptr }
+    }
+
+    pub fn label(&self) -> Option<String> {
+        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    }
+
+    pub fn set_label(&self, label: &str) {
+        let ns_label = NSString::new(label);
+        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+    }
+}
+
 impl Drop for Fence {
     fn drop(&mut self) {
         release(self.raw);
@@ -1415,6 +1698,36 @@ impl FunctionHandle {
     pub fn name(&self) -> Option<String> {
         ns_string_to_string(msg_id(self.raw, sel(b"name\0")))
     }
+
+    pub fn device(&self) -> Device {
+        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        Device { raw: ptr }
+    }
+
+    pub fn function_type(&self) -> FunctionType {
+        let val = msg_usize(self.raw, sel(b"functionType\0"));
+        match val {
+            1 => FunctionType::Vertex,
+            2 => FunctionType::Fragment,
+            3 => FunctionType::Kernel,
+            5 => FunctionType::Visible,
+            6 => FunctionType::Intersection,
+            7 => FunctionType::Mesh,
+            8 => FunctionType::Object,
+            _ => FunctionType::Vertex,
+        }
+    }
+
+    pub fn gpu_resource_id(&self) -> Result<ResourceID, MetalError> {
+        let selector = sel(b"gpuResourceID\0");
+        if responds_to_selector(self.raw, selector) {
+            Ok(msg_resource_id(self.raw, selector))
+        } else {
+            Err(MetalError::new(
+                "gpuResourceID not supported on FunctionHandle",
+            ))
+        }
+    }
 }
 
 impl Drop for FunctionHandle {
@@ -1463,8 +1776,12 @@ pub struct FunctionLog {
 }
 
 impl FunctionLog {
-    pub fn log_type(&self) -> usize {
-        msg_usize(self.raw, sel(b"type\0"))
+    pub fn log_type(&self) -> FunctionLogType {
+        let val = msg_usize(self.raw, sel(b"type\0"));
+        match val {
+            0 => FunctionLogType::Validation,
+            _ => FunctionLogType::Validation,
+        }
     }
 
     pub fn encoder_label(&self) -> Option<String> {
