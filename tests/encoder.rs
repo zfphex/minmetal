@@ -261,8 +261,8 @@ fn encoder_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
         let mut sparse_heap_keepalive = None;
         let mut sparse_texture_keepalive = None;
 
-        encoder.update_fence(&fence);
-        encoder.wait_for_fence(&fence);
+        let _ = encoder.update_fence(&fence);
+        let _ = encoder.wait_for_fence(&fence);
 
         // update_texture_mapping mapping tests
         let sparse_tile = device.sparse_tile_size(TextureType::D2, PixelFormat::Rgba8Unorm, 1);

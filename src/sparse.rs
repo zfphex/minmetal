@@ -69,4 +69,136 @@ impl ResourceStateCommandEncoder {
             Ok(())
         }
     }
+
+    pub fn update_texture_mappings(
+        &self,
+        texture: &Texture,
+        mode: SparseTextureMappingMode,
+        regions: &[Region],
+        mip_levels: &[usize],
+        slices: &[usize],
+    ) -> Result<(), MetalError> {
+        if regions.len() != mip_levels.len() || regions.len() != slices.len() {
+            return Err(MetalError::new(
+                "updateTextureMappings requires regions, mip_levels, and slices to have equal length",
+            ));
+        }
+        if regions.is_empty() {
+            return Err(MetalError::new(
+                "updateTextureMappings requires at least one region",
+            ));
+        }
+        unsafe {
+            let selector = sel(
+                b"updateTextureMappings:mode:regions:mipLevels:slices:numRegions:\0",
+            );
+            if !responds_to_selector(self.raw, selector) {
+                return Err(MetalError::new(
+                    "updateTextureMappings:mode:regions:mipLevels:slices:numRegions: not supported on this ResourceStateCommandEncoder",
+                ));
+            }
+            let f: unsafe extern "C" fn(
+                id,
+                SEL,
+                id,
+                usize,
+                *const Region,
+                *const usize,
+                *const usize,
+                usize,
+            ) = transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                selector,
+                texture.raw,
+                mode as usize,
+                regions.as_ptr(),
+                mip_levels.as_ptr(),
+                slices.as_ptr(),
+                regions.len(),
+            );
+            Ok(())
+        }
+    }
+
+    pub fn update_texture_mapping_indirect(
+        &self,
+        texture: &Texture,
+        mode: SparseTextureMappingMode,
+        indirect_buffer: &Buffer,
+        indirect_buffer_offset: usize,
+    ) -> Result<(), MetalError> {
+        unsafe {
+            let selector = sel(
+                b"updateTextureMapping:mode:indirectBuffer:indirectBufferOffset:\0",
+            );
+            if !responds_to_selector(self.raw, selector) {
+                return Err(MetalError::new(
+                    "updateTextureMapping:mode:indirectBuffer:indirectBufferOffset: not supported on this ResourceStateCommandEncoder",
+                ));
+            }
+            let f: unsafe extern "C" fn(id, SEL, id, usize, id, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                selector,
+                texture.raw,
+                mode as usize,
+                indirect_buffer.raw,
+                indirect_buffer_offset,
+            );
+            Ok(())
+        }
+    }
+
+    pub fn move_texture_mappings(
+        &self,
+        source_texture: &Texture,
+        source_slice: usize,
+        source_level: usize,
+        source_origin: Origin,
+        source_size: Size,
+        destination_texture: &Texture,
+        destination_slice: usize,
+        destination_level: usize,
+        destination_origin: Origin,
+    ) -> Result<(), MetalError> {
+        unsafe {
+            let selector = sel(
+                b"moveTextureMappingsFromTexture:sourceSlice:sourceLevel:sourceOrigin:sourceSize:toTexture:destinationSlice:destinationLevel:destinationOrigin:\0",
+            );
+            if !responds_to_selector(self.raw, selector) {
+                return Err(MetalError::new(
+                    "moveTextureMappingsFromTexture:... not supported on this ResourceStateCommandEncoder",
+                ));
+            }
+            let f: unsafe extern "C" fn(
+                id,
+                SEL,
+                id,
+                usize,
+                usize,
+                Origin,
+                Size,
+                id,
+                usize,
+                usize,
+                Origin,
+            ) = transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                selector,
+                source_texture.raw,
+                source_slice,
+                source_level,
+                source_origin,
+                source_size,
+                destination_texture.raw,
+                destination_slice,
+                destination_level,
+                destination_origin,
+            );
+            Ok(())
+        }
+    }
 }

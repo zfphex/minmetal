@@ -55,6 +55,12 @@ impl CaptureDescriptor {
         let ns_url = ns_url_from_path(path);
         msg_void_id(self.raw, sel(b"setOutputURL:\0"), ns_url);
     }
+
+    pub fn copy(&self) -> Self {
+        Self {
+            raw: retain(objc_copy(self.raw)),
+        }
+    }
 }
 
 impl Default for CaptureDescriptor {

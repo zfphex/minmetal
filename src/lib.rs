@@ -8,6 +8,7 @@ mod ffi;
 mod indirect;
 mod io;
 mod layer;
+mod mtl4;
 mod pass;
 mod pipeline;
 mod rasterization_rate;
@@ -17,7 +18,9 @@ mod residency;
 mod resource;
 mod sparse;
 mod stitching;
+mod tensor;
 mod types;
+mod view_pool;
 
 pub use capture::*;
 pub use counters::*;
@@ -31,6 +34,7 @@ pub use ffi::{
 pub use indirect::*;
 pub use io::*;
 pub use layer::*;
+pub use mtl4::*;
 pub use pass::*;
 pub use pipeline::*;
 pub use rasterization_rate::*;
@@ -40,7 +44,9 @@ pub use residency::*;
 pub use resource::*;
 pub use sparse::*;
 pub use stitching::*;
+pub use tensor::*;
 pub use types::*;
+pub use view_pool::*;
 
 #[cfg(test)]
 mod tests {

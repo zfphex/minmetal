@@ -99,6 +99,11 @@ impl ResidencySet {
         ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
     }
 
+    pub fn set_label(&self, label: &str) {
+        let ns_label = NSString::new(label);
+        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+    }
+
     pub fn allocated_size(&self) -> u64 {
         msg_u64(self.raw, sel(b"allocatedSize\0"))
     }

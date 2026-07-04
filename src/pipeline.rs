@@ -2,6 +2,51 @@ use crate::*;
 use std::ffi::c_void;
 use std::mem::transmute;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(usize)]
+pub enum Mutability {
+    Default = 0,
+    Mutable = 1,
+    Immutable = 2,
+}
+
+impl Mutability {
+    fn from_raw(raw: usize) -> Option<Self> {
+        match raw {
+            0 => Some(Self::Default),
+            1 => Some(Self::Mutable),
+            2 => Some(Self::Immutable),
+            _ => None,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(isize)]
+pub enum ShaderValidation {
+    Default = 0,
+    Enabled = 1,
+    Disabled = 2,
+}
+
+impl ShaderValidation {
+    fn from_raw(raw: isize) -> Option<Self> {
+        match raw {
+            0 => Some(Self::Default),
+            1 => Some(Self::Enabled),
+            2 => Some(Self::Disabled),
+            _ => None,
+        }
+    }
+}
+
+fn functions_from_array(array: id) -> Vec<Function> {
+    ns_array_to_vec(array)
+        .into_iter()
+        .map(|raw| Function { raw: retain(raw) })
+        .collect()
+}
+
 #[derive(Debug)]
 pub struct FunctionConstantValues {
     pub raw: id,
@@ -370,6 +415,59 @@ impl Drop for BinaryArchive {
 }
 
 #[derive(Debug)]
+pub struct PipelineBufferDescriptor {
+    pub raw: id,
+}
+
+impl PipelineBufferDescriptor {
+    fn borrowed(raw: id) -> Self {
+        Self { raw }
+    }
+
+    pub fn mutability(&self) -> Mutability {
+        Mutability::from_raw(msg_usize(self.raw, sel(b"mutability\0")))
+            .unwrap_or(Mutability::Default)
+    }
+
+    pub fn set_mutability(&self, mutability: Mutability) {
+        msg_void_usize(self.raw, sel(b"setMutability:\0"), mutability as usize);
+    }
+}
+
+#[derive(Debug)]
+pub struct PipelineBufferDescriptorArray {
+    pub raw: id,
+}
+
+impl PipelineBufferDescriptorArray {
+    pub fn object_at_index(&self, index: usize) -> PipelineBufferDescriptor {
+        let ptr = msg_id_usize(self.raw, sel(b"objectAtIndexedSubscript:\0"), index);
+        PipelineBufferDescriptor::borrowed(ptr)
+    }
+}
+
+#[derive(Debug)]
+pub struct ComputePipelineReflection {
+    pub raw: id,
+}
+
+impl ComputePipelineReflection {
+    pub fn bindings(&self) -> Vec<Binding> {
+        let array = msg_id(self.raw, sel(b"bindings\0"));
+        ns_array_to_vec(array)
+            .into_iter()
+            .map(Binding::new_with_raw)
+            .collect()
+    }
+}
+
+impl Drop for ComputePipelineReflection {
+    fn drop(&mut self) {
+        release(self.raw);
+    }
+}
+
+#[derive(Debug)]
 pub struct ComputePipelineDescriptor {
     pub raw: id,
 }
@@ -447,6 +545,146 @@ impl ComputePipelineDescriptor {
             if value { YES } else { NO },
         );
     }
+
+    pub fn label(&self) -> Option<String> {
+        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    }
+
+    pub fn set_label(&self, label: &str) {
+        let ns_label = NSString::new(label);
+        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+    }
+
+    pub fn compute_function(&self) -> Option<Function> {
+        let f = msg_id(self.raw, sel(b"computeFunction\0"));
+        (!f.is_null()).then(|| Function { raw: retain(f) })
+    }
+
+    pub fn reset(&self) {
+        let selector = sel(b"reset\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void(self.raw, selector);
+        }
+    }
+
+    pub fn stage_input_output_descriptor(&self) -> Option<StageInputOutputDescriptor> {
+        let selector = sel(b"stageInputOutputDescriptor\0");
+        if responds_to_selector(self.raw, selector) {
+            let ptr = msg_id(self.raw, selector);
+            (!ptr.is_null()).then(|| StageInputOutputDescriptor { raw: retain(ptr) })
+        } else {
+            None
+        }
+    }
+
+    pub fn set_stage_input_output_descriptor(
+        &self,
+        descriptor: Option<&StageInputOutputDescriptor>,
+    ) {
+        let selector = sel(b"setStageInputOutputDescriptor:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_id(
+                self.raw,
+                selector,
+                descriptor.map_or(NIL, |descriptor| descriptor.raw),
+            );
+        }
+    }
+
+    pub fn buffers(&self) -> PipelineBufferDescriptorArray {
+        PipelineBufferDescriptorArray {
+            raw: msg_id(self.raw, sel(b"buffers\0")),
+        }
+    }
+
+    pub fn preloaded_libraries(&self) -> Result<Vec<DynamicLibrary>, MetalError> {
+        let selector = sel(b"preloadedLibraries\0");
+        if responds_to_selector(self.raw, selector) {
+            let array = msg_id(self.raw, selector);
+            Ok(ns_array_to_vec(array)
+                .into_iter()
+                .map(|raw| DynamicLibrary { raw: retain(raw) })
+                .collect())
+        } else {
+            Err(MetalError::new(
+                "preloadedLibraries not supported on ComputePipelineDescriptor",
+            ))
+        }
+    }
+
+    pub fn set_preloaded_libraries(
+        &self,
+        libraries: &[&DynamicLibrary],
+    ) -> Result<(), MetalError> {
+        let selector = sel(b"setPreloadedLibraries:\0");
+        if responds_to_selector(self.raw, selector) {
+            let raw: Vec<id> = libraries.iter().map(|library| library.raw).collect();
+            let array = ns_array_from_ids(&raw);
+            msg_void_id(self.raw, selector, array);
+            Ok(())
+        } else {
+            Err(MetalError::new(
+                "setPreloadedLibraries: not supported on ComputePipelineDescriptor",
+            ))
+        }
+    }
+
+    pub fn binary_archives(&self) -> Result<Vec<BinaryArchive>, MetalError> {
+        let selector = sel(b"binaryArchives\0");
+        if responds_to_selector(self.raw, selector) {
+            let array = msg_id(self.raw, selector);
+            Ok(ns_array_to_vec(array)
+                .into_iter()
+                .map(|raw| BinaryArchive { raw: retain(raw) })
+                .collect())
+        } else {
+            Err(MetalError::new(
+                "binaryArchives not supported on ComputePipelineDescriptor",
+            ))
+        }
+    }
+
+    pub fn support_indirect_command_buffers(&self) -> bool {
+        let selector = sel(b"supportIndirectCommandBuffers\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_bool(self.raw, selector) != NO
+        } else {
+            false
+        }
+    }
+
+    pub fn max_call_stack_depth(&self) -> usize {
+        let selector = sel(b"maxCallStackDepth\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_usize(self.raw, selector)
+        } else {
+            0
+        }
+    }
+
+    pub fn set_max_call_stack_depth(&self, depth: usize) {
+        let selector = sel(b"setMaxCallStackDepth:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_usize(self.raw, selector, depth);
+        }
+    }
+
+    pub fn shader_validation(&self) -> ShaderValidation {
+        let selector = sel(b"shaderValidation\0");
+        if responds_to_selector(self.raw, selector) {
+            ShaderValidation::from_raw(msg_usize(self.raw, selector) as isize)
+                .unwrap_or(ShaderValidation::Default)
+        } else {
+            ShaderValidation::Default
+        }
+    }
+
+    pub fn set_shader_validation(&self, validation: ShaderValidation) {
+        let selector = sel(b"setShaderValidation:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_usize(self.raw, selector, validation as usize);
+        }
+    }
 }
 
 impl Default for ComputePipelineDescriptor {
@@ -473,6 +711,37 @@ impl Drop for ComputePipelineState {
 }
 
 impl ComputePipelineState {
+    pub fn device(&self) -> Device {
+        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        Device { raw: ptr }
+    }
+
+    pub fn label(&self) -> Option<String> {
+        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    }
+
+    pub fn imageblock_memory_length_for_dimensions(&self, dimensions: Size) -> usize {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, Size) -> usize =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"imageblockMemoryLengthForDimensions:\0"),
+                dimensions,
+            )
+        }
+    }
+
+    pub fn reflection(&self) -> Option<ComputePipelineReflection> {
+        let selector = sel(b"reflection\0");
+        if responds_to_selector(self.raw, selector) {
+            let ptr = msg_id(self.raw, selector);
+            (!ptr.is_null()).then(|| ComputePipelineReflection { raw: retain(ptr) })
+        } else {
+            None
+        }
+    }
+
     pub fn max_total_threads_per_threadgroup(&self) -> usize {
         msg_usize(self.raw, sel(b"maxTotalThreadsPerThreadgroup\0"))
     }
@@ -571,6 +840,78 @@ impl ComputePipelineState {
 }
 
 #[derive(Debug)]
+pub struct VertexAttributeDescriptor {
+    pub raw: id,
+}
+
+impl VertexAttributeDescriptor {
+    fn borrowed(raw: id) -> Self {
+        Self { raw }
+    }
+
+    pub fn format(&self) -> VertexFormat {
+        let val = msg_usize(self.raw, sel(b"format\0"));
+        unsafe { std::mem::transmute(val) }
+    }
+
+    pub fn offset(&self) -> usize {
+        msg_usize(self.raw, sel(b"offset\0"))
+    }
+
+    pub fn buffer_index(&self) -> usize {
+        msg_usize(self.raw, sel(b"bufferIndex\0"))
+    }
+}
+
+#[derive(Debug)]
+pub struct VertexAttributeDescriptorArray {
+    pub raw: id,
+}
+
+impl VertexAttributeDescriptorArray {
+    pub fn object_at_index(&self, index: usize) -> VertexAttributeDescriptor {
+        let ptr = msg_id_usize(self.raw, sel(b"objectAtIndexedSubscript:\0"), index);
+        VertexAttributeDescriptor::borrowed(ptr)
+    }
+}
+
+#[derive(Debug)]
+pub struct VertexBufferLayoutDescriptor {
+    pub raw: id,
+}
+
+impl VertexBufferLayoutDescriptor {
+    fn borrowed(raw: id) -> Self {
+        Self { raw }
+    }
+
+    pub fn stride(&self) -> usize {
+        msg_usize(self.raw, sel(b"stride\0"))
+    }
+
+    pub fn step_function(&self) -> VertexStepFunction {
+        let val = msg_usize(self.raw, sel(b"stepFunction\0"));
+        unsafe { std::mem::transmute(val) }
+    }
+
+    pub fn step_rate(&self) -> usize {
+        msg_usize(self.raw, sel(b"stepRate\0"))
+    }
+}
+
+#[derive(Debug)]
+pub struct VertexBufferLayoutDescriptorArray {
+    pub raw: id,
+}
+
+impl VertexBufferLayoutDescriptorArray {
+    pub fn object_at_index(&self, index: usize) -> VertexBufferLayoutDescriptor {
+        let ptr = msg_id_usize(self.raw, sel(b"objectAtIndexedSubscript:\0"), index);
+        VertexBufferLayoutDescriptor::borrowed(ptr)
+    }
+}
+
+#[derive(Debug)]
 pub struct VertexDescriptor {
     pub raw: id,
 }
@@ -610,6 +951,18 @@ impl VertexDescriptor {
         msg_void_usize(layout, sel(b"setStride:\0"), stride);
         msg_void_usize(layout, sel(b"setStepFunction:\0"), step_function as usize);
         msg_void_usize(layout, sel(b"setStepRate:\0"), step_rate);
+    }
+
+    pub fn attributes(&self) -> VertexAttributeDescriptorArray {
+        VertexAttributeDescriptorArray {
+            raw: msg_id(self.raw, sel(b"attributes\0")),
+        }
+    }
+
+    pub fn layouts(&self) -> VertexBufferLayoutDescriptorArray {
+        VertexBufferLayoutDescriptorArray {
+            raw: msg_id(self.raw, sel(b"layouts\0")),
+        }
     }
 }
 
@@ -709,6 +1062,72 @@ impl Clone for StageInputOutputDescriptor {
 impl Drop for StageInputOutputDescriptor {
     fn drop(&mut self) {
         release(self.raw);
+    }
+}
+
+#[derive(Debug)]
+pub struct RenderPipelineColorAttachmentDescriptor {
+    pub raw: id,
+}
+
+impl RenderPipelineColorAttachmentDescriptor {
+    fn borrowed(raw: id) -> Self {
+        Self { raw }
+    }
+
+    pub fn pixel_format(&self) -> PixelFormat {
+        PixelFormat::from_raw(msg_usize(self.raw, sel(b"pixelFormat\0")))
+    }
+
+    pub fn blending_enabled(&self) -> bool {
+        msg_bool(self.raw, sel(b"isBlendingEnabled\0")) != NO
+    }
+
+    pub fn source_rgb_blend_factor(&self) -> BlendFactor {
+        let val = msg_usize(self.raw, sel(b"sourceRGBBlendFactor\0"));
+        unsafe { std::mem::transmute(val) }
+    }
+
+    pub fn destination_rgb_blend_factor(&self) -> BlendFactor {
+        let val = msg_usize(self.raw, sel(b"destinationRGBBlendFactor\0"));
+        unsafe { std::mem::transmute(val) }
+    }
+
+    pub fn rgb_blend_operation(&self) -> BlendOperation {
+        let val = msg_usize(self.raw, sel(b"rgbBlendOperation\0"));
+        unsafe { std::mem::transmute(val) }
+    }
+
+    pub fn source_alpha_blend_factor(&self) -> BlendFactor {
+        let val = msg_usize(self.raw, sel(b"sourceAlphaBlendFactor\0"));
+        unsafe { std::mem::transmute(val) }
+    }
+
+    pub fn destination_alpha_blend_factor(&self) -> BlendFactor {
+        let val = msg_usize(self.raw, sel(b"destinationAlphaBlendFactor\0"));
+        unsafe { std::mem::transmute(val) }
+    }
+
+    pub fn alpha_blend_operation(&self) -> BlendOperation {
+        let val = msg_usize(self.raw, sel(b"alphaBlendOperation\0"));
+        unsafe { std::mem::transmute(val) }
+    }
+
+    pub fn write_mask(&self) -> ColorWriteMask {
+        let raw = msg_usize(self.raw, sel(b"writeMask\0"));
+        unsafe { std::mem::transmute(raw) }
+    }
+}
+
+#[derive(Debug)]
+pub struct RenderPipelineColorAttachmentDescriptorArray {
+    pub raw: id,
+}
+
+impl RenderPipelineColorAttachmentDescriptorArray {
+    pub fn object_at_index(&self, index: usize) -> RenderPipelineColorAttachmentDescriptor {
+        let ptr = msg_id_usize(self.raw, sel(b"objectAtIndexedSubscript:\0"), index);
+        RenderPipelineColorAttachmentDescriptor::borrowed(ptr)
     }
 }
 
@@ -897,6 +1316,67 @@ impl RenderPipelineDescriptor {
             msg_void_usize(self.raw, selector, depth);
         }
     }
+
+    pub fn label(&self) -> Option<String> {
+        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    }
+
+    pub fn vertex_function(&self) -> Option<Function> {
+        let f = msg_id(self.raw, sel(b"vertexFunction\0"));
+        (!f.is_null()).then(|| Function { raw: retain(f) })
+    }
+
+    pub fn fragment_function(&self) -> Option<Function> {
+        let f = msg_id(self.raw, sel(b"fragmentFunction\0"));
+        (!f.is_null()).then(|| Function { raw: retain(f) })
+    }
+
+    pub fn vertex_descriptor(&self) -> Option<VertexDescriptor> {
+        let ptr = msg_id(self.raw, sel(b"vertexDescriptor\0"));
+        (!ptr.is_null()).then(|| VertexDescriptor { raw: retain(ptr) })
+    }
+
+    pub fn sample_count(&self) -> usize {
+        msg_usize(self.raw, sel(b"sampleCount\0"))
+    }
+
+    pub fn raster_sample_count(&self) -> usize {
+        msg_usize(self.raw, sel(b"rasterSampleCount\0"))
+    }
+
+    pub fn alpha_to_coverage_enabled(&self) -> bool {
+        msg_bool(self.raw, sel(b"isAlphaToCoverageEnabled\0")) != NO
+    }
+
+    pub fn alpha_to_one_enabled(&self) -> bool {
+        msg_bool(self.raw, sel(b"isAlphaToOneEnabled\0")) != NO
+    }
+
+    pub fn rasterization_enabled(&self) -> bool {
+        msg_bool(self.raw, sel(b"isRasterizationEnabled\0")) != NO
+    }
+
+    pub fn support_indirect_command_buffers(&self) -> bool {
+        let selector = sel(b"supportIndirectCommandBuffers\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_bool(self.raw, selector) != NO
+        } else {
+            false
+        }
+    }
+
+    pub fn reset(&self) {
+        let selector = sel(b"reset\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void(self.raw, selector);
+        }
+    }
+
+    pub fn color_attachments(&self) -> RenderPipelineColorAttachmentDescriptorArray {
+        RenderPipelineColorAttachmentDescriptorArray {
+            raw: msg_id(self.raw, sel(b"colorAttachments\0")),
+        }
+    }
 }
 
 impl Default for RenderPipelineDescriptor {
@@ -991,6 +1471,28 @@ impl Drop for RenderPipelineState {
 }
 
 impl RenderPipelineState {
+    pub fn device(&self) -> Device {
+        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        Device { raw: ptr }
+    }
+
+    pub fn label(&self) -> Option<String> {
+        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    }
+
+    pub fn imageblock_sample_length(&self) -> usize {
+        msg_usize(self.raw, sel(b"imageblockSampleLength\0"))
+    }
+
+    pub fn support_indirect_command_buffers(&self) -> bool {
+        let selector = sel(b"supportIndirectCommandBuffers\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_bool(self.raw, selector) != NO
+        } else {
+            false
+        }
+    }
+
     pub fn max_total_threads_per_threadgroup(&self) -> usize {
         let selector = sel(b"maxTotalThreadsPerThreadgroup\0");
         if responds_to_selector(self.raw, selector) {
@@ -1714,6 +2216,15 @@ impl FunctionDescriptor {
         }
     }
 
+    pub fn function_descriptor() -> Self {
+        Self {
+            raw: retain(msg_id(
+                class(b"MTLFunctionDescriptor\0"),
+                sel(b"functionDescriptor\0"),
+            )),
+        }
+    }
+
     pub fn name(&self) -> Option<String> {
         ns_string_to_string(msg_id(self.raw, sel(b"name\0")))
     }
@@ -1763,6 +2274,21 @@ impl FunctionDescriptor {
         } else {
             Err(MetalError::new(
                 "setBinaryArchives: not supported on FunctionDescriptor",
+            ))
+        }
+    }
+
+    pub fn binary_archives(&self) -> Result<Vec<BinaryArchive>, MetalError> {
+        let selector = sel(b"binaryArchives\0");
+        if responds_to_selector(self.raw, selector) {
+            let array = msg_id(self.raw, selector);
+            Ok(ns_array_to_vec(array)
+                .into_iter()
+                .map(|raw| BinaryArchive { raw: retain(raw) })
+                .collect())
+        } else {
+            Err(MetalError::new(
+                "binaryArchives not supported on FunctionDescriptor",
             ))
         }
     }
@@ -1845,6 +2371,36 @@ impl LinkedFunctions {
             let array = ns_array_from_ids(&raw_functions);
             msg_void_id(self.raw, selector, array);
         }
+    }
+
+    pub fn functions(&self) -> Vec<Function> {
+        functions_from_array(msg_id(self.raw, sel(b"functions\0")))
+    }
+
+    pub fn private_functions(&self) -> Vec<Function> {
+        let selector = sel(b"privateFunctions\0");
+        if responds_to_selector(self.raw, selector) {
+            functions_from_array(msg_id(self.raw, selector))
+        } else {
+            Vec::new()
+        }
+    }
+
+    pub fn groups(&self) -> Vec<(String, Vec<Function>)> {
+        let dict = msg_id(self.raw, sel(b"groups\0"));
+        if dict.is_null() {
+            return Vec::new();
+        }
+        let keys = msg_id(dict, sel(b"allKeys\0"));
+        let count = ns_array_count(keys);
+        let mut result = Vec::with_capacity(count);
+        for i in 0..count {
+            let key = ns_array_object_at_index(keys, i);
+            let name = ns_string_to_string(key).unwrap_or_default();
+            let array = msg_id_id(dict, sel(b"objectForKey:\0"), key);
+            result.push((name, functions_from_array(array)));
+        }
+        result
     }
 }
 
@@ -2078,6 +2634,22 @@ pub struct LogState {
     pub raw: id,
 }
 
+impl LogState {
+    pub fn device(&self) -> Device {
+        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        Device { raw: ptr }
+    }
+
+    pub fn label(&self) -> Option<String> {
+        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    }
+
+    pub fn set_label(&self, label: &str) {
+        let ns_label = NSString::new(label);
+        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+    }
+}
+
 impl Drop for LogState {
     fn drop(&mut self) {
         release(self.raw);
@@ -2127,6 +2699,20 @@ pub struct VisibleFunctionTable {
 }
 
 impl VisibleFunctionTable {
+    pub fn device(&self) -> Device {
+        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        Device { raw: ptr }
+    }
+
+    pub fn label(&self) -> Option<String> {
+        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    }
+
+    pub fn set_label(&self, label: &str) {
+        let ns_label = NSString::new(label);
+        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+    }
+
     pub fn gpu_resource_id(&self) -> Result<ResourceID, MetalError> {
         let selector = sel(b"gpuResourceID\0");
         if responds_to_selector(self.raw, selector) {
@@ -2168,6 +2754,14 @@ pub struct IntersectionFunctionTableDescriptor {
 }
 
 impl IntersectionFunctionTableDescriptor {
+    pub fn intersection_function_table_descriptor() -> Self {
+        let raw = retain(msg_id(
+            class(b"MTLIntersectionFunctionTableDescriptor\0"),
+            sel(b"intersectionFunctionTableDescriptor\0"),
+        ));
+        Self { raw }
+    }
+
     pub fn new() -> Self {
         let allocated = msg_id(
             class(b"MTLIntersectionFunctionTableDescriptor\0"),
@@ -2184,6 +2778,12 @@ impl IntersectionFunctionTableDescriptor {
 
     pub fn set_function_count(&self, count: usize) {
         msg_void_usize(self.raw, sel(b"setFunctionCount:\0"), count);
+    }
+
+    pub fn copy(&self) -> Self {
+        Self {
+            raw: retain(objc_copy(self.raw)),
+        }
     }
 }
 
@@ -2205,6 +2805,30 @@ pub struct IntersectionFunctionTable {
 }
 
 impl IntersectionFunctionTable {
+    fn validate_range(&self, range: Range, count: usize) -> Result<(), MetalError> {
+        if count != range.length {
+            return Err(MetalError::new(format!(
+                "array length {count} does not match range length {}",
+                range.length
+            )));
+        }
+        Ok(())
+    }
+
+    pub fn device(&self) -> Device {
+        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        Device { raw: ptr }
+    }
+
+    pub fn label(&self) -> Option<String> {
+        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    }
+
+    pub fn set_label(&self, label: &str) {
+        let ns_label = NSString::new(label);
+        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+    }
+
     pub fn gpu_resource_id(&self) -> Result<ResourceID, MetalError> {
         let selector = sel(b"gpuResourceID\0");
         if responds_to_selector(self.raw, selector) {
@@ -2214,16 +2838,111 @@ impl IntersectionFunctionTable {
         }
     }
 
-    pub fn set_function(&self, function: Option<&FunctionHandle>, index: usize) {
+    pub fn cpu_cache_mode(&self) -> CpuCacheMode {
+        let val = msg_usize(self.raw, sel(b"cpuCacheMode\0"));
+        match val {
+            1 => CpuCacheMode::WriteCombined,
+            _ => CpuCacheMode::DefaultCache,
+        }
+    }
+
+    pub fn storage_mode(&self) -> StorageMode {
+        let val = msg_usize(self.raw, sel(b"storageMode\0"));
+        match val {
+            0 => StorageMode::Shared,
+            1 => StorageMode::Managed,
+            2 => StorageMode::Private,
+            3 => StorageMode::Memoryless,
+            _ => StorageMode::Shared,
+        }
+    }
+
+    pub fn hazard_tracking_mode(&self) -> HazardTrackingMode {
+        let selector = sel(b"hazardTrackingMode\0");
+        if responds_to_selector(self.raw, selector) {
+            let val = msg_usize(self.raw, selector);
+            match val {
+                1 => HazardTrackingMode::Untracked,
+                2 => HazardTrackingMode::Tracked,
+                _ => HazardTrackingMode::Default,
+            }
+        } else {
+            HazardTrackingMode::Default
+        }
+    }
+
+    pub fn resource_options(&self) -> ResourceOptions {
+        let selector = sel(b"resourceOptions\0");
+        if responds_to_selector(self.raw, selector) {
+            ResourceOptions::from_raw(msg_usize(self.raw, selector))
+        } else {
+            ResourceOptions::from_raw(0)
+        }
+    }
+
+    pub fn heap(&self) -> Option<Heap> {
+        let selector = sel(b"heap\0");
+        if responds_to_selector(self.raw, selector) {
+            let ptr = msg_id(self.raw, selector);
+            if ptr.is_null() {
+                None
+            } else {
+                Some(Heap { raw: retain(ptr) })
+            }
+        } else {
+            None
+        }
+    }
+
+    pub fn heap_offset(&self) -> usize {
+        let selector = sel(b"heapOffset\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_usize(self.raw, selector)
+        } else {
+            0
+        }
+    }
+
+    pub fn allocated_size(&self) -> usize {
+        let selector = sel(b"allocatedSize\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_usize(self.raw, selector)
+        } else {
+            0
+        }
+    }
+
+    pub fn set_purgeable_state(&self, state: PurgeableState) -> PurgeableState {
+        let val = msg_usize_usize(self.raw, sel(b"setPurgeableState:\0"), state as usize);
+        match val {
+            1 => PurgeableState::KeepCurrent,
+            2 => PurgeableState::NonVolatile,
+            3 => PurgeableState::Volatile,
+            4 => PurgeableState::Empty,
+            _ => PurgeableState::KeepCurrent,
+        }
+    }
+
+    pub fn set_function(
+        &self,
+        function: Option<&FunctionHandle>,
+        index: usize,
+    ) -> Result<(), MetalError> {
         msg_void_id_usize(
             self.raw,
             sel(b"setFunction:atIndex:\0"),
             function.map_or(NIL, |f| f.raw),
             index,
         );
+        Ok(())
     }
 
-    pub fn set_functions(&self, functions: &[Option<&FunctionHandle>], range: Range) {
+    pub fn set_functions(
+        &self,
+        functions: &[Option<&FunctionHandle>],
+        range: Range,
+    ) -> Result<(), MetalError> {
+        self.validate_range(range, functions.len())?;
         let raw_functions: Vec<id> = functions.iter().map(|f| f.map_or(NIL, |h| h.raw)).collect();
         msg_void_ptr_range(
             self.raw,
@@ -2231,9 +2950,15 @@ impl IntersectionFunctionTable {
             raw_functions.as_ptr(),
             range,
         );
+        Ok(())
     }
 
-    pub fn set_buffer(&self, buffer: Option<&Buffer>, offset: usize, index: usize) {
+    pub fn set_buffer(
+        &self,
+        buffer: Option<&Buffer>,
+        offset: usize,
+        index: usize,
+    ) -> Result<(), MetalError> {
         msg_void_id_usize_usize(
             self.raw,
             sel(b"setBuffer:offset:atIndex:\0"),
@@ -2241,9 +2966,23 @@ impl IntersectionFunctionTable {
             offset,
             index,
         );
+        Ok(())
     }
 
-    pub fn set_buffers(&self, buffers: &[Option<&Buffer>], offsets: &[usize], range: Range) {
+    pub fn set_buffers(
+        &self,
+        buffers: &[Option<&Buffer>],
+        offsets: &[usize],
+        range: Range,
+    ) -> Result<(), MetalError> {
+        self.validate_range(range, buffers.len())?;
+        if offsets.len() != buffers.len() {
+            return Err(MetalError::new(format!(
+                "offsets length {} does not match buffers length {}",
+                offsets.len(),
+                buffers.len()
+            )));
+        }
         let raw_buffers: Vec<id> = buffers
             .iter()
             .map(|b| b.map_or(NIL, |buf| buf.raw))
@@ -2255,6 +2994,7 @@ impl IntersectionFunctionTable {
             offsets.as_ptr(),
             range,
         );
+        Ok(())
     }
 
     pub fn set_opaque_triangle_intersection_function(
@@ -2278,7 +3018,12 @@ impl IntersectionFunctionTable {
         &self,
         signature: IntersectionFunctionSignature,
         range: Range,
-    ) {
+    ) -> Result<(), MetalError> {
+        if range.length == 0 {
+            return Err(MetalError::new(
+                "opaque triangle intersection function range length must be greater than zero",
+            ));
+        }
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, usize, Range) =
                 transmute(objc_msgSend as *const c_void);
@@ -2289,6 +3034,7 @@ impl IntersectionFunctionTable {
                 range,
             );
         }
+        Ok(())
     }
 
     pub fn set_opaque_curve_intersection_function(
@@ -2312,7 +3058,12 @@ impl IntersectionFunctionTable {
         &self,
         signature: IntersectionFunctionSignature,
         range: Range,
-    ) {
+    ) -> Result<(), MetalError> {
+        if range.length == 0 {
+            return Err(MetalError::new(
+                "opaque curve intersection function range length must be greater than zero",
+            ));
+        }
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, usize, Range) =
                 transmute(objc_msgSend as *const c_void);
@@ -2323,6 +3074,7 @@ impl IntersectionFunctionTable {
                 range,
             );
         }
+        Ok(())
     }
 
     pub fn set_visible_function_table(
@@ -2342,7 +3094,8 @@ impl IntersectionFunctionTable {
         &self,
         tables: &[Option<&VisibleFunctionTable>],
         range: Range,
-    ) {
+    ) -> Result<(), MetalError> {
+        self.validate_range(range, tables.len())?;
         let raw_tables: Vec<id> = tables
             .iter()
             .map(|t| t.map_or(NIL, |tbl| tbl.raw))
@@ -2353,6 +3106,7 @@ impl IntersectionFunctionTable {
             raw_tables.as_ptr(),
             range,
         );
+        Ok(())
     }
 }
 

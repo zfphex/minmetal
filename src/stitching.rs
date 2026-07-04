@@ -15,6 +15,16 @@ impl StitchedLibraryOptions {
     }
 }
 
+pub fn validate_graph_for_stitching(graph: &FunctionStitchingGraph) -> Result<(), MetalError> {
+    if graph.output_node().is_none() {
+        Err(MetalError::new(
+            "function stitching graph output node must not be nil before compiling a stitched library",
+        ))
+    } else {
+        Ok(())
+    }
+}
+
 #[derive(Debug)]
 pub struct FunctionStitchingAttribute {
     pub raw: id,
@@ -79,6 +89,12 @@ impl FunctionStitchingInputNode {
         Self { raw }
     }
 
+    pub fn copy(&self) -> Self {
+        Self {
+            raw: retain(objc_copy(self.raw)),
+        }
+    }
+
     pub fn argument_index(&self) -> usize {
         msg_usize(self.raw, sel(b"argumentIndex\0"))
     }
@@ -135,6 +151,12 @@ impl FunctionStitchingFunctionNode {
                 ns_deps,
             );
             Self { raw }
+        }
+    }
+
+    pub fn copy(&self) -> Self {
+        Self {
+            raw: retain(objc_copy(self.raw)),
         }
     }
 
@@ -199,6 +221,15 @@ pub struct FunctionStitchingGraph {
 }
 
 impl FunctionStitchingGraph {
+    pub fn try_new(
+        function_name: &str,
+        nodes: &[&FunctionStitchingFunctionNode],
+        output_node: Option<&FunctionStitchingFunctionNode>,
+        attributes: &[&FunctionStitchingAttribute],
+    ) -> Result<Self, MetalError> {
+        Ok(Self::new(function_name, nodes, output_node, attributes))
+    }
+
     pub fn new(
         function_name: &str,
         nodes: &[&FunctionStitchingFunctionNode],
@@ -268,6 +299,12 @@ impl FunctionStitchingGraph {
         msg_void_id(self.raw, sel(b"setOutputNode:\0"), raw_output);
     }
 
+    pub fn copy(&self) -> Self {
+        Self {
+            raw: retain(objc_copy(self.raw)),
+        }
+    }
+
     pub fn attributes(&self) -> Vec<FunctionStitchingAttribute> {
         let array = msg_id(self.raw, sel(b"attributes\0"));
         ns_array_to_vec(array)
@@ -299,6 +336,12 @@ impl StitchedLibraryDescriptor {
         let raw = msg_id(class(b"MTLStitchedLibraryDescriptor\0"), sel(b"alloc\0"));
         let raw = msg_id(raw, sel(b"init\0"));
         Self { raw }
+    }
+
+    pub fn copy(&self) -> Self {
+        Self {
+            raw: retain(objc_copy(self.raw)),
+        }
     }
 
     pub fn function_graphs(&self) -> Vec<FunctionStitchingGraph> {
@@ -380,6 +423,12 @@ impl StitchedLibraryDescriptor {
                 "setOptions: property not supported on this platform",
             ))
         }
+    }
+}
+
+impl Default for StitchedLibraryDescriptor {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

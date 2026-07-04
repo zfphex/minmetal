@@ -2,6 +2,21 @@ use crate::*;
 use std::ffi::c_void;
 use std::mem::transmute;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(usize)]
+pub enum DepthClipMode {
+    Clip = 0,
+    Clamp = 1,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(usize)]
+pub enum VisibilityResultMode {
+    Disabled = 0,
+    Boolean = 1,
+    Counting = 2,
+}
+
 #[derive(Debug)]
 pub struct RenderCommandEncoder {
     pub raw: id,
@@ -100,6 +115,115 @@ impl RenderCommandEncoder {
         msg_void_scissor_rect(self.raw, sel(b"setScissorRect:\0"), rect);
     }
 
+    pub fn set_viewports(&self, viewports: &[Viewport]) -> Result<(), MetalError> {
+        let selector = sel(b"setViewports:count:\0");
+        if responds_to_selector(self.raw, selector) {
+            unsafe {
+                let f: unsafe extern "C" fn(id, SEL, *const Viewport, usize) =
+                    transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector, viewports.as_ptr(), viewports.len());
+            }
+            Ok(())
+        } else {
+            Err(MetalError::new("setViewports:count: not supported"))
+        }
+    }
+
+    pub fn set_scissor_rects(&self, rects: &[ScissorRect]) -> Result<(), MetalError> {
+        let selector = sel(b"setScissorRects:count:\0");
+        if responds_to_selector(self.raw, selector) {
+            unsafe {
+                let f: unsafe extern "C" fn(id, SEL, *const ScissorRect, usize) =
+                    transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector, rects.as_ptr(), rects.len());
+            }
+            Ok(())
+        } else {
+            Err(MetalError::new("setScissorRects:count: not supported"))
+        }
+    }
+
+    pub fn set_visibility_result_mode(
+        &self,
+        mode: VisibilityResultMode,
+        offset: usize,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, usize, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"setVisibilityResultMode:offset:\0"),
+                mode as usize,
+                offset,
+            );
+        }
+    }
+
+    pub fn set_depth_clip_mode(&self, mode: DepthClipMode) -> Result<(), MetalError> {
+        let selector = sel(b"setDepthClipMode:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_usize(self.raw, selector, mode as usize);
+            Ok(())
+        } else {
+            Err(MetalError::new("setDepthClipMode: not supported"))
+        }
+    }
+
+    pub fn set_stencil_reference_value(&self, reference_value: u32) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, u32) = transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"setStencilReferenceValue:\0"),
+                reference_value,
+            );
+        }
+    }
+
+    pub fn set_blend_color(&self, red: f32, green: f32, blue: f32, alpha: f32) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, f32, f32, f32, f32) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"setBlendColorRed:green:blue:alpha:\0"),
+                red,
+                green,
+                blue,
+                alpha,
+            );
+        }
+    }
+
+    pub fn set_vertex_buffer_offset(&self, offset: usize, index: usize) -> Result<(), MetalError> {
+        let selector = sel(b"setVertexBufferOffset:atIndex:\0");
+        if responds_to_selector(self.raw, selector) {
+            unsafe {
+                let f: unsafe extern "C" fn(id, SEL, usize, usize) =
+                    transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector, offset, index);
+            }
+            Ok(())
+        } else {
+            Err(MetalError::new("setVertexBufferOffset:atIndex: not supported"))
+        }
+    }
+
+    pub fn set_fragment_buffer_offset(&self, offset: usize, index: usize) -> Result<(), MetalError> {
+        let selector = sel(b"setFragmentBufferOffset:atIndex:\0");
+        if responds_to_selector(self.raw, selector) {
+            unsafe {
+                let f: unsafe extern "C" fn(id, SEL, usize, usize) =
+                    transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector, offset, index);
+            }
+            Ok(())
+        } else {
+            Err(MetalError::new("setFragmentBufferOffset:atIndex: not supported"))
+        }
+    }
+
     pub fn set_cull_mode(&self, mode: CullMode) {
         msg_void_usize(self.raw, sel(b"setCullMode:\0"), mode as usize);
     }
@@ -142,6 +266,100 @@ impl RenderCommandEncoder {
                 vertex_start,
                 vertex_count,
             );
+        }
+    }
+
+    pub fn draw_patches(
+        &self,
+        number_of_patch_control_points: usize,
+        patch_start: usize,
+        patch_count: usize,
+        patch_index_buffer: Option<&Buffer>,
+        patch_index_buffer_offset: usize,
+        instance_count: usize,
+        base_instance: usize,
+    ) -> Result<(), MetalError> {
+        let selector = sel(
+            b"drawPatches:patchStart:patchCount:patchIndexBuffer:patchIndexBufferOffset:instanceCount:baseInstance:\0",
+        );
+        if responds_to_selector(self.raw, selector) {
+            unsafe {
+                let f: unsafe extern "C" fn(
+                    id,
+                    SEL,
+                    usize,
+                    usize,
+                    usize,
+                    id,
+                    usize,
+                    usize,
+                    usize,
+                ) = transmute(objc_msgSend as *const c_void);
+                f(
+                    self.raw,
+                    selector,
+                    number_of_patch_control_points,
+                    patch_start,
+                    patch_count,
+                    patch_index_buffer.map_or(NIL, |b| b.raw),
+                    patch_index_buffer_offset,
+                    instance_count,
+                    base_instance,
+                );
+            }
+            Ok(())
+        } else {
+            Err(MetalError::new("drawPatches: not supported"))
+        }
+    }
+
+    pub fn draw_indexed_patches(
+        &self,
+        number_of_patch_control_points: usize,
+        patch_start: usize,
+        patch_count: usize,
+        patch_index_buffer: Option<&Buffer>,
+        patch_index_buffer_offset: usize,
+        control_point_index_buffer: &Buffer,
+        control_point_index_buffer_offset: usize,
+        instance_count: usize,
+        base_instance: usize,
+    ) -> Result<(), MetalError> {
+        let selector = sel(
+            b"drawIndexedPatches:patchStart:patchCount:patchIndexBuffer:patchIndexBufferOffset:controlPointIndexBuffer:controlPointIndexBufferOffset:instanceCount:baseInstance:\0",
+        );
+        if responds_to_selector(self.raw, selector) {
+            unsafe {
+                let f: unsafe extern "C" fn(
+                    id,
+                    SEL,
+                    usize,
+                    usize,
+                    usize,
+                    id,
+                    usize,
+                    id,
+                    usize,
+                    usize,
+                    usize,
+                ) = transmute(objc_msgSend as *const c_void);
+                f(
+                    self.raw,
+                    selector,
+                    number_of_patch_control_points,
+                    patch_start,
+                    patch_count,
+                    patch_index_buffer.map_or(NIL, |b| b.raw),
+                    patch_index_buffer_offset,
+                    control_point_index_buffer.raw,
+                    control_point_index_buffer_offset,
+                    instance_count,
+                    base_instance,
+                );
+            }
+            Ok(())
+        } else {
+            Err(MetalError::new("drawIndexedPatches: not supported"))
         }
     }
 
@@ -962,6 +1180,27 @@ impl RenderCommandEncoder {
         );
     }
 
+    pub fn memory_barrier_with_scope_after_before(
+        &self,
+        scope: BarrierScope,
+        after: RenderStages,
+        before: RenderStages,
+    ) -> Result<(), MetalError> {
+        let selector = sel(b"memoryBarrierWithScope:afterStages:beforeStages:\0");
+        if responds_to_selector(self.raw, selector) {
+            unsafe {
+                let f: unsafe extern "C" fn(id, SEL, usize, usize, usize) =
+                    transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector, scope.0, after.0, before.0);
+            }
+            Ok(())
+        } else {
+            Err(MetalError::new(
+                "memoryBarrierWithScope:afterStages:beforeStages: not supported",
+            ))
+        }
+    }
+
     pub fn device(&self) -> Device {
         let ptr = retain(msg_id(self.raw, sel(b"device\0")));
         Device { raw: ptr }
@@ -1529,12 +1768,110 @@ pub struct ResourceStateCommandEncoder {
 }
 
 impl ResourceStateCommandEncoder {
-    pub fn update_fence(&self, fence: &Fence) {
-        msg_void_id(self.raw, sel(b"updateFence:\0"), fence.raw);
+    pub fn use_resource(&self, resource: id, usage: ResourceUsage) -> Result<(), MetalError> {
+        let selector = sel(b"useResource:usage:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "useResource:usage: not supported on this ResourceStateCommandEncoder",
+            ));
+        }
+        msg_void_id_usize(self.raw, selector, resource, usage.as_raw());
+        Ok(())
     }
 
-    pub fn wait_for_fence(&self, fence: &Fence) {
-        msg_void_id(self.raw, sel(b"waitForFence:\0"), fence.raw);
+    pub fn use_resources(&self, resources: &[id], usage: ResourceUsage) -> Result<(), MetalError> {
+        let selector = sel(b"useResources:count:usage:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "useResources:count:usage: not supported on this ResourceStateCommandEncoder",
+            ));
+        }
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, *const id, usize, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                selector,
+                resources.as_ptr(),
+                resources.len(),
+                usage.as_raw(),
+            );
+        }
+        Ok(())
+    }
+
+    pub fn use_heap(&self, heap: &Heap) -> Result<(), MetalError> {
+        let selector = sel(b"useHeap:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "useHeap: not supported on this ResourceStateCommandEncoder",
+            ));
+        }
+        msg_void_id(self.raw, selector, heap.raw);
+        Ok(())
+    }
+
+    pub fn use_heaps(&self, heaps: &[id]) -> Result<(), MetalError> {
+        let selector = sel(b"useHeaps:count:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "useHeaps:count: not supported on this ResourceStateCommandEncoder",
+            ));
+        }
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, *const id, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(self.raw, selector, heaps.as_ptr(), heaps.len());
+        }
+        Ok(())
+    }
+
+    pub fn memory_barrier_with_scope(&self, scope: BarrierScope) -> Result<(), MetalError> {
+        let selector = sel(b"memoryBarrierWithScope:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "memoryBarrierWithScope: not supported on this ResourceStateCommandEncoder",
+            ));
+        }
+        msg_void_usize(self.raw, selector, scope.0);
+        Ok(())
+    }
+
+    pub fn memory_barrier_with_resources(&self, resources: &[id]) -> Result<(), MetalError> {
+        let selector = sel(b"memoryBarrierWithResources:count:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "memoryBarrierWithResources:count: not supported on this ResourceStateCommandEncoder",
+            ));
+        }
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, *const id, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(self.raw, selector, resources.as_ptr(), resources.len());
+        }
+        Ok(())
+    }
+
+    pub fn update_fence(&self, fence: &Fence) -> Result<(), MetalError> {
+        let selector = sel(b"updateFence:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "updateFence: not supported on this ResourceStateCommandEncoder",
+            ));
+        }
+        msg_void_id(self.raw, selector, fence.raw);
+        Ok(())
+    }
+
+    pub fn wait_for_fence(&self, fence: &Fence) -> Result<(), MetalError> {
+        let selector = sel(b"waitForFence:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "waitForFence: not supported on this ResourceStateCommandEncoder",
+            ));
+        }
+        msg_void_id(self.raw, selector, fence.raw);
+        Ok(())
     }
 
     pub fn device(&self) -> Device {

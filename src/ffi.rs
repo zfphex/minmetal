@@ -145,10 +145,25 @@ pub(crate) fn msg_f32(obj: id, selector: SEL) -> f32 {
     }
 }
 
+pub(crate) fn msg_cgsize(obj: id, selector: SEL) -> CGSize {
+    unsafe {
+        let f: unsafe extern "C" fn(id, SEL) -> CGSize = transmute(objc_msgSend as *const c_void);
+        f(obj, selector)
+    }
+}
+
 pub(crate) fn msg_void_size(obj: id, selector: SEL, arg: CGSize) {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL, CGSize) = transmute(objc_msgSend as *const c_void);
         f(obj, selector, arg);
+    }
+}
+
+pub(crate) fn objc_copy(obj: id) -> id {
+    if obj.is_null() {
+        obj
+    } else {
+        msg_id(obj, sel(b"copy\0"))
     }
 }
 
@@ -193,6 +208,14 @@ pub(crate) fn msg_id_usize_usize(obj: id, selector: SEL, arg1: usize, arg2: usiz
 pub(crate) fn msg_id_id_usize(obj: id, selector: SEL, arg1: id, arg2: usize) -> id {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL, id, usize) -> id =
+            transmute(objc_msgSend as *const c_void);
+        f(obj, selector, arg1, arg2)
+    }
+}
+
+pub(crate) fn msg_id_ptr_usize(obj: id, selector: SEL, arg1: *const c_void, arg2: usize) -> id {
+    unsafe {
+        let f: unsafe extern "C" fn(id, SEL, *const c_void, usize) -> id =
             transmute(objc_msgSend as *const c_void);
         f(obj, selector, arg1, arg2)
     }
@@ -484,4 +507,111 @@ pub fn ns_url_to_path(url: id) -> Option<String> {
         return None;
     }
     ns_string_to_string(msg_id(url, sel(b"path\0")))
+}
+
+pub(crate) fn ns_data_from_bytes(bytes: &[u8]) -> id {
+    msg_id_ptr_usize(
+        class(b"NSData\0"),
+        sel(b"dataWithBytes:length:\0"),
+        bytes.as_ptr() as *const c_void,
+        bytes.len(),
+    )
+}
+
+pub(crate) fn ns_data_length(data: id) -> usize {
+    if data.is_null() {
+        0
+    } else {
+        msg_usize(data, sel(b"length\0"))
+    }
+}
+
+pub(crate) fn ns_data_to_bytes(data: id) -> Vec<u8> {
+    let len = ns_data_length(data);
+    if data.is_null() || len == 0 {
+        return Vec::new();
+    }
+    let mut out = vec![0u8; len];
+    unsafe {
+        let f: unsafe extern "C" fn(id, SEL, *mut c_void, usize) =
+            transmute(objc_msgSend as *const c_void);
+        f(
+            data,
+            sel(b"getBytes:length:\0"),
+            out.as_mut_ptr() as *mut c_void,
+            len,
+        );
+    }
+    out
+}
+
+pub(crate) fn ns_dictionary_from_keys_and_values(keys: &[id], values: &[id]) -> id {
+    debug_assert_eq!(keys.len(), values.len());
+    unsafe {
+        let f: unsafe extern "C" fn(id, SEL, *const id, *const id, usize) -> id =
+            transmute(objc_msgSend as *const c_void);
+        f(
+            class(b"NSDictionary\0"),
+            sel(b"dictionaryWithObjects:forKeys:count:\0"),
+            values.as_ptr(),
+            keys.as_ptr(),
+            keys.len(),
+        )
+    }
+}
+
+pub(crate) fn ns_dictionary_count(dictionary: id) -> usize {
+    if dictionary.is_null() {
+        0
+    } else {
+        msg_usize(dictionary, sel(b"count\0"))
+    }
+}
+
+pub(crate) fn ns_dictionary_object_for_key(dictionary: id, key: id) -> id {
+    if dictionary.is_null() {
+        ptr::null_mut()
+    } else {
+        msg_id_id(dictionary, sel(b"objectForKey:\0"), key)
+    }
+}
+
+pub(crate) fn ns_dictionary_all_keys(dictionary: id) -> id {
+    if dictionary.is_null() {
+        ptr::null_mut()
+    } else {
+        msg_id(dictionary, sel(b"allKeys\0"))
+    }
+}
+
+pub fn ns_bundle_main() -> id {
+    msg_id(class(b"NSBundle\0"), sel(b"mainBundle\0"))
+}
+
+pub(crate) fn error_domain(error: id) -> Option<String> {
+    if error.is_null() {
+        None
+    } else {
+        ns_string_to_string(msg_id(error, sel(b"domain\0")))
+    }
+}
+
+pub(crate) fn error_code(error: id) -> isize {
+    if error.is_null() {
+        0
+    } else {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL) -> isize =
+                transmute(objc_msgSend as *const c_void);
+            f(error, sel(b"code\0"))
+        }
+    }
+}
+
+pub(crate) fn error_user_info(error: id) -> id {
+    if error.is_null() {
+        NIL
+    } else {
+        msg_id(error, sel(b"userInfo\0"))
+    }
 }

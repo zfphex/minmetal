@@ -47,8 +47,34 @@ impl MetalLayer {
         msg_void_id(self.raw, sel(b"setDevice:\0"), device.raw);
     }
 
+    pub fn device(&self) -> Option<Device> {
+        let ptr = msg_id(self.raw, sel(b"device\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(Device { raw: retain(ptr) })
+        }
+    }
+
+    pub fn preferred_device(&self) -> Result<Option<Device>, MetalError> {
+        let selector = sel(b"preferredDevice\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new("preferredDevice is not supported"));
+        }
+        let ptr = msg_id(self.raw, selector);
+        if ptr.is_null() {
+            Ok(None)
+        } else {
+            Ok(Some(Device { raw: retain(ptr) }))
+        }
+    }
+
     pub fn set_pixel_format(&self, pixel_format: PixelFormat) {
         msg_void_usize(self.raw, sel(b"setPixelFormat:\0"), pixel_format.as_raw());
+    }
+
+    pub fn pixel_format(&self) -> PixelFormat {
+        PixelFormat::from_raw(msg_usize(self.raw, sel(b"pixelFormat\0")))
     }
 
     pub fn set_framebuffer_only(&self, framebuffer_only: bool) {
@@ -59,6 +85,10 @@ impl MetalLayer {
         );
     }
 
+    pub fn framebuffer_only(&self) -> bool {
+        msg_bool(self.raw, sel(b"framebufferOnly\0")) != 0
+    }
+
     pub fn set_presents_with_transaction(&self, presents_with_transaction: bool) {
         msg_void_bool(
             self.raw,
@@ -67,11 +97,19 @@ impl MetalLayer {
         );
     }
 
+    pub fn presents_with_transaction(&self) -> bool {
+        msg_bool(self.raw, sel(b"presentsWithTransaction\0")) != 0
+    }
+
     pub fn set_contents_scale(&self, scale: f64) {
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, f64) = transmute(objc_msgSend as *const c_void);
             f(self.raw, sel(b"setContentsScale:\0"), scale);
         }
+    }
+
+    pub fn drawable_size(&self) -> CGSize {
+        msg_cgsize(self.raw, sel(b"drawableSize\0"))
     }
 
     pub fn set_drawable_size(&self, width: usize, height: usize) {
@@ -83,6 +121,86 @@ impl MetalLayer {
                 height: height as f64,
             },
         );
+    }
+
+    pub fn maximum_drawable_count(&self) -> Result<usize, MetalError> {
+        let selector = sel(b"maximumDrawableCount\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new("maximumDrawableCount is not supported"));
+        }
+        Ok(msg_usize(self.raw, selector))
+    }
+
+    pub fn set_maximum_drawable_count(&self, count: usize) -> Result<(), MetalError> {
+        let selector = sel(b"setMaximumDrawableCount:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new("setMaximumDrawableCount: is not supported"));
+        }
+        msg_void_usize(self.raw, selector, count);
+        Ok(())
+    }
+
+    pub fn display_sync_enabled(&self) -> Result<bool, MetalError> {
+        let selector = sel(b"displaySyncEnabled\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new("displaySyncEnabled is not supported"));
+        }
+        Ok(msg_bool(self.raw, selector) != 0)
+    }
+
+    pub fn set_display_sync_enabled(&self, enabled: bool) -> Result<(), MetalError> {
+        let selector = sel(b"setDisplaySyncEnabled:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new("setDisplaySyncEnabled: is not supported"));
+        }
+        msg_void_bool(self.raw, selector, if enabled { YES } else { NO });
+        Ok(())
+    }
+
+    pub fn allows_next_drawable_timeout(&self) -> Result<bool, MetalError> {
+        let selector = sel(b"allowsNextDrawableTimeout\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new("allowsNextDrawableTimeout is not supported"));
+        }
+        Ok(msg_bool(self.raw, selector) != 0)
+    }
+
+    pub fn set_allows_next_drawable_timeout(&self, allows: bool) -> Result<(), MetalError> {
+        let selector = sel(b"setAllowsNextDrawableTimeout:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new("setAllowsNextDrawableTimeout: is not supported"));
+        }
+        msg_void_bool(self.raw, selector, if allows { YES } else { NO });
+        Ok(())
+    }
+
+    pub fn colorspace(&self) -> *mut c_void {
+        msg_id(self.raw, sel(b"colorspace\0")) as *mut c_void
+    }
+
+    pub fn set_colorspace(&self, colorspace: *mut c_void) {
+        msg_void_id(self.raw, sel(b"setColorspace:\0"), colorspace as id);
+    }
+
+    pub fn wants_extended_dynamic_range_content(&self) -> Result<bool, MetalError> {
+        let selector = sel(b"wantsExtendedDynamicRangeContent\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "wantsExtendedDynamicRangeContent is not supported",
+            ));
+        }
+        Ok(msg_bool(self.raw, selector) != 0)
+    }
+
+    pub fn set_wants_extended_dynamic_range_content(&self, wants: bool) -> Result<(), MetalError> {
+        let selector = sel(b"setWantsExtendedDynamicRangeContent:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "setWantsExtendedDynamicRangeContent: is not supported",
+            ));
+        }
+        msg_void_bool(self.raw, selector, if wants { YES } else { NO });
+        Ok(())
     }
 
     pub fn next_drawable(&self) -> Option<Drawable> {

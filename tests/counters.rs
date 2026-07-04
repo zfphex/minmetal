@@ -7,7 +7,7 @@ fn counters_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
         CounterSamplingPoint::AtStageBoundary,
         CounterSamplingPoint::AtDrawBoundary,
         CounterSamplingPoint::AtDispatchBoundary,
-        CounterSamplingPoint::AtTileBoundary,
+        CounterSamplingPoint::AtTileDispatchBoundary,
         CounterSamplingPoint::AtBlitBoundary,
     ];
 
@@ -16,7 +16,7 @@ fn counters_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
             CounterSamplingPoint::AtStageBoundary => assert_eq!(point as usize, 0),
             CounterSamplingPoint::AtDrawBoundary => assert_eq!(point as usize, 1),
             CounterSamplingPoint::AtDispatchBoundary => assert_eq!(point as usize, 2),
-            CounterSamplingPoint::AtTileBoundary => assert_eq!(point as usize, 3),
+            CounterSamplingPoint::AtTileDispatchBoundary => assert_eq!(point as usize, 3),
             CounterSamplingPoint::AtBlitBoundary => assert_eq!(point as usize, 4),
         }
     }

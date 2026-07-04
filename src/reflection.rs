@@ -871,3 +871,62 @@ impl Drop for Binding {
         release(self.raw);
     }
 }
+
+// --- MTLFunctionReflection ---
+
+pub(crate) fn bindings_from_array(array: id) -> Vec<Binding> {
+    ns_array_to_vec(array)
+        .into_iter()
+        .filter(|item| !item.is_null())
+        .map(|item| Binding::new_with_raw(item))
+        .collect()
+}
+
+#[derive(Debug)]
+pub struct FunctionReflection {
+    pub raw: id,
+}
+
+impl FunctionReflection {
+    pub fn new_with_raw(raw: id) -> Self {
+        Self { raw: retain(raw) }
+    }
+
+    pub fn bindings(&self) -> Vec<Binding> {
+        if self.raw.is_null() {
+            return Vec::new();
+        }
+        let selector = sel(b"bindings\0");
+        if responds_to_selector(self.raw, selector) {
+            bindings_from_array(msg_id(self.raw, selector))
+        } else {
+            Vec::new()
+        }
+    }
+
+    pub fn user_annotation(&self) -> Option<String> {
+        if self.raw.is_null() {
+            return None;
+        }
+        let selector = sel(b"userAnnotation\0");
+        if responds_to_selector(self.raw, selector) {
+            ns_string_to_string(msg_id(self.raw, selector))
+        } else {
+            None
+        }
+    }
+}
+
+impl Clone for FunctionReflection {
+    fn clone(&self) -> Self {
+        Self {
+            raw: retain(self.raw),
+        }
+    }
+}
+
+impl Drop for FunctionReflection {
+    fn drop(&mut self) {
+        release(self.raw);
+    }
+}

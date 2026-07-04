@@ -288,6 +288,33 @@ impl Buffer {
             Ok(Buffer { raw })
         }
     }
+
+    pub fn new_tensor_with_descriptor(
+        &self,
+        descriptor: &TensorDescriptor,
+        offset: usize,
+    ) -> Result<Tensor, MetalError> {
+        let selector = sel(b"newTensorWithDescriptor:offset:error:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "newTensorWithDescriptor:offset:error: is not supported on this macOS version",
+            ));
+        }
+        let mut error = NIL;
+        let raw = unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, usize, *mut id) -> id =
+                transmute(objc_msgSend as *const c_void);
+            f(self.raw, selector, descriptor.raw, offset, &mut error)
+        };
+        if raw.is_null() {
+            Err(MetalError::new(error_message(
+                error,
+                "failed to create Metal tensor from buffer",
+            )))
+        } else {
+            Ok(Tensor { raw })
+        }
+    }
 }
 
 impl Drop for Buffer {

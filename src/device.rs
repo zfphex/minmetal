@@ -1,7 +1,149 @@
 use crate::*;
+use std::cell::RefCell;
 use std::ffi::c_void;
-use std::mem::transmute;
+use std::mem::{size_of, transmute};
 use std::ptr;
+
+#[link(name = "Metal", kind = "framework")]
+#[link(name = "System", kind = "framework")]
+unsafe extern "C" {
+    fn MTLCopyAllDevices() -> id;
+    fn MTLCopyAllDevicesWithObserver(observer: *mut id, handler: id) -> id;
+    fn MTLRemoveDeviceObserver(observer: id);
+    static MTLDeviceWasAddedNotification: id;
+    static MTLDeviceRemovalRequestedNotification: id;
+    static MTLDeviceWasRemovedNotification: id;
+    fn dispatch_data_create(
+        buffer: *const c_void,
+        size: usize,
+        queue: id,
+        destructor: *const c_void,
+    ) -> id;
+    fn dispatch_release(object: id);
+    static _NSConcreteGlobalBlock: *const c_void;
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct PipelineOption(pub usize);
+
+impl PipelineOption {
+    pub const NONE: Self = Self(0);
+    pub const BINDING_INFO: Self = Self(1 << 0);
+    pub const BUFFER_TYPE_INFO: Self = Self(1 << 1);
+    pub const FAIL_ON_BINARY_ARCHIVE_MISS: Self = Self(1 << 2);
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(usize)]
+pub enum PatchType {
+    None = 0,
+    Triangle = 1,
+    Quad = 2,
+}
+
+impl PatchType {
+    fn from_raw(raw: usize) -> Self {
+        match raw {
+            1 => Self::Triangle,
+            2 => Self::Quad,
+            _ => Self::None,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum DeviceNotificationName {
+    WasAdded,
+    RemovalRequested,
+    WasRemoved,
+}
+
+fn device_notification_name_from_raw(raw: id) -> DeviceNotificationName {
+    unsafe {
+        if raw == MTLDeviceWasAddedNotification {
+            DeviceNotificationName::WasAdded
+        } else if raw == MTLDeviceRemovalRequestedNotification {
+            DeviceNotificationName::RemovalRequested
+        } else if raw == MTLDeviceWasRemovedNotification {
+            DeviceNotificationName::WasRemoved
+        } else {
+            DeviceNotificationName::WasAdded
+        }
+    }
+}
+
+fn ns_array_to_strings(array: id) -> Vec<String> {
+    let count = ns_array_count(array);
+    let mut names = Vec::with_capacity(count);
+    for i in 0..count {
+        let item = ns_array_object_at_index(array, i);
+        if let Some(name) = ns_string_to_string(item) {
+            names.push(name);
+        }
+    }
+    names
+}
+
+fn devices_from_ns_array(array: id) -> Vec<Device> {
+    ns_array_to_vec(array)
+        .into_iter()
+        .filter(|raw| !raw.is_null())
+        .map(|raw| Device { raw: retain(raw) })
+        .collect()
+}
+
+#[repr(C)]
+struct BlockDescriptor {
+    reserved: u64,
+    size: u64,
+}
+
+#[repr(C)]
+struct GlobalBlock {
+    isa: *const c_void,
+    flags: i32,
+    reserved: i32,
+    invoke: unsafe extern "C" fn(*mut c_void, id, id),
+    descriptor: *const BlockDescriptor,
+}
+
+static DEVICE_NOTIFICATION_BLOCK_DESCRIPTOR: BlockDescriptor = BlockDescriptor {
+    reserved: 0,
+    size: size_of::<GlobalBlock>() as u64,
+};
+
+thread_local! {
+    static DEVICE_NOTIFICATION_HANDLER: RefCell<Option<*const dyn Fn(Device, DeviceNotificationName)>> =
+        const { RefCell::new(None) };
+}
+
+unsafe extern "C" fn device_notification_block_invoke(_block: *mut c_void, device: id, name: id) {
+    DEVICE_NOTIFICATION_HANDLER.with(|slot| {
+        if let Some(handler_ptr) = *slot.borrow() {
+            let device = Device { raw: retain(device) };
+            unsafe {
+                (*handler_ptr)(device, device_notification_name_from_raw(name));
+            }
+        }
+    });
+}
+
+fn device_notification_block() -> id {
+    unsafe {
+        static mut BLOCK: GlobalBlock = GlobalBlock {
+            isa: ptr::null(),
+            flags: 1 << 28,
+            reserved: 0,
+            invoke: device_notification_block_invoke,
+            descriptor: &DEVICE_NOTIFICATION_BLOCK_DESCRIPTOR,
+        };
+        static INIT: std::sync::Once = std::sync::Once::new();
+        INIT.call_once(|| {
+            BLOCK.isa = _NSConcreteGlobalBlock;
+        });
+        &raw const BLOCK as *const GlobalBlock as id
+    }
+}
 
 #[derive(Debug)]
 pub struct Device {
@@ -473,6 +615,38 @@ impl Device {
         }
     }
 
+    pub fn new_library_with_data(&self, data: &[u8]) -> Result<Library, MetalError> {
+        unsafe {
+            let dispatch_data = dispatch_data_create(
+                data.as_ptr() as *const c_void,
+                data.len(),
+                ptr::null_mut(),
+                ptr::null_mut(),
+            );
+            if dispatch_data.is_null() {
+                return Err(MetalError::new(
+                    "failed to create dispatch data for Metal library",
+                ));
+            }
+            let mut error = NIL;
+            let raw = msg_id_id_err(
+                self.raw,
+                sel(b"newLibraryWithData:error:\0"),
+                dispatch_data,
+                &mut error,
+            );
+            dispatch_release(dispatch_data);
+            if raw.is_null() {
+                Err(MetalError::new(error_message(
+                    error,
+                    "failed to load Metal library from data",
+                )))
+            } else {
+                Ok(Library { raw })
+            }
+        }
+    }
+
     pub fn new_default_library(&self) -> Result<Library, MetalError> {
         let raw = msg_id(self.raw, sel(b"newDefaultLibrary\0"));
         if raw.is_null() {
@@ -522,6 +696,45 @@ impl Device {
         }
     }
 
+    // Async completionHandler variants (newRenderPipelineStateWithDescriptor:options:completionHandler:,
+    // newComputePipelineStateWithFunction:options:completionHandler:,
+    // newComputePipelineStateWithDescriptor:options:completionHandler:, etc.) are intentionally skipped.
+
+    pub fn new_render_pipeline_state_with_options(
+        &self,
+        descriptor: &RenderPipelineDescriptor,
+        options: PipelineOption,
+        reflection: Option<&mut Option<RenderPipelineReflection>>,
+    ) -> Result<RenderPipelineState, MetalError> {
+        unsafe {
+            let mut error = NIL;
+            let mut reflection_out = ptr::null_mut();
+            let f: unsafe extern "C" fn(id, SEL, id, usize, *mut id, *mut id) -> id =
+                transmute(objc_msgSend as *const c_void);
+            let raw = f(
+                self.raw,
+                sel(b"newRenderPipelineStateWithDescriptor:options:reflection:error:\0"),
+                descriptor.raw,
+                options.0,
+                &mut reflection_out,
+                &mut error,
+            );
+            if let Some(out) = reflection {
+                *out = (!reflection_out.is_null()).then_some(RenderPipelineReflection {
+                    raw: retain(reflection_out),
+                });
+            }
+            if raw.is_null() {
+                Err(MetalError::new(error_message(
+                    error,
+                    "failed to create Metal render pipeline state with options",
+                )))
+            } else {
+                Ok(RenderPipelineState { raw })
+            }
+        }
+    }
+
     pub fn new_compute_pipeline_state_with_function(
         &self,
         function: &Function,
@@ -540,6 +753,41 @@ impl Device {
             )))
         } else {
             Ok(ComputePipelineState { raw })
+        }
+    }
+
+    pub fn new_compute_pipeline_state_with_function_options(
+        &self,
+        function: &Function,
+        options: PipelineOption,
+        reflection: Option<&mut Option<ComputePipelineReflection>>,
+    ) -> Result<ComputePipelineState, MetalError> {
+        unsafe {
+            let mut error = NIL;
+            let mut reflection_out = ptr::null_mut();
+            let f: unsafe extern "C" fn(id, SEL, id, usize, *mut id, *mut id) -> id =
+                transmute(objc_msgSend as *const c_void);
+            let raw = f(
+                self.raw,
+                sel(b"newComputePipelineStateWithFunction:options:reflection:error:\0"),
+                function.raw,
+                options.0,
+                &mut reflection_out,
+                &mut error,
+            );
+            if let Some(out) = reflection {
+                *out = (!reflection_out.is_null()).then_some(ComputePipelineReflection {
+                    raw: retain(reflection_out),
+                });
+            }
+            if raw.is_null() {
+                Err(MetalError::new(error_message(
+                    error,
+                    "failed to create Metal compute pipeline state with function and options",
+                )))
+            } else {
+                Ok(ComputePipelineState { raw })
+            }
         }
     }
 
@@ -563,6 +811,41 @@ impl Device {
                 Err(MetalError::new(error_message(
                     error,
                     "failed to create Metal compute pipeline state with descriptor",
+                )))
+            } else {
+                Ok(ComputePipelineState { raw })
+            }
+        }
+    }
+
+    pub fn new_compute_pipeline_state_with_descriptor_options(
+        &self,
+        descriptor: &ComputePipelineDescriptor,
+        options: PipelineOption,
+        reflection: Option<&mut Option<ComputePipelineReflection>>,
+    ) -> Result<ComputePipelineState, MetalError> {
+        unsafe {
+            let mut error = NIL;
+            let mut reflection_out = ptr::null_mut();
+            let f: unsafe extern "C" fn(id, SEL, id, usize, *mut id, *mut id) -> id =
+                transmute(objc_msgSend as *const c_void);
+            let raw = f(
+                self.raw,
+                sel(b"newComputePipelineStateWithDescriptor:options:reflection:error:\0"),
+                descriptor.raw,
+                options.0,
+                &mut reflection_out,
+                &mut error,
+            );
+            if let Some(out) = reflection {
+                *out = (!reflection_out.is_null()).then_some(ComputePipelineReflection {
+                    raw: retain(reflection_out),
+                });
+            }
+            if raw.is_null() {
+                Err(MetalError::new(error_message(
+                    error,
+                    "failed to create Metal compute pipeline state with descriptor and options",
                 )))
             } else {
                 Ok(ComputePipelineState { raw })
@@ -803,6 +1086,111 @@ impl Device {
             Ok(Texture { raw })
         }
     }
+
+    pub fn copy_all_devices() -> Vec<Device> {
+        unsafe {
+            let array = MTLCopyAllDevices();
+            if array.is_null() {
+                Vec::new()
+            } else {
+                let devices = devices_from_ns_array(array);
+                release(array);
+                devices
+            }
+        }
+    }
+
+    pub fn copy_all_devices_with_observer<F>(
+        handler: F,
+    ) -> Result<(Vec<Device>, DeviceObserver), MetalError>
+    where
+        F: Fn(Device, DeviceNotificationName) + 'static,
+    {
+        let handler = Box::new(handler);
+        let handler_ptr: *const dyn Fn(Device, DeviceNotificationName) = &*handler;
+        if DEVICE_NOTIFICATION_HANDLER.with(|slot| slot.borrow().is_some()) {
+            return Err(MetalError::new(
+                "only one device notification observer may be active per thread",
+            ));
+        }
+        DEVICE_NOTIFICATION_HANDLER.with(|slot| {
+            *slot.borrow_mut() = Some(handler_ptr);
+        });
+
+        unsafe {
+            let mut observer = ptr::null_mut();
+            let array = MTLCopyAllDevicesWithObserver(&mut observer, device_notification_block());
+            if array.is_null() {
+                DEVICE_NOTIFICATION_HANDLER.with(|slot| {
+                    *slot.borrow_mut() = None;
+                });
+                return Err(MetalError::new(
+                    "MTLCopyAllDevicesWithObserver is not supported on this macOS version",
+                ));
+            }
+            let devices = devices_from_ns_array(array);
+            release(array);
+            Ok((
+                devices,
+                DeviceObserver {
+                    raw: observer,
+                    _handler: handler,
+                },
+            ))
+        }
+    }
+
+    pub fn remove_device_observer(observer: &DeviceObserver) {
+        if !observer.raw.is_null() {
+            unsafe {
+                MTLRemoveDeviceObserver(observer.raw);
+            }
+        }
+    }
+
+    pub fn new_tensor_with_descriptor(
+        &self,
+        descriptor: &TensorDescriptor,
+    ) -> Result<Tensor, MetalError> {
+        let selector = sel(b"newTensorWithDescriptor:error:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "newTensorWithDescriptor:error: is not supported on this macOS version",
+            ));
+        }
+        let mut error = NIL;
+        let raw = msg_id_id_err(self.raw, selector, descriptor.raw, &mut error);
+        if raw.is_null() {
+            Err(MetalError::new(error_message(
+                error,
+                "failed to create Metal tensor",
+            )))
+        } else {
+            Ok(Tensor { raw })
+        }
+    }
+
+    pub fn new_texture_view_pool_with_descriptor(
+        &self,
+        descriptor: &ResourceViewPoolDescriptor,
+    ) -> Result<TextureViewPool, MetalError> {
+        let selector = sel(b"newTextureViewPoolWithDescriptor:error:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "newTextureViewPoolWithDescriptor:error: is not supported on this macOS version",
+            ));
+        }
+        let mut error = NIL;
+        let raw = msg_id_id_err(self.raw, selector, descriptor.raw, &mut error);
+        if raw.is_null() {
+            Err(MetalError::new(error_message(
+                error,
+                "failed to create Metal texture view pool",
+            )))
+        } else {
+            Ok(TextureViewPool { raw })
+        }
+    }
 }
 
 impl Drop for Device {
@@ -957,7 +1345,7 @@ impl CommandBuffer {
                 "failed to create Metal parallel render command encoder",
             ))
         } else {
-            Ok(ParallelRenderCommandEncoder { raw })
+            Ok(ParallelRenderCommandEncoder::new(raw))
         }
     }
 
@@ -1363,6 +1751,84 @@ impl Library {
             ))
         }
     }
+
+    pub fn device(&self) -> Device {
+        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        Device { raw: ptr }
+    }
+
+    pub fn function_names(&self) -> Vec<String> {
+        ns_array_to_strings(msg_id(self.raw, sel(b"functionNames\0")))
+    }
+
+    pub fn new_function_with_descriptor(
+        &self,
+        descriptor: &FunctionDescriptor,
+    ) -> Result<Function, MetalError> {
+        let selector = sel(b"newFunctionWithDescriptor:error:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "newFunctionWithDescriptor:error: is not supported on this macOS version",
+            ));
+        }
+        let mut error = NIL;
+        let raw = msg_id_id_err(self.raw, selector, descriptor.raw, &mut error);
+        if raw.is_null() {
+            Err(MetalError::new(error_message(
+                error,
+                "failed to create Metal function with descriptor",
+            )))
+        } else {
+            Ok(Function { raw })
+        }
+    }
+
+    // Async completionHandler variants (newFunctionWithDescriptor:completionHandler:,
+    // newIntersectionFunctionWithDescriptor:completionHandler:, etc.) are intentionally skipped.
+
+    pub fn new_intersection_function_with_descriptor(
+        &self,
+        descriptor: &IntersectionFunctionDescriptor,
+    ) -> Result<Function, MetalError> {
+        let selector = sel(b"newIntersectionFunctionWithDescriptor:error:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "newIntersectionFunctionWithDescriptor:error: is not supported on this macOS version",
+            ));
+        }
+        let mut error = NIL;
+        let raw = msg_id_id_err(self.raw, selector, descriptor.raw, &mut error);
+        if raw.is_null() {
+            Err(MetalError::new(error_message(
+                error,
+                "failed to create Metal intersection function with descriptor",
+            )))
+        } else {
+            Ok(Function { raw })
+        }
+    }
+
+    pub fn reflection_for_function_with_name(
+        &self,
+        name: &str,
+    ) -> Result<FunctionReflection, MetalError> {
+        let selector = sel(b"reflectionForFunctionWithName:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "reflectionForFunctionWithName: is not supported on this macOS version",
+            ));
+        }
+        let ns_name = NSString::new(name);
+        let raw = msg_id_id(self.raw, selector, ns_name.raw());
+        if raw.is_null() {
+            Err(MetalError::new(format!(
+                "failed to load reflection for Metal function '{}'",
+                name
+            )))
+        } else {
+            Ok(FunctionReflection::new_with_raw(raw))
+        }
+    }
 }
 
 impl Drop for Library {
@@ -1381,11 +1847,199 @@ impl Function {
         ns_string_to_string(msg_id(self.raw, sel(b"name\0")))
             .unwrap_or_else(|| "unknown".to_string())
     }
+
+    pub fn label(&self) -> Option<String> {
+        let selector = sel(b"label\0");
+        if responds_to_selector(self.raw, selector) {
+            ns_string_to_string(msg_id(self.raw, selector))
+        } else {
+            None
+        }
+    }
+
+    pub fn set_label(&self, label: &str) {
+        let selector = sel(b"setLabel:\0");
+        if responds_to_selector(self.raw, selector) {
+            let ns_label = NSString::new(label);
+            msg_void_id(self.raw, selector, ns_label.raw());
+        }
+    }
+
+    pub fn device(&self) -> Device {
+        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        Device { raw: ptr }
+    }
+
+    pub fn function_type(&self) -> FunctionType {
+        let val = msg_usize(self.raw, sel(b"functionType\0"));
+        match val {
+            1 => FunctionType::Vertex,
+            2 => FunctionType::Fragment,
+            3 => FunctionType::Kernel,
+            5 => FunctionType::Visible,
+            6 => FunctionType::Intersection,
+            7 => FunctionType::Mesh,
+            8 => FunctionType::Object,
+            _ => FunctionType::Vertex,
+        }
+    }
+
+    pub fn patch_type(&self) -> Result<PatchType, MetalError> {
+        let selector = sel(b"patchType\0");
+        if responds_to_selector(self.raw, selector) {
+            Ok(PatchType::from_raw(msg_usize(self.raw, selector)))
+        } else {
+            Err(MetalError::new(
+                "patchType is not supported on this macOS version",
+            ))
+        }
+    }
+
+    pub fn patch_control_point_count(&self) -> Result<isize, MetalError> {
+        let selector = sel(b"patchControlPointCount\0");
+        if responds_to_selector(self.raw, selector) {
+            unsafe {
+                let f: unsafe extern "C" fn(id, SEL) -> isize =
+                    transmute(objc_msgSend as *const c_void);
+                Ok(f(self.raw, selector))
+            }
+        } else {
+            Err(MetalError::new(
+                "patchControlPointCount is not supported on this macOS version",
+            ))
+        }
+    }
+
+    pub fn options(&self) -> Result<FunctionOptions, MetalError> {
+        let selector = sel(b"options\0");
+        if responds_to_selector(self.raw, selector) {
+            Ok(FunctionOptions(msg_usize(self.raw, selector)))
+        } else {
+            Err(MetalError::new(
+                "options is not supported on this macOS version",
+            ))
+        }
+    }
+
+    pub fn vertex_attributes(&self) -> Vec<VertexAttribute> {
+        let array = msg_id(self.raw, sel(b"vertexAttributes\0"));
+        if array.is_null() {
+            return Vec::new();
+        }
+        ns_array_to_vec(array)
+            .into_iter()
+            .filter(|raw| !raw.is_null())
+            .map(|raw| VertexAttribute { raw: retain(raw) })
+            .collect()
+    }
 }
 
 impl Drop for Function {
     fn drop(&mut self) {
         release(self.raw);
+    }
+}
+
+#[derive(Debug)]
+pub struct VertexAttribute {
+    pub raw: id,
+}
+
+impl VertexAttribute {
+    pub fn name(&self) -> Option<String> {
+        ns_string_to_string(msg_id(self.raw, sel(b"name\0")))
+    }
+
+    pub fn attribute_index(&self) -> usize {
+        msg_usize(self.raw, sel(b"attributeIndex\0"))
+    }
+
+    pub fn attribute_type(&self) -> DataType {
+        let selector = sel(b"attributeType\0");
+        if responds_to_selector(self.raw, selector) {
+            let val = msg_usize(self.raw, selector);
+            unsafe { transmute(val) }
+        } else {
+            DataType::None
+        }
+    }
+
+    pub fn is_active(&self) -> bool {
+        let selector = sel(b"isActive\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_bool(self.raw, selector) != 0
+        } else {
+            false
+        }
+    }
+}
+
+impl Drop for VertexAttribute {
+    fn drop(&mut self) {
+        release(self.raw);
+    }
+}
+
+#[derive(Debug)]
+pub struct RenderPipelineReflection {
+    pub raw: id,
+}
+
+impl RenderPipelineReflection {
+    pub fn vertex_bindings(&self) -> Vec<Binding> {
+        let selector = sel(b"vertexBindings\0");
+        if responds_to_selector(self.raw, selector) {
+            crate::reflection::bindings_from_array(msg_id(self.raw, selector))
+        } else {
+            Vec::new()
+        }
+    }
+
+    pub fn fragment_bindings(&self) -> Vec<Binding> {
+        let selector = sel(b"fragmentBindings\0");
+        if responds_to_selector(self.raw, selector) {
+            crate::reflection::bindings_from_array(msg_id(self.raw, selector))
+        } else {
+            Vec::new()
+        }
+    }
+}
+
+impl Drop for RenderPipelineReflection {
+    fn drop(&mut self) {
+        release(self.raw);
+    }
+}
+
+pub struct DeviceObserver {
+    pub raw: id,
+    _handler: Box<dyn Fn(Device, DeviceNotificationName)>,
+}
+
+impl DeviceObserver {
+    pub fn remove(&self) {
+        Device::remove_device_observer(self);
+    }
+}
+
+impl std::fmt::Debug for DeviceObserver {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("DeviceObserver")
+            .field("raw", &self.raw)
+            .finish_non_exhaustive()
+    }
+}
+
+impl Drop for DeviceObserver {
+    fn drop(&mut self) {
+        if !self.raw.is_null() {
+            unsafe {
+                MTLRemoveDeviceObserver(self.raw);
+            }
+        }
+        DEVICE_NOTIFICATION_HANDLER.with(|slot| {
+            *slot.borrow_mut() = None;
+        });
     }
 }
 

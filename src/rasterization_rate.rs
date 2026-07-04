@@ -27,6 +27,10 @@ impl Drop for RasterizationRateSampleArray {
 }
 
 impl RasterizationRateSampleArray {
+    pub fn count(&self) -> usize {
+        ns_array_count(self.raw)
+    }
+
     pub fn object_at_indexed_subscript(&self, index: usize) -> f32 {
         let number = msg_id_usize(self.raw, sel(b"objectAtIndexedSubscript:\0"), index);
         if number.is_null() {
@@ -55,6 +59,34 @@ impl RasterizationRateSampleArray {
             );
         }
     }
+
+    pub fn object_at_indexed_subscript_checked(
+        &self,
+        index: usize,
+        count: usize,
+    ) -> Result<f32, MetalError> {
+        if index >= count {
+            return Err(MetalError::new(format!(
+                "rasterization rate sample index {index} is out of range for count {count}"
+            )));
+        }
+        Ok(self.object_at_indexed_subscript(index))
+    }
+
+    pub fn set_object_at_indexed_subscript_checked(
+        &self,
+        value: f32,
+        index: usize,
+        count: usize,
+    ) -> Result<(), MetalError> {
+        if index >= count {
+            return Err(MetalError::new(format!(
+                "rasterization rate sample index {index} is out of range for count {count}"
+            )));
+        }
+        self.set_object_at_indexed_subscript(value, index);
+        Ok(())
+    }
 }
 
 #[derive(Debug)]
@@ -73,6 +105,55 @@ impl RasterizationRateLayerDescriptor {
                 transmute(objc_msgSend as *const c_void);
             let raw = f(allocated, sel(b"initWithSampleCount:\0"), sample_count);
             Self { raw }
+        }
+    }
+
+    pub fn new_with_samples(
+        sample_count: Size,
+        horizontal: &[f32],
+        vertical: &[f32],
+    ) -> Result<Self, MetalError> {
+        if horizontal.len() != sample_count.width {
+            return Err(MetalError::new(format!(
+                "horizontal sample count {} does not match sample_count.width {}",
+                horizontal.len(),
+                sample_count.width
+            )));
+        }
+        if vertical.len() != sample_count.height {
+            return Err(MetalError::new(format!(
+                "vertical sample count {} does not match sample_count.height {}",
+                vertical.len(),
+                sample_count.height
+            )));
+        }
+        unsafe {
+            let allocated = msg_id(
+                class(b"MTLRasterizationRateLayerDescriptor\0"),
+                sel(b"alloc\0"),
+            );
+            let f: unsafe extern "C" fn(id, SEL, Size, *const f32, *const f32) -> id =
+                transmute(objc_msgSend as *const c_void);
+            let raw = f(
+                allocated,
+                sel(b"initWithSampleCount:horizontal:vertical:\0"),
+                sample_count,
+                horizontal.as_ptr(),
+                vertical.as_ptr(),
+            );
+            if raw.is_null() {
+                Err(MetalError::new(
+                    "failed to create rasterization rate layer descriptor with samples",
+                ))
+            } else {
+                Ok(Self { raw })
+            }
+        }
+    }
+
+    pub fn copy(&self) -> Self {
+        Self {
+            raw: retain(objc_copy(self.raw)),
         }
     }
 
@@ -129,6 +210,26 @@ impl RasterizationRateLayerDescriptor {
         RasterizationRateSampleArray {
             raw: retain(msg_id(self.raw, sel(b"vertical\0"))),
         }
+    }
+
+    pub fn horizontal_sample(&self, index: usize) -> Result<f32, MetalError> {
+        self.horizontal()
+            .object_at_indexed_subscript_checked(index, self.sample_count().width)
+    }
+
+    pub fn set_horizontal_sample(&self, index: usize, value: f32) -> Result<(), MetalError> {
+        self.horizontal()
+            .set_object_at_indexed_subscript_checked(value, index, self.sample_count().width)
+    }
+
+    pub fn vertical_sample(&self, index: usize) -> Result<f32, MetalError> {
+        self.vertical()
+            .object_at_indexed_subscript_checked(index, self.sample_count().height)
+    }
+
+    pub fn set_vertical_sample(&self, index: usize, value: f32) -> Result<(), MetalError> {
+        self.vertical()
+            .set_object_at_indexed_subscript_checked(value, index, self.sample_count().height)
     }
 }
 
@@ -286,6 +387,12 @@ impl RasterizationRateMapDescriptor {
     pub fn layer_count(&self) -> usize {
         msg_usize(self.raw, sel(b"layerCount\0"))
     }
+
+    pub fn copy(&self) -> Self {
+        Self {
+            raw: retain(objc_copy(self.raw)),
+        }
+    }
 }
 
 impl Drop for RasterizationRateMapDescriptor {
@@ -347,11 +454,36 @@ impl RasterizationRateMap {
                 "copyParameterDataToBuffer:offset: is not supported",
             ));
         }
+        let size_align = self.parameter_buffer_size_and_align();
+        if size_align.align > 0 && offset % size_align.align != 0 {
+            return Err(MetalError::new(format!(
+                "parameter buffer offset {offset} is not aligned to required alignment {}",
+                size_align.align
+            )));
+        }
+        if offset + size_align.size > buffer.len() {
+            return Err(MetalError::new(format!(
+                "parameter buffer offset {offset} plus size {} exceeds buffer length {}",
+                size_align.size,
+                buffer.len()
+            )));
+        }
         msg_void_id_usize(self.raw, selector, buffer.raw, offset);
         Ok(())
     }
 
+    fn validate_layer_index(&self, layer_index: usize) -> Result<(), MetalError> {
+        let count = self.layer_count();
+        if layer_index >= count {
+            return Err(MetalError::new(format!(
+                "layer index {layer_index} is out of range for layer count {count}"
+            )));
+        }
+        Ok(())
+    }
+
     pub fn physical_size_for_layer(&self, layer_index: usize) -> Result<Size, MetalError> {
+        self.validate_layer_index(layer_index)?;
         let selector = sel(b"physicalSizeForLayer:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new("physicalSizeForLayer: is not supported"));
@@ -368,6 +500,7 @@ impl RasterizationRateMap {
         screen_coordinates: Coordinate2D,
         layer_index: usize,
     ) -> Result<Coordinate2D, MetalError> {
+        self.validate_layer_index(layer_index)?;
         let selector = sel(b"mapScreenToPhysicalCoordinates:forLayer:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
@@ -386,6 +519,7 @@ impl RasterizationRateMap {
         physical_coordinates: Coordinate2D,
         layer_index: usize,
     ) -> Result<Coordinate2D, MetalError> {
+        self.validate_layer_index(layer_index)?;
         let selector = sel(b"mapPhysicalToScreenCoordinates:forLayer:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(

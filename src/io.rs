@@ -256,12 +256,61 @@ impl Drop for IOCommandQueueDescriptor {
     }
 }
 
+fn validate_io_load_range(source_handle_offset: usize, size: usize) -> Result<(), MetalError> {
+    if size == 0 {
+        return Err(MetalError::new("IO load size must be greater than zero"));
+    }
+    source_handle_offset
+        .checked_add(size)
+        .ok_or_else(|| MetalError::new("IO load file offset and size overflow usize"))?;
+    Ok(())
+}
+
+fn validate_io_buffer_load(
+    buffer: &Buffer,
+    offset: usize,
+    size: usize,
+    source_handle_offset: usize,
+) -> Result<(), MetalError> {
+    validate_io_load_range(source_handle_offset, size)?;
+    let end = offset
+        .checked_add(size)
+        .ok_or_else(|| MetalError::new("IO load buffer offset and size overflow usize"))?;
+    if end > buffer.len() {
+        return Err(MetalError::new(format!(
+            "IO load range [{}, {}) exceeds buffer size {}",
+            offset,
+            end,
+            buffer.len()
+        )));
+    }
+    Ok(())
+}
+
 #[derive(Debug)]
 pub struct IOFileHandle {
     pub raw: id,
 }
 
 impl IOFileHandle {
+    pub fn url(&self) -> Option<id> {
+        let selector = sel(b"URL\0");
+        if responds_to_selector(self.raw, selector) {
+            let url = msg_id(self.raw, selector);
+            if url.is_null() {
+                None
+            } else {
+                Some(url)
+            }
+        } else {
+            None
+        }
+    }
+
+    pub fn path(&self) -> Option<String> {
+        self.url().and_then(ns_url_to_path)
+    }
+
     pub fn label(&self) -> Option<String> {
         ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
     }
@@ -331,6 +380,37 @@ impl IOCommandQueue {
         let ns_label = NSString::new(label);
         msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
     }
+
+    pub fn device(&self) -> Result<Device, MetalError> {
+        let selector = sel(b"device\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new("device is not supported on IO command queue"));
+        }
+        let raw = retain(msg_id(self.raw, selector));
+        if raw.is_null() {
+            Err(MetalError::new("IO command queue device is null"))
+        } else {
+            Ok(Device { raw })
+        }
+    }
+
+    pub fn queue_type(&self) -> Result<IOCommandQueueType, MetalError> {
+        let selector = sel(b"type\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new("type is not supported on IO command queue"));
+        }
+        IOCommandQueueType::from_raw(msg_usize(self.raw, selector))
+            .ok_or_else(|| MetalError::new("invalid IOCommandQueueType value from Metal"))
+    }
+
+    pub fn priority(&self) -> Result<IOPriority, MetalError> {
+        let selector = sel(b"priority\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new("priority is not supported on IO command queue"));
+        }
+        IOPriority::from_raw(msg_usize(self.raw, selector))
+            .ok_or_else(|| MetalError::new("invalid IOPriority value from Metal"))
+    }
 }
 
 impl Drop for IOCommandQueue {
@@ -352,6 +432,10 @@ impl IOCommandBuffer {
         source_handle: &IOFileHandle,
         source_handle_offset: usize,
     ) -> Result<(), MetalError> {
+        validate_io_load_range(source_handle_offset, size)?;
+        if pointer.is_null() {
+            return Err(MetalError::new("IO load destination pointer must not be null"));
+        }
         let selector = sel(b"loadBytes:size:sourceHandle:sourceHandleOffset:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
@@ -381,6 +465,7 @@ impl IOCommandBuffer {
         source_handle: &IOFileHandle,
         source_handle_offset: usize,
     ) -> Result<(), MetalError> {
+        validate_io_buffer_load(buffer, offset, size, source_handle_offset)?;
         let selector = sel(b"loadBuffer:offset:size:sourceHandle:sourceHandleOffset:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
@@ -415,6 +500,12 @@ impl IOCommandBuffer {
         source_handle: &IOFileHandle,
         source_handle_offset: usize,
     ) -> Result<(), MetalError> {
+        if source_bytes_per_image == 0 {
+            return Err(MetalError::new(
+                "IO texture load sourceBytesPerImage must be greater than zero",
+            ));
+        }
+        validate_io_load_range(source_handle_offset, source_bytes_per_image)?;
         let selector = sel(
             b"loadTexture:slice:level:size:sourceBytesPerRow:sourceBytesPerImage:destinationOrigin:sourceHandle:sourceHandleOffset:\0",
         );

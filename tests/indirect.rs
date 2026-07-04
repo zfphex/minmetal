@@ -164,6 +164,8 @@ fn indirect_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     render_desc.set_command_types(IndirectCommandType::DRAW | IndirectCommandType::DRAW_INDEXED);
     render_desc.set_inherit_pipeline_state(false);
     render_desc.set_inherit_buffers(false);
+    render_desc.set_max_vertex_buffer_bind_count(1);
+    render_desc.set_max_fragment_buffer_bind_count(1);
     if let Ok(render_icb) =
         device.new_indirect_command_buffer(&render_desc, 1, IndirectCommandBufferOptions::NONE)
     {

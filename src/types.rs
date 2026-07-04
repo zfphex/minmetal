@@ -106,6 +106,23 @@ impl ScissorRect {
     }
 }
 
+/// Sample position within a pixel (`MTLSamplePosition`). Origin is top-left with range [0, 1).
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct SamplePosition {
+    pub x: f32,
+    pub y: f32,
+}
+
+impl SamplePosition {
+    pub const fn new(x: f32, y: f32) -> Self {
+        Self { x, y }
+    }
+}
+
+/// 64-bit unsigned integer type appropriate for storing GPU addresses (`MTLGPUAddress`).
+pub type GpuAddress = u64;
+
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Range {
@@ -148,19 +165,56 @@ pub struct CGSize {
 #[repr(usize)]
 pub enum PixelFormat {
     Invalid = 0,
+    A8Unorm = 1,
     R8Unorm = 10,
+    R8UnormSrgb = 11,
+    R8Snorm = 12,
     R8Uint = 13,
+    R8Sint = 14,
+    R16Unorm = 20,
+    R16Snorm = 22,
+    R16Uint = 23,
+    R16Sint = 24,
     R16Float = 25,
     Rg8Unorm = 30,
+    Rg8UnormSrgb = 31,
+    Rg8Snorm = 32,
+    Rg8Uint = 33,
+    Rg8Sint = 34,
+    B5G6R5Unorm = 40,
+    A1Bgr5Unorm = 41,
+    Abgr4Unorm = 42,
+    Bgr5A1Unorm = 43,
+    R32Uint = 53,
+    R32Sint = 54,
+    R32Float = 55,
+    Rg16Unorm = 60,
+    Rg16Snorm = 62,
+    Rg16Uint = 63,
+    Rg16Sint = 64,
     Rg16Float = 65,
     Rgba8Unorm = 70,
     Rgba8UnormSrgb = 71,
+    Rgba8Snorm = 72,
+    Rgba8Uint = 73,
+    Rgba8Sint = 74,
     Bgra8Unorm = 80,
     Bgra8UnormSrgb = 81,
     Rgb10A2Unorm = 90,
+    Rgb10A2Uint = 91,
     Rg11B10Float = 92,
     Rgb9E5Float = 93,
+    Bgr10A2Unorm = 94,
+    Rg32Uint = 103,
+    Rg32Sint = 104,
+    Rg32Float = 105,
+    Rgba16Unorm = 110,
+    Rgba16Snorm = 112,
+    Rgba16Uint = 113,
+    Rgba16Sint = 114,
     Rgba16Float = 115,
+    Rgba32Uint = 123,
+    Rgba32Sint = 124,
     Rgba32Float = 125,
     Bc1Rgba = 130,
     Bc1RgbaSrgb = 131,
@@ -169,15 +223,39 @@ pub enum PixelFormat {
     Bc3Rgba = 134,
     Bc3RgbaSrgb = 135,
     Bc4RUnorm = 140,
+    Bc4RSnorm = 141,
     Bc5RgUnorm = 142,
+    Bc5RgSnorm = 143,
     Bc6HRgbFloat = 150,
+    Bc6HRgbUfloat = 151,
     Bc7RgbaUnorm = 152,
     Bc7RgbaUnormSrgb = 153,
+    EacR11Unorm = 170,
+    EacR11Snorm = 172,
+    EacRg11Unorm = 174,
+    EacRg11Snorm = 176,
+    EacRgba8 = 178,
+    EacRgba8Srgb = 179,
+    Etc2Rgb8 = 180,
+    Etc2Rgb8Srgb = 181,
+    Etc2Rgb8A1 = 182,
+    Etc2Rgb8A1Srgb = 183,
+    Astc4x4Srgb = 186,
+    Astc4x4Ldr = 204,
+    Astc4x4Hdr = 222,
+    Gbgr422 = 240,
+    Bgrg422 = 241,
     Depth16Unorm = 250,
     Depth32Float = 252,
     Stencil8 = 253,
     Depth24UnormStencil8 = 255,
     Depth32FloatStencil8 = 260,
+    X32Stencil8 = 261,
+    X24Stencil8 = 262,
+    Bgra10Xr = 552,
+    Bgra10XrSrgb = 553,
+    Bgr10Xr = 554,
+    Bgr10XrSrgb = 555,
 }
 
 impl PixelFormat {
@@ -187,19 +265,57 @@ impl PixelFormat {
 
     pub fn from_raw(raw: usize) -> Self {
         match raw {
+            0 => Self::Invalid,
+            1 => Self::A8Unorm,
             10 => Self::R8Unorm,
+            11 => Self::R8UnormSrgb,
+            12 => Self::R8Snorm,
             13 => Self::R8Uint,
+            14 => Self::R8Sint,
+            20 => Self::R16Unorm,
+            22 => Self::R16Snorm,
+            23 => Self::R16Uint,
+            24 => Self::R16Sint,
             25 => Self::R16Float,
             30 => Self::Rg8Unorm,
+            31 => Self::Rg8UnormSrgb,
+            32 => Self::Rg8Snorm,
+            33 => Self::Rg8Uint,
+            34 => Self::Rg8Sint,
+            40 => Self::B5G6R5Unorm,
+            41 => Self::A1Bgr5Unorm,
+            42 => Self::Abgr4Unorm,
+            43 => Self::Bgr5A1Unorm,
+            53 => Self::R32Uint,
+            54 => Self::R32Sint,
+            55 => Self::R32Float,
+            60 => Self::Rg16Unorm,
+            62 => Self::Rg16Snorm,
+            63 => Self::Rg16Uint,
+            64 => Self::Rg16Sint,
             65 => Self::Rg16Float,
             70 => Self::Rgba8Unorm,
             71 => Self::Rgba8UnormSrgb,
+            72 => Self::Rgba8Snorm,
+            73 => Self::Rgba8Uint,
+            74 => Self::Rgba8Sint,
             80 => Self::Bgra8Unorm,
             81 => Self::Bgra8UnormSrgb,
             90 => Self::Rgb10A2Unorm,
+            91 => Self::Rgb10A2Uint,
             92 => Self::Rg11B10Float,
             93 => Self::Rgb9E5Float,
+            94 => Self::Bgr10A2Unorm,
+            103 => Self::Rg32Uint,
+            104 => Self::Rg32Sint,
+            105 => Self::Rg32Float,
+            110 => Self::Rgba16Unorm,
+            112 => Self::Rgba16Snorm,
+            113 => Self::Rgba16Uint,
+            114 => Self::Rgba16Sint,
             115 => Self::Rgba16Float,
+            123 => Self::Rgba32Uint,
+            124 => Self::Rgba32Sint,
             125 => Self::Rgba32Float,
             130 => Self::Bc1Rgba,
             131 => Self::Bc1RgbaSrgb,
@@ -208,15 +324,39 @@ impl PixelFormat {
             134 => Self::Bc3Rgba,
             135 => Self::Bc3RgbaSrgb,
             140 => Self::Bc4RUnorm,
+            141 => Self::Bc4RSnorm,
             142 => Self::Bc5RgUnorm,
+            143 => Self::Bc5RgSnorm,
             150 => Self::Bc6HRgbFloat,
+            151 => Self::Bc6HRgbUfloat,
             152 => Self::Bc7RgbaUnorm,
             153 => Self::Bc7RgbaUnormSrgb,
+            170 => Self::EacR11Unorm,
+            172 => Self::EacR11Snorm,
+            174 => Self::EacRg11Unorm,
+            176 => Self::EacRg11Snorm,
+            178 => Self::EacRgba8,
+            179 => Self::EacRgba8Srgb,
+            180 => Self::Etc2Rgb8,
+            181 => Self::Etc2Rgb8Srgb,
+            182 => Self::Etc2Rgb8A1,
+            183 => Self::Etc2Rgb8A1Srgb,
+            186 => Self::Astc4x4Srgb,
+            204 => Self::Astc4x4Ldr,
+            222 => Self::Astc4x4Hdr,
+            240 => Self::Gbgr422,
+            241 => Self::Bgrg422,
             250 => Self::Depth16Unorm,
             252 => Self::Depth32Float,
             253 => Self::Stencil8,
             255 => Self::Depth24UnormStencil8,
             260 => Self::Depth32FloatStencil8,
+            261 => Self::X32Stencil8,
+            262 => Self::X24Stencil8,
+            552 => Self::Bgra10Xr,
+            553 => Self::Bgra10XrSrgb,
+            554 => Self::Bgr10Xr,
+            555 => Self::Bgr10XrSrgb,
             _ => Self::Invalid,
         }
     }
@@ -540,6 +680,30 @@ pub enum VertexFormat {
     UChar2 = 1,
     UChar3 = 2,
     UChar4 = 3,
+    Char2 = 4,
+    Char3 = 5,
+    Char4 = 6,
+    UChar2Normalized = 7,
+    UChar3Normalized = 8,
+    UChar4Normalized = 9,
+    Char2Normalized = 10,
+    Char3Normalized = 11,
+    Char4Normalized = 12,
+    UShort2 = 13,
+    UShort3 = 14,
+    UShort4 = 15,
+    Short2 = 16,
+    Short3 = 17,
+    Short4 = 18,
+    UShort2Normalized = 19,
+    UShort3Normalized = 20,
+    UShort4Normalized = 21,
+    Short2Normalized = 22,
+    Short3Normalized = 23,
+    Short4Normalized = 24,
+    Half2 = 25,
+    Half3 = 26,
+    Half4 = 27,
     Float = 28,
     Float2 = 29,
     Float3 = 30,
@@ -552,10 +716,20 @@ pub enum VertexFormat {
     UInt2 = 37,
     UInt3 = 38,
     UInt4 = 39,
-    Half = 40,
-    Half2 = 41,
-    Half3 = 42,
-    Half4 = 43,
+    Int1010102Normalized = 40,
+    UInt1010102Normalized = 41,
+    UChar4Normalized_BGRA = 42,
+    UChar = 45,
+    Char = 46,
+    UCharNormalized = 47,
+    CharNormalized = 48,
+    UShort = 49,
+    Short = 50,
+    UShortNormalized = 51,
+    ShortNormalized = 52,
+    Half = 53,
+    FloatRG11B10 = 54,
+    FloatRGB9E5 = 55,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -1288,6 +1462,68 @@ impl BlitOption {
     pub const fn as_raw(self) -> usize {
         self.0
     }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(isize)]
+pub enum CounterSampleBufferError {
+    OutOfMemory = 0,
+    Invalid = 1,
+    Internal = 2,
+}
+
+impl CounterSampleBufferError {
+    pub fn from_raw(raw: isize) -> Option<Self> {
+        match raw {
+            0 => Some(Self::OutOfMemory),
+            1 => Some(Self::Invalid),
+            2 => Some(Self::Internal),
+            _ => None,
+        }
+    }
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct CounterResultTimestamp {
+    pub timestamp: u64,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct CounterResultStageUtilization {
+    pub total_cycles: u64,
+    pub vertex_cycles: u64,
+    pub tessellation_cycles: u64,
+    pub post_tessellation_vertex_cycles: u64,
+    pub fragment_cycles: u64,
+    pub render_target_cycles: u64,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct CounterResultStatistic {
+    pub tessellation_input_patches: u64,
+    pub vertex_invocations: u64,
+    pub post_tessellation_vertex_invocations: u64,
+    pub clipper_invocations: u64,
+    pub clipper_primitives_out: u64,
+    pub fragment_invocations: u64,
+    pub fragments_passed: u64,
+    pub compute_kernel_invocations: u64,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct MapIndirectArguments {
+    pub region_origin_x: u32,
+    pub region_origin_y: u32,
+    pub region_origin_z: u32,
+    pub region_size_width: u32,
+    pub region_size_height: u32,
+    pub region_size_depth: u32,
+    pub mip_map_level: u32,
+    pub slice_id: u32,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

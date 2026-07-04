@@ -31,7 +31,7 @@ fn raytracing_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(AccelerationStructureUsage::NONE.0, 0);
     assert_eq!(AccelerationStructureUsage::REFIT.0, 1);
     assert_eq!(AccelerationStructureUsage::PREFER_FAST_BUILD.0, 2);
-    assert_eq!(AccelerationStructureUsage::PREFER_FAST_INTERSECTION.0, 4);
+    assert_eq!(AccelerationStructureUsage::PREFER_FAST_INTERSECTION.0, 16);
 
     let usage_comb = AccelerationStructureUsage(
         AccelerationStructureUsage::REFIT.0 | AccelerationStructureUsage::PREFER_FAST_BUILD.0,

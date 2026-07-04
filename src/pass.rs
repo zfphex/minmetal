@@ -1,6 +1,50 @@
 use crate::*;
+use std::cell::Cell;
 use std::ffi::c_void;
 use std::mem::transmute;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(usize)]
+pub enum MultisampleDepthResolveFilter {
+    Sample0 = 0,
+    Min = 1,
+    Max = 2,
+}
+
+impl MultisampleDepthResolveFilter {
+    pub fn from_raw(raw: usize) -> Option<Self> {
+        match raw {
+            0 => Some(Self::Sample0),
+            1 => Some(Self::Min),
+            2 => Some(Self::Max),
+            _ => None,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(usize)]
+pub enum MultisampleStencilResolveFilter {
+    Sample0 = 0,
+    DepthResolvedSample = 1,
+}
+
+impl MultisampleStencilResolveFilter {
+    pub fn from_raw(raw: usize) -> Option<Self> {
+        match raw {
+            0 => Some(Self::Sample0),
+            1 => Some(Self::DepthResolvedSample),
+            _ => None,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(usize)]
+pub enum VisibilityResultType {
+    Reset = 0,
+    Accumulate = 1,
+}
 
 #[derive(Debug)]
 pub struct RenderPassAttachmentDescriptor {
@@ -164,6 +208,33 @@ impl RenderPassDepthAttachmentDescriptor {
     pub fn set_clear_depth(&self, depth: f64) {
         msg_void_f64(self.raw, sel(b"setClearDepth:\0"), depth);
     }
+
+    pub fn depth_resolve_filter(&self) -> Result<MultisampleDepthResolveFilter, MetalError> {
+        let selector = sel(b"depthResolveFilter\0");
+        if responds_to_selector(self.raw, selector) {
+            let val = msg_usize(self.raw, selector);
+            MultisampleDepthResolveFilter::from_raw(val).ok_or_else(|| {
+                MetalError::new(format!(
+                    "invalid MTLMultisampleDepthResolveFilter value from Metal: {val}"
+                ))
+            })
+        } else {
+            Err(MetalError::new("depthResolveFilter not supported"))
+        }
+    }
+
+    pub fn set_depth_resolve_filter(
+        &self,
+        filter: MultisampleDepthResolveFilter,
+    ) -> Result<(), MetalError> {
+        let selector = sel(b"setDepthResolveFilter:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_usize(self.raw, selector, filter as usize);
+            Ok(())
+        } else {
+            Err(MetalError::new("setDepthResolveFilter: not supported"))
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -182,6 +253,58 @@ impl RenderPassStencilAttachmentDescriptor {
 
     pub fn set_clear_stencil(&self, stencil: u32) {
         msg_void_usize(self.raw, sel(b"setClearStencil:\0"), stencil as usize);
+    }
+
+    pub fn stencil_resolve_filter(&self) -> Result<MultisampleStencilResolveFilter, MetalError> {
+        let selector = sel(b"stencilResolveFilter\0");
+        if responds_to_selector(self.raw, selector) {
+            let val = msg_usize(self.raw, selector);
+            MultisampleStencilResolveFilter::from_raw(val).ok_or_else(|| {
+                MetalError::new(format!(
+                    "invalid MTLMultisampleStencilResolveFilter value from Metal: {val}"
+                ))
+            })
+        } else {
+            Err(MetalError::new("stencilResolveFilter not supported"))
+        }
+    }
+
+    pub fn set_stencil_resolve_filter(
+        &self,
+        filter: MultisampleStencilResolveFilter,
+    ) -> Result<(), MetalError> {
+        let selector = sel(b"setStencilResolveFilter:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_usize(self.raw, selector, filter as usize);
+            Ok(())
+        } else {
+            Err(MetalError::new("setStencilResolveFilter: not supported"))
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct RenderPassColorAttachmentDescriptorArray {
+    pub raw: id,
+}
+
+impl RenderPassColorAttachmentDescriptorArray {
+    pub fn object_at_indexed_subscript(&self, index: usize) -> RenderPassColorAttachmentDescriptor {
+        let attachment = msg_id_usize(self.raw, sel(b"objectAtIndexedSubscript:\0"), index);
+        RenderPassColorAttachmentDescriptor { raw: attachment }
+    }
+
+    pub fn set_object_at_indexed_subscript(
+        &self,
+        index: usize,
+        attachment: Option<&RenderPassColorAttachmentDescriptor>,
+    ) {
+        msg_void_id_usize(
+            self.raw,
+            sel(b"setObject:atIndexedSubscript:\0"),
+            attachment.map_or(NIL, |a| a.raw),
+            index,
+        );
     }
 }
 
@@ -267,9 +390,12 @@ impl RenderPassDescriptor {
     }
 
     pub fn color_attachment(&self, index: usize) -> RenderPassColorAttachmentDescriptor {
+        self.color_attachments().object_at_indexed_subscript(index)
+    }
+
+    pub fn color_attachments(&self) -> RenderPassColorAttachmentDescriptorArray {
         let attachments = msg_id(self.raw, sel(b"colorAttachments\0"));
-        let attachment = msg_id_usize(attachments, sel(b"objectAtIndexedSubscript:\0"), index);
-        RenderPassColorAttachmentDescriptor { raw: attachment }
+        RenderPassColorAttachmentDescriptorArray { raw: attachments }
     }
 
     pub fn depth_attachment(&self) -> RenderPassDepthAttachmentDescriptor {
@@ -290,18 +416,16 @@ impl RenderPassDescriptor {
         store_action: StoreAction,
         clear_color: ClearColor,
     ) {
-        let attachments = msg_id(self.raw, sel(b"colorAttachments\0"));
-        let attachment = msg_id_usize(attachments, sel(b"objectAtIndexedSubscript:\0"), index);
-        msg_void_id(attachment, sel(b"setTexture:\0"), texture.raw);
-        msg_void_usize(attachment, sel(b"setLoadAction:\0"), load_action as usize);
-        msg_void_usize(attachment, sel(b"setStoreAction:\0"), store_action as usize);
-        msg_void_clear_color(attachment, sel(b"setClearColor:\0"), clear_color);
+        let attachment = self.color_attachments().object_at_indexed_subscript(index);
+        msg_void_id(attachment.raw, sel(b"setTexture:\0"), texture.raw);
+        msg_void_usize(attachment.raw, sel(b"setLoadAction:\0"), load_action as usize);
+        msg_void_usize(attachment.raw, sel(b"setStoreAction:\0"), store_action as usize);
+        msg_void_clear_color(attachment.raw, sel(b"setClearColor:\0"), clear_color);
     }
 
     pub fn set_color_attachment_resolve_texture(&self, index: usize, texture: &Texture) {
-        let attachments = msg_id(self.raw, sel(b"colorAttachments\0"));
-        let attachment = msg_id_usize(attachments, sel(b"objectAtIndexedSubscript:\0"), index);
-        msg_void_id(attachment, sel(b"setResolveTexture:\0"), texture.raw);
+        let attachment = self.color_attachments().object_at_indexed_subscript(index);
+        msg_void_id(attachment.raw, sel(b"setResolveTexture:\0"), texture.raw);
     }
 
     pub fn set_depth_attachment(
@@ -414,6 +538,138 @@ impl RenderPassDescriptor {
         }
         msg_void_id(self.raw, selector, map.map_or(NIL, |m| m.raw));
         Ok(())
+    }
+
+    pub fn default_raster_sample_count(&self) -> Result<usize, MetalError> {
+        let selector = sel(b"defaultRasterSampleCount\0");
+        if responds_to_selector(self.raw, selector) {
+            Ok(msg_usize(self.raw, selector))
+        } else {
+            Err(MetalError::new("defaultRasterSampleCount not supported"))
+        }
+    }
+
+    pub fn set_default_raster_sample_count(&self, count: usize) -> Result<(), MetalError> {
+        let selector = sel(b"setDefaultRasterSampleCount:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_usize(self.raw, selector, count);
+            Ok(())
+        } else {
+            Err(MetalError::new("setDefaultRasterSampleCount: not supported"))
+        }
+    }
+
+    pub fn render_target_width(&self) -> Result<usize, MetalError> {
+        let selector = sel(b"renderTargetWidth\0");
+        if responds_to_selector(self.raw, selector) {
+            Ok(msg_usize(self.raw, selector))
+        } else {
+            Err(MetalError::new("renderTargetWidth not supported"))
+        }
+    }
+
+    pub fn set_render_target_width(&self, width: usize) -> Result<(), MetalError> {
+        let selector = sel(b"setRenderTargetWidth:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_usize(self.raw, selector, width);
+            Ok(())
+        } else {
+            Err(MetalError::new("setRenderTargetWidth: not supported"))
+        }
+    }
+
+    pub fn render_target_height(&self) -> Result<usize, MetalError> {
+        let selector = sel(b"renderTargetHeight\0");
+        if responds_to_selector(self.raw, selector) {
+            Ok(msg_usize(self.raw, selector))
+        } else {
+            Err(MetalError::new("renderTargetHeight not supported"))
+        }
+    }
+
+    pub fn set_render_target_height(&self, height: usize) -> Result<(), MetalError> {
+        let selector = sel(b"setRenderTargetHeight:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_usize(self.raw, selector, height);
+            Ok(())
+        } else {
+            Err(MetalError::new("setRenderTargetHeight: not supported"))
+        }
+    }
+
+    pub fn threadgroup_memory_length(&self) -> Result<usize, MetalError> {
+        let selector = sel(b"threadgroupMemoryLength\0");
+        if responds_to_selector(self.raw, selector) {
+            Ok(msg_usize(self.raw, selector))
+        } else {
+            Err(MetalError::new("threadgroupMemoryLength not supported"))
+        }
+    }
+
+    pub fn set_threadgroup_memory_length(&self, length: usize) -> Result<(), MetalError> {
+        let selector = sel(b"setThreadgroupMemoryLength:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_usize(self.raw, selector, length);
+            Ok(())
+        } else {
+            Err(MetalError::new("setThreadgroupMemoryLength: not supported"))
+        }
+    }
+
+    pub fn visibility_result_type(&self) -> Result<VisibilityResultType, MetalError> {
+        let selector = sel(b"visibilityResultType\0");
+        if responds_to_selector(self.raw, selector) {
+            match msg_usize(self.raw, selector) {
+                0 => Ok(VisibilityResultType::Reset),
+                1 => Ok(VisibilityResultType::Accumulate),
+                val => Err(MetalError::new(format!(
+                    "invalid MTLVisibilityResultType value from Metal: {val}"
+                ))),
+            }
+        } else {
+            Err(MetalError::new("visibilityResultType not supported"))
+        }
+    }
+
+    pub fn set_visibility_result_type(
+        &self,
+        result_type: VisibilityResultType,
+    ) -> Result<(), MetalError> {
+        let selector = sel(b"setVisibilityResultType:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_usize(self.raw, selector, result_type as usize);
+            Ok(())
+        } else {
+            Err(MetalError::new("setVisibilityResultType: not supported"))
+        }
+    }
+
+    pub fn set_sample_positions(&self, positions: &[SamplePosition]) -> Result<(), MetalError> {
+        let selector = sel(b"setSamplePositions:count:\0");
+        if responds_to_selector(self.raw, selector) {
+            unsafe {
+                let f: unsafe extern "C" fn(id, SEL, *const SamplePosition, usize) =
+                    transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector, positions.as_ptr(), positions.len());
+            }
+            Ok(())
+        } else {
+            Err(MetalError::new("setSamplePositions:count: not supported"))
+        }
+    }
+
+    pub fn get_sample_positions(&self, positions: &mut [SamplePosition]) -> Result<usize, MetalError> {
+        let selector = sel(b"getSamplePositions:count:\0");
+        if responds_to_selector(self.raw, selector) {
+            let count = unsafe {
+                let f: unsafe extern "C" fn(id, SEL, *mut SamplePosition, usize) -> usize =
+                    transmute(objc_msgSend as *const c_void);
+                f(self.raw, selector, positions.as_mut_ptr(), positions.len())
+            };
+            Ok(count)
+        } else {
+            Err(MetalError::new("getSamplePositions:count: not supported"))
+        }
     }
 }
 
@@ -782,10 +1038,23 @@ impl Drop for ResourceStatePassDescriptor {
 #[derive(Debug)]
 pub struct ParallelRenderCommandEncoder {
     pub raw: id,
+    ended: Cell<bool>,
 }
 
 impl ParallelRenderCommandEncoder {
+    pub(crate) fn new(raw: id) -> Self {
+        Self {
+            raw,
+            ended: Cell::new(false),
+        }
+    }
+
     pub fn render_command_encoder(&self) -> Result<RenderCommandEncoder, MetalError> {
+        if self.ended.get() {
+            return Err(MetalError::new(
+                "cannot create child render command encoder after parallel render command encoder has ended encoding",
+            ));
+        }
         let raw = retain(msg_id(self.raw, sel(b"renderCommandEncoder\0")));
         if raw.is_null() {
             Err(MetalError::new(
@@ -876,6 +1145,7 @@ impl ParallelRenderCommandEncoder {
 
     pub fn end_encoding(&self) {
         msg_void(self.raw, sel(b"endEncoding\0"));
+        self.ended.set(true);
     }
 }
 

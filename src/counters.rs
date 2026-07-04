@@ -2,13 +2,16 @@ use crate::*;
 use std::ffi::c_void;
 use std::mem::transmute;
 
+pub const COUNTER_ERROR_VALUE: u64 = u64::MAX;
+pub const COUNTER_DONT_SAMPLE: usize = usize::MAX;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(usize)]
 pub enum CounterSamplingPoint {
     AtStageBoundary = 0,
     AtDrawBoundary = 1,
     AtDispatchBoundary = 2,
-    AtTileBoundary = 3,
+    AtTileDispatchBoundary = 3,
     AtBlitBoundary = 4,
 }
 
@@ -80,8 +83,21 @@ impl CounterSampleBufferDescriptor {
         }
     }
 
+    pub fn counter_set(&self) -> Option<CounterSet> {
+        let raw = msg_id(self.raw, sel(b"counterSet\0"));
+        if raw.is_null() {
+            None
+        } else {
+            Some(CounterSet { raw: retain(raw) })
+        }
+    }
+
     pub fn set_counter_set(&self, counter_set: &CounterSet) {
         msg_void_id(self.raw, sel(b"setCounterSet:\0"), counter_set.raw);
+    }
+
+    pub fn label(&self) -> Option<String> {
+        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
     }
 
     pub fn set_label(&self, label: &str) {
@@ -89,8 +105,22 @@ impl CounterSampleBufferDescriptor {
         msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
     }
 
+    pub fn storage_mode(&self) -> StorageMode {
+        match msg_usize(self.raw, sel(b"storageMode\0")) {
+            0 => StorageMode::Shared,
+            1 => StorageMode::Managed,
+            2 => StorageMode::Private,
+            3 => StorageMode::Memoryless,
+            _ => StorageMode::Shared,
+        }
+    }
+
     pub fn set_storage_mode(&self, storage_mode: StorageMode) {
         msg_void_usize(self.raw, sel(b"setStorageMode:\0"), storage_mode as usize);
+    }
+
+    pub fn sample_count(&self) -> usize {
+        msg_usize(self.raw, sel(b"sampleCount\0"))
     }
 
     pub fn set_sample_count(&self, sample_count: usize) {
@@ -157,6 +187,9 @@ impl CounterSampleBuffer {
     }
 
     pub fn validate_sample_index(&self, sample_index: usize) -> Result<(), MetalError> {
+        if sample_index == COUNTER_DONT_SAMPLE {
+            return Ok(());
+        }
         let sample_count = self.sample_count()?;
         if sample_index >= sample_count {
             return Err(MetalError::new(format!(
@@ -178,12 +211,49 @@ impl CounterSampleBuffer {
         }
         Ok(())
     }
+
+    pub fn resolve_counter_range(&self, range: Range) -> Result<Vec<u8>, MetalError> {
+        if self.raw.is_null() {
+            return Err(MetalError::new("counter sample buffer is null"));
+        }
+        self.validate_resolve_range(range)?;
+        if self.storage_mode()? != StorageMode::Shared {
+            return Err(MetalError::new(
+                "resolveCounterRange: requires MTLStorageModeShared counter sample buffer",
+            ));
+        }
+        let selector = sel(b"resolveCounterRange:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "resolveCounterRange: is not supported on this counter sample buffer",
+            ));
+        }
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, Range) -> id =
+                transmute(objc_msgSend as *const c_void);
+            let data = f(self.raw, selector, range);
+            if data.is_null() {
+                return Err(MetalError::new("resolveCounterRange: returned null data"));
+            }
+            let len = msg_usize(data, sel(b"length\0"));
+            let bytes = msg_id(data, sel(b"bytes\0")) as *const u8;
+            if bytes.is_null() && len > 0 {
+                return Err(MetalError::new(
+                    "resolveCounterRange: returned null bytes with non-zero length",
+                ));
+            }
+            Ok(std::slice::from_raw_parts(bytes, len).to_vec())
+        }
+    }
 }
 
 fn validate_counter_sampling(
+    device: &Device,
     sample_buffer: &CounterSampleBuffer,
     sample_index: usize,
+    sampling_point: CounterSamplingPoint,
 ) -> Result<(), MetalError> {
+    device.validate_counter_sampling_point(sampling_point)?;
     sample_buffer.validate_sample_index(sample_index)
 }
 
@@ -193,7 +263,6 @@ impl Drop for CounterSampleBuffer {
     }
 }
 
-// Add Device methods for counters
 impl Device {
     pub fn supports_counter_sampling(&self, sampling_point: CounterSamplingPoint) -> bool {
         unsafe {
@@ -206,6 +275,19 @@ impl Device {
                 false
             }
         }
+    }
+
+    pub fn validate_counter_sampling_point(
+        &self,
+        sampling_point: CounterSamplingPoint,
+    ) -> Result<(), MetalError> {
+        if !self.supports_counter_sampling(sampling_point) {
+            return Err(MetalError::new(format!(
+                "device does not support counter sampling at sampling point {}",
+                sampling_point as usize
+            )));
+        }
+        Ok(())
     }
 
     pub fn counter_sets(&self) -> Result<Vec<CounterSet>, MetalError> {
@@ -251,7 +333,6 @@ impl Device {
     }
 }
 
-// Counter sampling encoder implementations
 impl RenderCommandEncoder {
     pub fn sample_counters_in_buffer(
         &self,
@@ -259,7 +340,13 @@ impl RenderCommandEncoder {
         sample_index: usize,
         barrier: bool,
     ) -> Result<(), MetalError> {
-        validate_counter_sampling(sample_buffer, sample_index)?;
+        let device = self.device();
+        validate_counter_sampling(
+            &device,
+            sample_buffer,
+            sample_index,
+            CounterSamplingPoint::AtDrawBoundary,
+        )?;
         unsafe {
             let selector = sel(b"sampleCountersInBuffer:atSampleIndex:withBarrier:\0");
             if !responds_to_selector(self.raw, selector) {
@@ -288,7 +375,13 @@ impl ComputeCommandEncoder {
         sample_index: usize,
         barrier: bool,
     ) -> Result<(), MetalError> {
-        validate_counter_sampling(sample_buffer, sample_index)?;
+        let device = self.device();
+        validate_counter_sampling(
+            &device,
+            sample_buffer,
+            sample_index,
+            CounterSamplingPoint::AtDispatchBoundary,
+        )?;
         unsafe {
             let selector = sel(b"sampleCountersInBuffer:atSampleIndex:withBarrier:\0");
             if !responds_to_selector(self.raw, selector) {
@@ -322,7 +415,13 @@ impl BlitCommandEncoder {
                 "sampleCountersInBuffer:atSampleIndex:withBarrier: not supported on this BlitCommandEncoder",
             ));
         }
-        validate_counter_sampling(sample_buffer, sample_index)?;
+        let device = self.device();
+        validate_counter_sampling(
+            &device,
+            sample_buffer,
+            sample_index,
+            CounterSamplingPoint::AtBlitBoundary,
+        )?;
         unsafe {
             let selector = sel(b"sampleCountersInBuffer:atSampleIndex:withBarrier:\0");
             if !responds_to_selector(self.raw, selector) {
