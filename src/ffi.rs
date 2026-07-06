@@ -335,7 +335,23 @@ pub fn ns_string_to_string(raw: id) -> Option<String> {
     }
 }
 
-pub(crate) fn error_message(error: id, fallback: &str) -> String {
+#[derive(Clone, Copy)]
+pub struct LazyErrorMessage {
+    pub(crate) error: id,
+    pub(crate) fallback: &'static str,
+}
+
+impl LazyErrorMessage {
+    pub fn to_string(&self) -> String {
+        format_error_message(self.error, self.fallback)
+    }
+}
+
+pub(crate) fn error_message(error: id, fallback: &'static str) -> LazyErrorMessage {
+    LazyErrorMessage { error, fallback }
+}
+
+pub(crate) fn format_error_message(error: id, fallback: &str) -> String {
     if error.is_null() {
         return fallback.to_string();
     }
@@ -356,6 +372,7 @@ pub(crate) fn error_message(error: id, fallback: &str) -> String {
     }
     fallback.to_string()
 }
+
 
 pub struct AutoreleasePool {
     raw: id,

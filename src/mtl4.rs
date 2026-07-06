@@ -2414,7 +2414,7 @@ impl M4CommitFeedback {
         if error.is_null() {
             None
         } else {
-            Some(error_message(error, "commit feedback error"))
+            Some(error_message(error, "commit feedback error").to_string())
         }
     }
 

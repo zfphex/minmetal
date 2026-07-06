@@ -1,3 +1,5 @@
+use crate::*;
+
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Size {
@@ -1172,22 +1174,116 @@ pub enum FunctionConstantValue {
     },
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct MetalError {
-    message: String,
+    pub(crate) repr: ErrorRepr,
+}
+
+#[derive(Debug)]
+pub(crate) enum ErrorRepr {
+    Static(&'static str),
+    Runtime { error: id, fallback: &'static str },
+    Custom(String),
+}
+
+impl Clone for ErrorRepr {
+    fn clone(&self) -> Self {
+        match self {
+            Self::Static(s) => Self::Static(s),
+            Self::Runtime { error, fallback } => Self::Runtime {
+                error: retain(*error),
+                fallback,
+            },
+            Self::Custom(s) => Self::Custom(s.clone()),
+        }
+    }
+}
+
+impl Clone for MetalError {
+    fn clone(&self) -> Self {
+        Self {
+            repr: self.repr.clone(),
+        }
+    }
+}
+
+impl Drop for MetalError {
+    fn drop(&mut self) {
+        if let ErrorRepr::Runtime { error, .. } = self.repr {
+            release(error);
+        }
+    }
+}
+
+unsafe impl Send for MetalError {}
+unsafe impl Sync for MetalError {}
+
+pub trait IntoMetalError {
+    fn into_error(self) -> MetalError;
+}
+
+impl IntoMetalError for &'static str {
+    fn into_error(self) -> MetalError {
+        MetalError {
+            repr: ErrorRepr::Static(self),
+        }
+    }
+}
+
+impl IntoMetalError for String {
+    fn into_error(self) -> MetalError {
+        MetalError {
+            repr: ErrorRepr::Custom(self),
+        }
+    }
+}
+
+impl IntoMetalError for LazyErrorMessage {
+    fn into_error(self) -> MetalError {
+        MetalError {
+            repr: ErrorRepr::Runtime {
+                error: retain(self.error),
+                fallback: self.fallback,
+            },
+        }
+    }
+}
+
+impl IntoMetalError for &LazyErrorMessage {
+    fn into_error(self) -> MetalError {
+        MetalError {
+            repr: ErrorRepr::Runtime {
+                error: retain(self.error),
+                fallback: self.fallback,
+            },
+        }
+    }
+}
+
+impl IntoMetalError for &String {
+    fn into_error(self) -> MetalError {
+        MetalError {
+            repr: ErrorRepr::Custom(self.clone()),
+        }
+    }
 }
 
 impl MetalError {
-    pub fn new(message: impl Into<String>) -> Self {
-        Self {
-            message: message.into(),
-        }
+    pub fn new<T: IntoMetalError>(message: T) -> Self {
+        message.into_error()
     }
 }
 
 impl std::fmt::Display for MetalError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.message)
+        match &self.repr {
+            ErrorRepr::Static(s) => f.write_str(s),
+            ErrorRepr::Runtime { error, fallback } => {
+                let msg = crate::ffi::format_error_message(*error, fallback);
+                f.write_str(&msg)
+            }
+            ErrorRepr::Custom(s) => f.write_str(s),
+        }
     }
 }
 

@@ -617,7 +617,7 @@ impl Device {
         if raw.is_null() {
             Err(MetalError::new(error_message(
                 error,
-                &format!("failed to load Metal library from URL: {}", path),
+                "failed to load Metal library from URL",
             )))
         } else {
             Ok(Library { raw })
@@ -636,7 +636,7 @@ impl Device {
             if raw.is_null() {
                 Err(MetalError::new(error_message(
                     error,
-                    &format!("failed to load Metal library from file: {}", path),
+                    "failed to load Metal library from file",
                 )))
             } else {
                 Ok(Library { raw })
@@ -1731,10 +1731,7 @@ impl Library {
             if raw.is_null() {
                 Err(MetalError::new(error_message(
                     error,
-                    &format!(
-                        "failed to specialize Metal function '{}' with constants",
-                        name
-                    ),
+                    "failed to specialize Metal function with constants",
                 )))
             } else {
                 Ok(Function { raw })
