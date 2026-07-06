@@ -1798,7 +1798,7 @@ impl Library {
         Device { raw: ptr }
     }
 
-    pub fn function_names(&self) -> NSArrayIterator<String> {
+    pub fn function_names(&self) -> NSArrayIterator<NSString> {
         NSArrayIterator::new(msg_id(self.raw, sel(b"functionNames\0")))
     }
 

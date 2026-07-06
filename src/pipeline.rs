@@ -2461,7 +2461,7 @@ impl LinkedFunctions {
 
 pub struct DynamicLibraryGroupIterator {
     dict: id,
-    keys_iter: NSArrayIterator<id>,
+    keys_iter: NSArrayIterator<NSString>,
 }
 
 impl Drop for DynamicLibraryGroupIterator {
@@ -2471,12 +2471,11 @@ impl Drop for DynamicLibraryGroupIterator {
 }
 
 impl Iterator for DynamicLibraryGroupIterator {
-    type Item = (String, NSArrayIterator<Function>);
+    type Item = (NSString, NSArrayIterator<Function>);
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.keys_iter.next().map(|key| {
-            let name = ns_string_to_string(key).unwrap_or_default();
-            let array = msg_id_id(self.dict, sel(b"objectForKey:\0"), key);
+        self.keys_iter.next().map(|name| {
+            let array = msg_id_id(self.dict, sel(b"objectForKey:\0"), name.raw());
             (name, NSArrayIterator::new(array))
         })
     }

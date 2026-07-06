@@ -916,19 +916,24 @@ impl FunctionReflection {
         }
     }
 
-    pub fn user_annotation(&self) -> Option<String> {
+    pub fn user_annotation(&self) -> Option<NSString> {
         if self.raw.is_null() {
             return None;
         }
         let selector = sel(b"userAnnotation\0");
         if responds_to_selector(self.raw, selector) {
-            ns_string_to_string(msg_id(self.raw, selector))
+            let ptr = msg_id(self.raw, selector);
+            if ptr.is_null() {
+                None
+            } else {
+                Some(NSString::from_raw(ptr))
+            }
         } else {
             None
         }
     }
 
-    pub fn user_annotation_value(&self, key: &str) -> Option<String> {
+    pub fn user_annotation_value(&self, key: &str) -> Option<NSString> {
         if self.raw.is_null() {
             return None;
         }
@@ -942,15 +947,20 @@ impl FunctionReflection {
         }
         if responds_to_selector(annotation, sel(b"objectForKey:")) {
             let ns_key = NSString::new(key);
-            ns_string_to_string(ns_dictionary_object_for_key(annotation, ns_key.raw()))
+            let value = ns_dictionary_object_for_key(annotation, ns_key.raw());
+            if value.is_null() {
+                None
+            } else {
+                Some(NSString::from_raw(value))
+            }
         } else if key.is_empty() {
-            ns_string_to_string(annotation)
+            Some(NSString::from_raw(annotation))
         } else {
             None
         }
     }
 
-    pub fn user_annotation_keys(&self) -> NSArrayIterator<String> {
+    pub fn user_annotation_keys(&self) -> NSArrayIterator<NSString> {
         if self.raw.is_null() {
             return NSArrayIterator::new(std::ptr::null_mut());
         }

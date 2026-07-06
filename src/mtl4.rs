@@ -2473,12 +2473,17 @@ impl M4CommitFeedback {
         Self { raw: retain(raw) }
     }
 
-    pub fn error_description(&self) -> Option<String> {
+    pub fn error_description(&self) -> Option<NSString> {
         let error = msg_id(self.raw, sel(b"error\0"));
         if error.is_null() {
             None
         } else {
-            Some(error_message(error, "commit feedback error").to_string())
+            let description = msg_id(error, sel(b"localizedDescription\0"));
+            if description.is_null() {
+                None
+            } else {
+                Some(NSString::from_raw(description))
+            }
         }
     }
 
