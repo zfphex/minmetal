@@ -90,8 +90,17 @@ impl RasterizationRateSampleArray {
 }
 
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct RasterizationRateLayerDescriptor {
     pub raw: id,
+}
+
+impl Clone for RasterizationRateLayerDescriptor {
+    fn clone(&self) -> Self {
+        Self {
+            raw: retain(self.raw),
+        }
+    }
 }
 
 impl RasterizationRateLayerDescriptor {
@@ -321,9 +330,8 @@ impl RasterizationRateMapDescriptor {
 
     pub fn with_screen_size_and_layers(
         screen_size: Size,
-        layers: &[&RasterizationRateLayerDescriptor],
+        layers: &[RasterizationRateLayerDescriptor],
     ) -> Self {
-        let layer_ptrs: Vec<id> = layers.iter().map(|layer| layer.raw).collect();
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, Size, usize, *const id) -> id =
                 transmute(objc_msgSend as *const c_void);
@@ -331,8 +339,8 @@ impl RasterizationRateMapDescriptor {
                 class(b"MTLRasterizationRateMapDescriptor\0"),
                 sel(b"rasterizationRateMapDescriptorWithScreenSize:layerCount:layers:\0"),
                 screen_size,
-                layer_ptrs.len(),
-                layer_ptrs.as_ptr(),
+                layers.len(),
+                layers.as_ptr() as *const id,
             ));
             Self { raw }
         }
@@ -386,8 +394,13 @@ impl RasterizationRateMapDescriptor {
         msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        let ptr = msg_id(self.raw, sel(b"label\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(NSString::from_raw(ptr))
+        }
     }
 
     pub fn layer_count(&self) -> usize {
@@ -419,8 +432,13 @@ impl RasterizationRateMap {
         }
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        let ptr = msg_id(self.raw, sel(b"label\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(NSString::from_raw(ptr))
+        }
     }
 
     pub fn screen_size(&self) -> Size {

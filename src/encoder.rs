@@ -591,21 +591,20 @@ impl RenderCommandEncoder {
 
     pub fn use_buffers_at_stages(
         &self,
-        buffers: &[&Buffer],
+        buffers: &[Buffer],
         usage: ResourceUsage,
         stages: RenderStages,
     ) -> Result<(), MetalError> {
         unsafe {
             let selector = sel(b"useResources:count:usage:stages:\0");
             if responds_to_selector(self.raw, selector) {
-                let raw_buffers: Vec<id> = buffers.iter().map(|b| b.raw).collect();
                 let f: unsafe extern "C" fn(id, SEL, *const id, usize, usize, usize) =
                     transmute(objc_msgSend as *const c_void);
                 f(
                     self.raw,
                     selector,
-                    raw_buffers.as_ptr(),
-                    raw_buffers.len(),
+                    buffers.as_ptr() as *const id,
+                    buffers.len(),
                     usage.as_raw(),
                     stages.0,
                 );
@@ -620,21 +619,20 @@ impl RenderCommandEncoder {
 
     pub fn use_textures_at_stages(
         &self,
-        textures: &[&Texture],
+        textures: &[Texture],
         usage: ResourceUsage,
         stages: RenderStages,
     ) -> Result<(), MetalError> {
         unsafe {
             let selector = sel(b"useResources:count:usage:stages:\0");
             if responds_to_selector(self.raw, selector) {
-                let raw_textures: Vec<id> = textures.iter().map(|t| t.raw).collect();
                 let f: unsafe extern "C" fn(id, SEL, *const id, usize, usize, usize) =
                     transmute(objc_msgSend as *const c_void);
                 f(
                     self.raw,
                     selector,
-                    raw_textures.as_ptr(),
-                    raw_textures.len(),
+                    textures.as_ptr() as *const id,
+                    textures.len(),
                     usage.as_raw(),
                     stages.0,
                 );
@@ -649,20 +647,19 @@ impl RenderCommandEncoder {
 
     pub fn use_heaps_at_stages(
         &self,
-        heaps: &[&Heap],
+        heaps: &[Heap],
         stages: RenderStages,
     ) -> Result<(), MetalError> {
         unsafe {
             let selector = sel(b"useHeaps:count:stages:\0");
             if responds_to_selector(self.raw, selector) {
-                let raw_heaps: Vec<id> = heaps.iter().map(|h| h.raw).collect();
                 let f: unsafe extern "C" fn(id, SEL, *const id, usize, usize) =
                     transmute(objc_msgSend as *const c_void);
                 f(
                     self.raw,
                     selector,
-                    raw_heaps.as_ptr(),
-                    raw_heaps.len(),
+                    heaps.as_ptr() as *const id,
+                    heaps.len(),
                     stages.0,
                 );
                 Ok(())
@@ -988,189 +985,132 @@ impl RenderCommandEncoder {
         );
     }
 
-    pub fn set_vertex_buffers(&self, buffers: &[Option<&Buffer>], offsets: &[usize], range: Range) {
-        let raw_buffers: Vec<id> = buffers
-            .iter()
-            .map(|b| b.map_or(NIL, |buf| buf.raw))
-            .collect();
+    pub fn set_vertex_buffers(&self, buffers: &[Buffer], offsets: &[usize], range: Range) {
         msg_void_ptr_ptr_range(
             self.raw,
             sel(b"setVertexBuffers:offsets:withRange:\0"),
-            raw_buffers.as_ptr(),
+            transparent_id_slice(buffers).as_ptr(),
             offsets.as_ptr(),
             range,
         );
     }
 
-    pub fn set_vertex_textures(&self, textures: &[Option<&Texture>], range: Range) {
-        let raw_textures: Vec<id> = textures
-            .iter()
-            .map(|t| t.map_or(NIL, |tex| tex.raw))
-            .collect();
+    pub fn set_vertex_textures(&self, textures: &[Texture], range: Range) {
         msg_void_ptr_range(
             self.raw,
             sel(b"setVertexTextures:withRange:\0"),
-            raw_textures.as_ptr(),
+            transparent_id_slice(textures).as_ptr(),
             range,
         );
     }
 
-    pub fn set_vertex_sampler_states(&self, samplers: &[Option<&SamplerState>], range: Range) {
-        let raw_samplers: Vec<id> = samplers
-            .iter()
-            .map(|s| s.map_or(NIL, |sm| sm.raw))
-            .collect();
+    pub fn set_vertex_sampler_states(&self, samplers: &[SamplerState], range: Range) {
         msg_void_ptr_range(
             self.raw,
             sel(b"setVertexSamplerStates:withRange:\0"),
-            raw_samplers.as_ptr(),
+            transparent_id_slice(samplers).as_ptr(),
             range,
         );
     }
 
-    pub fn set_fragment_buffers(
-        &self,
-        buffers: &[Option<&Buffer>],
-        offsets: &[usize],
-        range: Range,
-    ) {
-        let raw_buffers: Vec<id> = buffers
-            .iter()
-            .map(|b| b.map_or(NIL, |buf| buf.raw))
-            .collect();
+    pub fn set_fragment_buffers(&self, buffers: &[Buffer], offsets: &[usize], range: Range) {
         msg_void_ptr_ptr_range(
             self.raw,
             sel(b"setFragmentBuffers:offsets:withRange:\0"),
-            raw_buffers.as_ptr(),
+            transparent_id_slice(buffers).as_ptr(),
             offsets.as_ptr(),
             range,
         );
     }
 
-    pub fn set_fragment_textures(&self, textures: &[Option<&Texture>], range: Range) {
-        let raw_textures: Vec<id> = textures
-            .iter()
-            .map(|t| t.map_or(NIL, |tex| tex.raw))
-            .collect();
+    pub fn set_fragment_textures(&self, textures: &[Texture], range: Range) {
         msg_void_ptr_range(
             self.raw,
             sel(b"setFragmentTextures:withRange:\0"),
-            raw_textures.as_ptr(),
+            transparent_id_slice(textures).as_ptr(),
             range,
         );
     }
 
-    pub fn set_fragment_sampler_states(&self, samplers: &[Option<&SamplerState>], range: Range) {
-        let raw_samplers: Vec<id> = samplers
-            .iter()
-            .map(|s| s.map_or(NIL, |sm| sm.raw))
-            .collect();
+    pub fn set_fragment_sampler_states(&self, samplers: &[SamplerState], range: Range) {
         msg_void_ptr_range(
             self.raw,
             sel(b"setFragmentSamplerStates:withRange:\0"),
-            raw_samplers.as_ptr(),
+            transparent_id_slice(samplers).as_ptr(),
             range,
         );
     }
 
     pub fn set_vertex_visible_function_tables(
         &self,
-        tables: &[Option<&VisibleFunctionTable>],
+        tables: &[VisibleFunctionTable],
         range: Range,
     ) {
-        let raw_tables: Vec<id> = tables
-            .iter()
-            .map(|t| t.map_or(NIL, |tbl| tbl.raw))
-            .collect();
         msg_void_ptr_range(
             self.raw,
             sel(b"setVertexVisibleFunctionTables:withBufferRange:\0"),
-            raw_tables.as_ptr(),
+            transparent_id_slice(tables).as_ptr(),
             range,
         );
     }
 
     pub fn set_vertex_intersection_function_tables(
         &self,
-        tables: &[Option<&IntersectionFunctionTable>],
+        tables: &[IntersectionFunctionTable],
         range: Range,
     ) {
-        let raw_tables: Vec<id> = tables
-            .iter()
-            .map(|t| t.map_or(NIL, |tbl| tbl.raw))
-            .collect();
         msg_void_ptr_range(
             self.raw,
             sel(b"setVertexIntersectionFunctionTables:withBufferRange:\0"),
-            raw_tables.as_ptr(),
+            transparent_id_slice(tables).as_ptr(),
             range,
         );
     }
 
     pub fn set_fragment_visible_function_tables(
         &self,
-        tables: &[Option<&VisibleFunctionTable>],
+        tables: &[VisibleFunctionTable],
         range: Range,
     ) {
-        let raw_tables: Vec<id> = tables
-            .iter()
-            .map(|t| t.map_or(NIL, |tbl| tbl.raw))
-            .collect();
         msg_void_ptr_range(
             self.raw,
             sel(b"setFragmentVisibleFunctionTables:withBufferRange:\0"),
-            raw_tables.as_ptr(),
+            transparent_id_slice(tables).as_ptr(),
             range,
         );
     }
 
     pub fn set_fragment_intersection_function_tables(
         &self,
-        tables: &[Option<&IntersectionFunctionTable>],
+        tables: &[IntersectionFunctionTable],
         range: Range,
     ) {
-        let raw_tables: Vec<id> = tables
-            .iter()
-            .map(|t| t.map_or(NIL, |tbl| tbl.raw))
-            .collect();
         msg_void_ptr_range(
             self.raw,
             sel(b"setFragmentIntersectionFunctionTables:withBufferRange:\0"),
-            raw_tables.as_ptr(),
+            transparent_id_slice(tables).as_ptr(),
             range,
         );
     }
 
-    pub fn set_tile_visible_function_tables(
-        &self,
-        tables: &[Option<&VisibleFunctionTable>],
-        range: Range,
-    ) {
-        let raw_tables: Vec<id> = tables
-            .iter()
-            .map(|t| t.map_or(NIL, |tbl| tbl.raw))
-            .collect();
+    pub fn set_tile_visible_function_tables(&self, tables: &[VisibleFunctionTable], range: Range) {
         msg_void_ptr_range(
             self.raw,
             sel(b"setTileVisibleFunctionTables:withBufferRange:\0"),
-            raw_tables.as_ptr(),
+            transparent_id_slice(tables).as_ptr(),
             range,
         );
     }
 
     pub fn set_tile_intersection_function_tables(
         &self,
-        tables: &[Option<&IntersectionFunctionTable>],
+        tables: &[IntersectionFunctionTable],
         range: Range,
     ) {
-        let raw_tables: Vec<id> = tables
-            .iter()
-            .map(|t| t.map_or(NIL, |tbl| tbl.raw))
-            .collect();
         msg_void_ptr_range(
             self.raw,
             sel(b"setTileIntersectionFunctionTables:withBufferRange:\0"),
-            raw_tables.as_ptr(),
+            transparent_id_slice(tables).as_ptr(),
             range,
         );
     }
@@ -1201,8 +1141,13 @@ impl RenderCommandEncoder {
         Device { raw: ptr }
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        let ptr = msg_id(self.raw, sel(b"label\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(NSString::from_raw(ptr))
+        }
     }
 
     pub fn set_label(&self, label: &str) {
@@ -1368,76 +1313,52 @@ impl ComputeCommandEncoder {
         );
     }
 
-    pub fn set_buffers(&self, buffers: &[Option<&Buffer>], offsets: &[usize], range: Range) {
-        let raw_buffers: Vec<id> = buffers
-            .iter()
-            .map(|b| b.map_or(NIL, |buf| buf.raw))
-            .collect();
+    pub fn set_buffers(&self, buffers: &[Buffer], offsets: &[usize], range: Range) {
         msg_void_ptr_ptr_range(
             self.raw,
             sel(b"setBuffers:offsets:withRange:\0"),
-            raw_buffers.as_ptr(),
+            transparent_id_slice(buffers).as_ptr(),
             offsets.as_ptr(),
             range,
         );
     }
 
-    pub fn set_textures(&self, textures: &[Option<&Texture>], range: Range) {
-        let raw_textures: Vec<id> = textures
-            .iter()
-            .map(|t| t.map_or(NIL, |tex| tex.raw))
-            .collect();
+    pub fn set_textures(&self, textures: &[Texture], range: Range) {
         msg_void_ptr_range(
             self.raw,
             sel(b"setTextures:withRange:\0"),
-            raw_textures.as_ptr(),
+            transparent_id_slice(textures).as_ptr(),
             range,
         );
     }
 
-    pub fn set_sampler_states(&self, samplers: &[Option<&SamplerState>], range: Range) {
-        let raw_samplers: Vec<id> = samplers
-            .iter()
-            .map(|s| s.map_or(NIL, |sm| sm.raw))
-            .collect();
+    pub fn set_sampler_states(&self, samplers: &[SamplerState], range: Range) {
         msg_void_ptr_range(
             self.raw,
             sel(b"setSamplerStates:withRange:\0"),
-            raw_samplers.as_ptr(),
+            transparent_id_slice(samplers).as_ptr(),
             range,
         );
     }
 
-    pub fn set_visible_function_tables(
-        &self,
-        tables: &[Option<&VisibleFunctionTable>],
-        range: Range,
-    ) {
-        let raw_tables: Vec<id> = tables
-            .iter()
-            .map(|t| t.map_or(NIL, |tbl| tbl.raw))
-            .collect();
+    pub fn set_visible_function_tables(&self, tables: &[VisibleFunctionTable], range: Range) {
         msg_void_ptr_range(
             self.raw,
             sel(b"setVisibleFunctionTables:withBufferRange:\0"),
-            raw_tables.as_ptr(),
+            transparent_id_slice(tables).as_ptr(),
             range,
         );
     }
 
     pub fn set_intersection_function_tables(
         &self,
-        tables: &[Option<&IntersectionFunctionTable>],
+        tables: &[IntersectionFunctionTable],
         range: Range,
     ) {
-        let raw_tables: Vec<id> = tables
-            .iter()
-            .map(|t| t.map_or(NIL, |tbl| tbl.raw))
-            .collect();
         msg_void_ptr_range(
             self.raw,
             sel(b"setIntersectionFunctionTables:withBufferRange:\0"),
-            raw_tables.as_ptr(),
+            transparent_id_slice(tables).as_ptr(),
             range,
         );
     }
@@ -1500,22 +1421,18 @@ impl ComputeCommandEncoder {
 
     pub fn set_buffers_with_attribute_strides(
         &self,
-        buffers: &[Option<&Buffer>],
+        buffers: &[Buffer],
         offsets: &[usize],
         strides: &[usize],
         range: Range,
     ) {
-        let raw_buffers: Vec<id> = buffers
-            .iter()
-            .map(|b| b.map_or(NIL, |buf| buf.raw))
-            .collect();
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, *const id, *const usize, *const usize, Range) =
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
                 sel(b"setBuffers:offsets:attributeStrides:withRange:\0"),
-                raw_buffers.as_ptr(),
+                transparent_id_slice(buffers).as_ptr(),
                 offsets.as_ptr(),
                 strides.as_ptr(),
                 range,
@@ -1561,22 +1478,18 @@ impl ComputeCommandEncoder {
 
     pub fn set_sampler_states_with_lod_clamps(
         &self,
-        samplers: &[Option<&SamplerState>],
+        samplers: &[SamplerState],
         lod_min_clamps: &[f32],
         lod_max_clamps: &[f32],
         range: Range,
     ) {
-        let raw_samplers: Vec<id> = samplers
-            .iter()
-            .map(|s| s.map_or(NIL, |sm| sm.raw))
-            .collect();
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, *const id, *const f32, *const f32, Range) =
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
                 sel(b"setSamplerStates:lodMinClamps:lodMaxClamps:withRange:\0"),
-                raw_samplers.as_ptr(),
+                transparent_id_slice(samplers).as_ptr(),
                 lod_min_clamps.as_ptr(),
                 lod_max_clamps.as_ptr(),
                 range,
@@ -1717,8 +1630,13 @@ impl ComputeCommandEncoder {
         Device { raw: ptr }
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        let ptr = msg_id(self.raw, sel(b"label\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(NSString::from_raw(ptr))
+        }
     }
 
     pub fn set_label(&self, label: &str) {
@@ -1868,8 +1786,13 @@ impl ResourceStateCommandEncoder {
         Device { raw: ptr }
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        let ptr = msg_id(self.raw, sel(b"label\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(NSString::from_raw(ptr))
+        }
     }
 
     pub fn set_label(&self, label: &str) {
@@ -2385,8 +2308,13 @@ impl BlitCommandEncoder {
         Device { raw: ptr }
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        let ptr = msg_id(self.raw, sel(b"label\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(NSString::from_raw(ptr))
+        }
     }
 
     pub fn set_label(&self, label: &str) {

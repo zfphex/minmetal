@@ -20,10 +20,24 @@ pub struct Counter {
     pub raw: id,
 }
 
+impl Clone for Counter {
+    fn clone(&self) -> Self {
+        Self {
+            raw: retain(self.raw),
+        }
+    }
+}
+
+impl FromRawId for Counter {
+    fn from_raw_id(raw: id) -> Self {
+        Self { raw: retain(raw) }
+    }
+}
+
 impl Counter {
-    pub fn name(&self) -> String {
-        ns_string_to_string(msg_id(self.raw, sel(b"name\0")))
-            .unwrap_or_else(|| "Unknown Counter".to_string())
+    pub fn name(&self) -> NSString {
+        let ptr = msg_id(self.raw, sel(b"name\0"));
+        NSString::from_raw(ptr)
     }
 }
 
@@ -38,26 +52,28 @@ pub struct CounterSet {
     pub raw: id,
 }
 
+impl Clone for CounterSet {
+    fn clone(&self) -> Self {
+        Self {
+            raw: retain(self.raw),
+        }
+    }
+}
+
+impl FromRawId for CounterSet {
+    fn from_raw_id(raw: id) -> Self {
+        Self { raw: retain(raw) }
+    }
+}
+
 impl CounterSet {
-    pub fn name(&self) -> String {
-        ns_string_to_string(msg_id(self.raw, sel(b"name\0")))
-            .unwrap_or_else(|| "Unknown CounterSet".to_string())
+    pub fn name(&self) -> NSString {
+        let ptr = msg_id(self.raw, sel(b"name\0"));
+        NSString::from_raw(ptr)
     }
 
-    pub fn counters(&self) -> Vec<Counter> {
-        let array = msg_id(self.raw, sel(b"counters\0"));
-        if array.is_null() {
-            return Vec::new();
-        }
-        let count = msg_usize(array, sel(b"count\0"));
-        let mut result = Vec::with_capacity(count);
-        for i in 0..count {
-            let item = retain(msg_id_usize(array, sel(b"objectAtIndex:\0"), i));
-            if !item.is_null() {
-                result.push(Counter { raw: item });
-            }
-        }
-        result
+    pub fn counters(&self) -> NSArrayIterator<Counter> {
+        NSArrayIterator::new(msg_id(self.raw, sel(b"counters\0")))
     }
 }
 
@@ -96,8 +112,13 @@ impl CounterSampleBufferDescriptor {
         msg_void_id(self.raw, sel(b"setCounterSet:\0"), counter_set.raw);
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        let ptr = msg_id(self.raw, sel(b"label\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(NSString::from_raw(ptr))
+        }
     }
 
     pub fn set_label(&self, label: &str) {
@@ -153,8 +174,13 @@ impl CounterSampleBuffer {
         Ok(msg_usize(self.raw, sel(b"sampleCount\0")))
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        let ptr = msg_id(self.raw, sel(b"label\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(NSString::from_raw(ptr))
+        }
     }
 
     pub fn device(&self) -> Result<Device, MetalError> {
@@ -212,7 +238,7 @@ impl CounterSampleBuffer {
         Ok(())
     }
 
-    pub fn resolve_counter_range(&self, range: Range) -> Result<Vec<u8>, MetalError> {
+    pub fn resolve_counter_range(&self, range: Range) -> Result<NSData, MetalError> {
         if self.raw.is_null() {
             return Err(MetalError::new("counter sample buffer is null"));
         }
@@ -235,7 +261,7 @@ impl CounterSampleBuffer {
             if data.is_null() {
                 return Err(MetalError::new("resolveCounterRange: returned null data"));
             }
-            Ok(ns_data_to_bytes(data))
+            Ok(NSData::from_raw(data))
         }
     }
 }
@@ -283,24 +309,13 @@ impl Device {
         Ok(())
     }
 
-    pub fn counter_sets(&self) -> Result<Vec<CounterSet>, MetalError> {
+    pub fn counter_sets(&self) -> Result<NSArrayIterator<CounterSet>, MetalError> {
         let selector = sel(b"counterSets\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new("MTLDevice does not respond to counterSets"));
         }
         let array = msg_id(self.raw, selector);
-        if array.is_null() {
-            return Ok(Vec::new());
-        }
-        let count = msg_usize(array, sel(b"count\0"));
-        let mut result = Vec::with_capacity(count);
-        for i in 0..count {
-            let item = retain(msg_id_usize(array, sel(b"objectAtIndex:\0"), i));
-            if !item.is_null() {
-                result.push(CounterSet { raw: item });
-            }
-        }
-        Ok(result)
+        Ok(NSArrayIterator::new(array))
     }
 
     pub fn new_counter_sample_buffer(

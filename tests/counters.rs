@@ -34,8 +34,8 @@ fn counters_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // Device::counter_sets
-    let counter_sets = match device.counter_sets() {
-        Ok(sets) => sets,
+    let counter_sets: Vec<CounterSet> = match device.counter_sets() {
+        Ok(sets) => sets.collect(),
         Err(e) => {
             println!(
                 "Counter sets query not supported on this device/OS: {}. Graceful skip.",

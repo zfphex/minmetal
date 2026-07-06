@@ -2,6 +2,23 @@ use crate::*;
 use std::ffi::c_void;
 use std::mem::transmute;
 
+fn raytracing_label(raw: id) -> Option<NSString> {
+    if raw.is_null() {
+        return None;
+    }
+    let selector = sel(b"label\0");
+    if responds_to_selector(raw, selector) {
+        let ptr = msg_id(raw, selector);
+        if ptr.is_null() {
+            None
+        } else {
+            Some(NSString::from_raw(ptr))
+        }
+    } else {
+        None
+    }
+}
+
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct AccelerationStructureSizes {
@@ -114,6 +131,20 @@ pub struct AccelerationStructureGeometryDescriptor {
     pub raw: id,
 }
 
+impl Clone for AccelerationStructureGeometryDescriptor {
+    fn clone(&self) -> Self {
+        Self {
+            raw: retain(self.raw),
+        }
+    }
+}
+
+impl FromRawId for AccelerationStructureGeometryDescriptor {
+    fn from_raw_id(raw: id) -> Self {
+        Self { raw: retain(raw) }
+    }
+}
+
 impl Drop for AccelerationStructureGeometryDescriptor {
     fn drop(&mut self) {
         release(self.raw);
@@ -121,8 +152,17 @@ impl Drop for AccelerationStructureGeometryDescriptor {
 }
 
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct AccelerationStructureTriangleGeometryDescriptor {
     pub raw: id,
+}
+
+impl Clone for AccelerationStructureTriangleGeometryDescriptor {
+    fn clone(&self) -> Self {
+        Self {
+            raw: retain(self.raw),
+        }
+    }
 }
 
 impl AccelerationStructureTriangleGeometryDescriptor {
@@ -207,13 +247,8 @@ impl AccelerationStructureTriangleGeometryDescriptor {
         );
     }
 
-    pub fn label(&self) -> Option<String> {
-        let selector = sel(b"label\0");
-        if responds_to_selector(self.raw, selector) {
-            ns_string_to_string(msg_id(self.raw, selector))
-        } else {
-            None
-        }
+    pub fn label(&self) -> Option<NSString> {
+        raytracing_label(self.raw)
     }
 
     pub fn set_label(&self, label: &str) {
@@ -396,8 +431,17 @@ impl Drop for AccelerationStructureTriangleGeometryDescriptor {
 }
 
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct AccelerationStructureBoundingBoxGeometryDescriptor {
     pub raw: id,
+}
+
+impl Clone for AccelerationStructureBoundingBoxGeometryDescriptor {
+    fn clone(&self) -> Self {
+        Self {
+            raw: retain(self.raw),
+        }
+    }
 }
 
 impl AccelerationStructureBoundingBoxGeometryDescriptor {
@@ -466,13 +510,8 @@ impl AccelerationStructureBoundingBoxGeometryDescriptor {
         );
     }
 
-    pub fn label(&self) -> Option<String> {
-        let selector = sel(b"label\0");
-        if responds_to_selector(self.raw, selector) {
-            ns_string_to_string(msg_id(self.raw, selector))
-        } else {
-            None
-        }
+    pub fn label(&self) -> Option<NSString> {
+        raytracing_label(self.raw)
     }
 
     pub fn set_label(&self, label: &str) {
@@ -591,19 +630,23 @@ impl PrimitiveAccelerationStructureDescriptor {
 
     pub fn set_geometry_descriptors(
         &self,
-        descriptors: &[&AccelerationStructureTriangleGeometryDescriptor],
+        descriptors: &[AccelerationStructureTriangleGeometryDescriptor],
     ) {
-        let raw_descriptors: Vec<id> = descriptors.iter().map(|d| d.raw).collect();
-        let array = ns_array_from_ids(&raw_descriptors);
+        let raw_ptrs = unsafe {
+            std::slice::from_raw_parts(descriptors.as_ptr() as *const id, descriptors.len())
+        };
+        let array = ns_array_from_ids(raw_ptrs);
         msg_void_id(self.raw, sel(b"setGeometryDescriptors:\0"), array);
     }
 
     pub fn set_bounding_box_geometry_descriptors(
         &self,
-        descriptors: &[&AccelerationStructureBoundingBoxGeometryDescriptor],
+        descriptors: &[AccelerationStructureBoundingBoxGeometryDescriptor],
     ) {
-        let raw_descriptors: Vec<id> = descriptors.iter().map(|d| d.raw).collect();
-        let array = ns_array_from_ids(&raw_descriptors);
+        let raw_ptrs = unsafe {
+            std::slice::from_raw_parts(descriptors.as_ptr() as *const id, descriptors.len())
+        };
+        let array = ns_array_from_ids(raw_ptrs);
         msg_void_id(self.raw, sel(b"setGeometryDescriptors:\0"), array);
     }
 
@@ -615,20 +658,9 @@ impl PrimitiveAccelerationStructureDescriptor {
         set_acceleration_structure_usage(self.raw, usage);
     }
 
-    pub fn geometry_descriptors(&self) -> Vec<AccelerationStructureGeometryDescriptor> {
+    pub fn geometry_descriptors(&self) -> NSArrayIterator<AccelerationStructureGeometryDescriptor> {
         let array = msg_id(self.raw, sel(b"geometryDescriptors\0"));
-        if array.is_null() {
-            return Vec::new();
-        }
-        let count = msg_usize(array, sel(b"count\0"));
-        let mut result = Vec::with_capacity(count);
-        for i in 0..count {
-            let item = retain(msg_id_usize(array, sel(b"objectAtIndex:\0"), i));
-            if !item.is_null() {
-                result.push(AccelerationStructureGeometryDescriptor { raw: item });
-            }
-        }
-        result
+        NSArrayIterator::new(array)
     }
 
     pub fn motion_start_border_mode(&self) -> MotionBorderMode {
@@ -766,9 +798,11 @@ impl InstanceAccelerationStructureDescriptor {
         msg_void_usize(self.raw, sel(b"setInstanceCount:\0"), count);
     }
 
-    pub fn set_instanced_acceleration_structures(&self, structures: &[&AccelerationStructure]) {
-        let raw_structures: Vec<id> = structures.iter().map(|s| s.raw).collect();
-        let array = ns_array_from_ids(&raw_structures);
+    pub fn set_instanced_acceleration_structures(&self, structures: &[AccelerationStructure]) {
+        let raw_ptrs = unsafe {
+            std::slice::from_raw_parts(structures.as_ptr() as *const id, structures.len())
+        };
+        let array = ns_array_from_ids(raw_ptrs);
         msg_void_id(
             self.raw,
             sel(b"setInstancedAccelerationStructures:\0"),
@@ -800,20 +834,9 @@ impl InstanceAccelerationStructureDescriptor {
         msg_usize(self.raw, sel(b"instanceCount\0"))
     }
 
-    pub fn instanced_acceleration_structures(&self) -> Vec<AccelerationStructure> {
+    pub fn instanced_acceleration_structures(&self) -> NSArrayIterator<AccelerationStructure> {
         let array = msg_id(self.raw, sel(b"instancedAccelerationStructures\0"));
-        if array.is_null() {
-            return Vec::new();
-        }
-        let count = msg_usize(array, sel(b"count\0"));
-        let mut result = Vec::with_capacity(count);
-        for i in 0..count {
-            let item = retain(msg_id_usize(array, sel(b"objectAtIndex:\0"), i));
-            if !item.is_null() {
-                result.push(AccelerationStructure { raw: item });
-            }
-        }
-        result
+        NSArrayIterator::new(array)
     }
 
     pub fn instance_descriptor_type(&self) -> AccelerationStructureInstanceDescriptorType {
@@ -957,8 +980,17 @@ impl Drop for InstanceAccelerationStructureDescriptor {
 }
 
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct MotionKeyframeData {
     pub raw: id,
+}
+
+impl Clone for MotionKeyframeData {
+    fn clone(&self) -> Self {
+        Self {
+            raw: retain(self.raw),
+        }
+    }
 }
 
 impl MotionKeyframeData {
@@ -1028,9 +1060,10 @@ impl AccelerationStructureMotionTriangleGeometryDescriptor {
         }
     }
 
-    pub fn set_vertex_buffers(&self, keyframes: &[&MotionKeyframeData]) {
-        let raw_keyframes: Vec<id> = keyframes.iter().map(|k| k.raw).collect();
-        let array = ns_array_from_ids(&raw_keyframes);
+    pub fn set_vertex_buffers(&self, keyframes: &[MotionKeyframeData]) {
+        let raw_ptrs =
+            unsafe { std::slice::from_raw_parts(keyframes.as_ptr() as *const id, keyframes.len()) };
+        let array = ns_array_from_ids(raw_ptrs);
         msg_void_id(self.raw, sel(b"setVertexBuffers:\0"), array);
     }
 
@@ -1108,9 +1141,10 @@ impl AccelerationStructureMotionBoundingBoxGeometryDescriptor {
         }
     }
 
-    pub fn set_bounding_box_buffers(&self, keyframes: &[&MotionKeyframeData]) {
-        let raw_keyframes: Vec<id> = keyframes.iter().map(|k| k.raw).collect();
-        let array = ns_array_from_ids(&raw_keyframes);
+    pub fn set_bounding_box_buffers(&self, keyframes: &[MotionKeyframeData]) {
+        let raw_ptrs =
+            unsafe { std::slice::from_raw_parts(keyframes.as_ptr() as *const id, keyframes.len()) };
+        let array = ns_array_from_ids(raw_ptrs);
         msg_void_id(self.raw, sel(b"setBoundingBoxBuffers:\0"), array);
     }
 
@@ -1250,15 +1284,17 @@ impl AccelerationStructureMotionCurveGeometryDescriptor {
         }
     }
 
-    pub fn set_control_point_buffers(&self, keyframes: &[&MotionKeyframeData]) {
-        let raw_keyframes: Vec<id> = keyframes.iter().map(|k| k.raw).collect();
-        let array = ns_array_from_ids(&raw_keyframes);
+    pub fn set_control_point_buffers(&self, keyframes: &[MotionKeyframeData]) {
+        let raw_ptrs =
+            unsafe { std::slice::from_raw_parts(keyframes.as_ptr() as *const id, keyframes.len()) };
+        let array = ns_array_from_ids(raw_ptrs);
         msg_void_id(self.raw, sel(b"setControlPointBuffers:\0"), array);
     }
 
-    pub fn set_radius_buffers(&self, keyframes: &[&MotionKeyframeData]) {
-        let raw_keyframes: Vec<id> = keyframes.iter().map(|k| k.raw).collect();
-        let array = ns_array_from_ids(&raw_keyframes);
+    pub fn set_radius_buffers(&self, keyframes: &[MotionKeyframeData]) {
+        let raw_ptrs =
+            unsafe { std::slice::from_raw_parts(keyframes.as_ptr() as *const id, keyframes.len()) };
+        let array = ns_array_from_ids(raw_ptrs);
         msg_void_id(self.raw, sel(b"setRadiusBuffers:\0"), array);
     }
 
@@ -1454,8 +1490,23 @@ impl Drop for IndirectInstanceAccelerationStructureDescriptor {
 }
 
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct AccelerationStructure {
     pub raw: id,
+}
+
+impl Clone for AccelerationStructure {
+    fn clone(&self) -> Self {
+        Self {
+            raw: retain(self.raw),
+        }
+    }
+}
+
+impl FromRawId for AccelerationStructure {
+    fn from_raw_id(raw: id) -> Self {
+        Self { raw: retain(raw) }
+    }
 }
 
 impl Drop for AccelerationStructure {
@@ -1480,8 +1531,8 @@ impl AccelerationStructure {
         }
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        raytracing_label(self.raw)
     }
 
     pub fn set_label(&self, label: &str) {
@@ -2112,8 +2163,8 @@ impl AccelerationStructureCommandEncoder {
         Device { raw: ptr }
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        raytracing_label(self.raw)
     }
 
     pub fn set_label(&self, label: &str) {

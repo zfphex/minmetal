@@ -235,6 +235,16 @@ pub(crate) fn msg_id_ptr_usize_usize(
     }
 }
 
+/// Marker for `#[repr(transparent)]` wrappers over `id`.
+pub(crate) trait TransparentId {}
+
+#[inline]
+pub(crate) fn transparent_id_slice<T: TransparentId>(slice: &[T]) -> &[id] {
+    debug_assert_eq!(std::mem::size_of::<T>(), std::mem::size_of::<id>());
+    debug_assert_eq!(std::mem::align_of::<T>(), std::mem::align_of::<id>());
+    unsafe { std::slice::from_raw_parts(slice.as_ptr().cast(), slice.len()) }
+}
+
 pub(crate) fn ns_array_from_ids(objects: &[id]) -> id {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL, *const id, usize) -> id =
@@ -264,14 +274,78 @@ pub(crate) fn ns_array_object_at_index(array: id, index: usize) -> id {
     }
 }
 
-pub(crate) fn ns_array_to_vec(array: id) -> Vec<id> {
-    let count = ns_array_count(array);
-    let mut vec = Vec::with_capacity(count);
-    for i in 0..count {
-        vec.push(ns_array_object_at_index(array, i));
-    }
-    vec
+pub trait FromRawId {
+    fn from_raw_id(raw: id) -> Self;
 }
+
+impl FromRawId for id {
+    fn from_raw_id(raw: id) -> Self {
+        raw
+    }
+}
+
+impl FromRawId for String {
+    fn from_raw_id(raw: id) -> Self {
+        ns_string_to_string(raw).unwrap_or_default()
+    }
+}
+
+pub struct NSArrayIterator<T> {
+    array: id,
+    index: usize,
+    count: usize,
+    phantom: std::marker::PhantomData<T>,
+}
+
+impl<T> NSArrayIterator<T> {
+    pub fn new(array: id) -> Self {
+        let count = ns_array_count(array);
+        Self {
+            array: retain(array),
+            index: 0,
+            count,
+            phantom: std::marker::PhantomData,
+        }
+    }
+}
+
+impl<T> Clone for NSArrayIterator<T> {
+    fn clone(&self) -> Self {
+        Self {
+            array: retain(self.array),
+            index: self.index,
+            count: self.count,
+            phantom: std::marker::PhantomData,
+        }
+    }
+}
+
+impl<T> Drop for NSArrayIterator<T> {
+    fn drop(&mut self) {
+        release(self.array);
+    }
+}
+
+impl<T: FromRawId> Iterator for NSArrayIterator<T> {
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.index < self.count {
+            let raw_item = ns_array_object_at_index(self.array, self.index);
+            self.index += 1;
+            Some(T::from_raw_id(raw_item))
+        } else {
+            None
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let remaining = self.count - self.index;
+        (remaining, Some(remaining))
+    }
+}
+
+impl<T: FromRawId> ExactSizeIterator for NSArrayIterator<T> {}
 
 pub fn retain(obj: id) -> id {
     if !obj.is_null() {
@@ -287,8 +361,23 @@ pub fn release(obj: id) {
     }
 }
 
+#[derive(Debug)]
 pub struct NSString {
     raw: id,
+}
+
+impl Clone for NSString {
+    fn clone(&self) -> Self {
+        Self {
+            raw: retain(self.raw),
+        }
+    }
+}
+
+impl FromRawId for NSString {
+    fn from_raw_id(raw: id) -> Self {
+        Self { raw: retain(raw) }
+    }
 }
 
 impl NSString {
@@ -308,12 +397,127 @@ impl NSString {
         }
     }
 
+    pub fn from_raw(raw: id) -> Self {
+        Self { raw: retain(raw) }
+    }
+
     pub fn raw(&self) -> id {
         self.raw
+    }
+
+    pub fn as_str(&self) -> Option<&str> {
+        if self.raw.is_null() {
+            return None;
+        }
+        unsafe {
+            let utf8_ptr = msg_id(self.raw, sel(b"UTF8String\0")) as *const std::ffi::c_char;
+            if utf8_ptr.is_null() {
+                None
+            } else {
+                let c_str = std::ffi::CStr::from_ptr(utf8_ptr);
+                c_str.to_str().ok()
+            }
+        }
+    }
+}
+
+impl std::ops::Deref for NSString {
+    type Target = str;
+
+    fn deref(&self) -> &Self::Target {
+        self.as_str().unwrap_or("")
+    }
+}
+
+impl PartialEq for NSString {
+    fn eq(&self, other: &Self) -> bool {
+        self.as_str() == other.as_str()
+    }
+}
+
+impl Eq for NSString {}
+
+impl PartialEq<str> for NSString {
+    fn eq(&self, other: &str) -> bool {
+        self.as_str() == Some(other)
+    }
+}
+
+impl PartialEq<&str> for NSString {
+    fn eq(&self, other: &&str) -> bool {
+        self.as_str() == Some(*other)
+    }
+}
+
+impl std::fmt::Display for NSString {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let Some(s) = self.as_str() {
+            write!(f, "{}", s)
+        } else {
+            Ok(())
+        }
     }
 }
 
 impl Drop for NSString {
+    fn drop(&mut self) {
+        release(self.raw);
+    }
+}
+
+#[derive(Debug)]
+pub struct NSData {
+    raw: id,
+}
+
+impl Clone for NSData {
+    fn clone(&self) -> Self {
+        Self {
+            raw: retain(self.raw),
+        }
+    }
+}
+
+impl FromRawId for NSData {
+    fn from_raw_id(raw: id) -> Self {
+        Self { raw: retain(raw) }
+    }
+}
+
+impl NSData {
+    pub fn from_raw(raw: id) -> Self {
+        Self { raw: retain(raw) }
+    }
+
+    pub fn raw(&self) -> id {
+        self.raw
+    }
+
+    pub fn bytes(&self) -> &[u8] {
+        if self.raw.is_null() {
+            return &[];
+        }
+        unsafe {
+            let bytes_ptr = msg_id(self.raw, sel(b"bytes\0")) as *const u8;
+            let length = msg_usize(self.raw, sel(b"length\0"));
+            if bytes_ptr.is_null() || length == 0 {
+                &[]
+            } else {
+                std::slice::from_raw_parts(bytes_ptr, length)
+            }
+        }
+    }
+}
+
+impl std::ops::Deref for NSData {
+    type Target = [u8];
+
+    fn deref(&self) -> &Self::Target {
+        self.bytes()
+    }
+}
+
+impl Drop for NSData {
     fn drop(&mut self) {
         release(self.raw);
     }
@@ -372,7 +576,6 @@ pub(crate) fn format_error_message(error: id, fallback: &str) -> String {
     }
     fallback.to_string()
 }
-
 
 pub struct AutoreleasePool {
     raw: id,
@@ -533,11 +736,16 @@ pub fn ns_url_from_path(path: &str) -> id {
     msg_id_id(class(b"NSURL\0"), sel(b"fileURLWithPath:\0"), ns_path.raw())
 }
 
-pub fn ns_url_to_path(url: id) -> Option<String> {
+pub fn ns_url_to_path(url: id) -> Option<NSString> {
     if url.is_null() {
         return None;
     }
-    ns_string_to_string(msg_id(url, sel(b"path\0")))
+    let ptr = msg_id(url, sel(b"path\0"));
+    if ptr.is_null() {
+        None
+    } else {
+        Some(NSString::from_raw(ptr))
+    }
 }
 
 pub(crate) fn ns_data_from_bytes(bytes: &[u8]) -> id {
@@ -547,41 +755,6 @@ pub(crate) fn ns_data_from_bytes(bytes: &[u8]) -> id {
         bytes.as_ptr() as *const c_void,
         bytes.len(),
     )
-}
-
-pub(crate) fn ns_data_length(data: id) -> usize {
-    if data.is_null() {
-        0
-    } else {
-        msg_usize(data, sel(b"length\0"))
-    }
-}
-
-pub(crate) fn ns_data_to_bytes(data: id) -> Vec<u8> {
-    let len = ns_data_length(data);
-    if data.is_null() || len == 0 {
-        return Vec::new();
-    }
-    let mut out = vec![0u8; len];
-    unsafe {
-        let f: unsafe extern "C" fn(id, SEL, *mut c_void, usize) =
-            transmute(objc_msgSend as *const c_void);
-        f(
-            data,
-            sel(b"getBytes:length:\0"),
-            out.as_mut_ptr() as *mut c_void,
-            len,
-        );
-    }
-    out
-}
-
-pub(crate) fn ns_dictionary_count(dictionary: id) -> usize {
-    if dictionary.is_null() {
-        0
-    } else {
-        msg_usize(dictionary, sel(b"count\0"))
-    }
 }
 
 pub(crate) fn ns_dictionary_object_for_key(dictionary: id, key: id) -> id {

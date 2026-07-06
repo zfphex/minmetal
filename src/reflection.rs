@@ -45,16 +45,27 @@ pub struct StructMember {
     pub raw: id,
 }
 
+impl FromRawId for StructMember {
+    fn from_raw_id(raw: id) -> Self {
+        Self::new_with_raw(raw)
+    }
+}
+
 impl StructMember {
     pub fn new_with_raw(raw: id) -> Self {
         Self { raw: retain(raw) }
     }
 
-    pub fn name(&self) -> Option<String> {
+    pub fn name(&self) -> Option<NSString> {
         if self.raw.is_null() {
             return None;
         }
-        ns_string_to_string(msg_id(self.raw, sel(b"name\0")))
+        let ptr = msg_id(self.raw, sel(b"name\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(NSString::from_raw(ptr))
+        }
     }
 
     pub fn offset(&self) -> usize {
@@ -173,23 +184,12 @@ impl StructType {
         }
     }
 
-    pub fn members(&self) -> Vec<StructMember> {
+    pub fn members(&self) -> NSArrayIterator<StructMember> {
         if self.Type.raw.is_null() {
-            return Vec::new();
+            return NSArrayIterator::new(std::ptr::null_mut());
         }
         let array = msg_id(self.Type.raw, sel(b"members\0"));
-        if array.is_null() {
-            return Vec::new();
-        }
-        let count = msg_usize(array, sel(b"count\0"));
-        let mut result = Vec::with_capacity(count);
-        for i in 0..count {
-            let item = msg_id_usize(array, sel(b"objectAtIndexedSubscript:\0"), i);
-            if !item.is_null() {
-                result.push(StructMember::new_with_raw(item));
-            }
-        }
-        result
+        NSArrayIterator::new(array)
     }
 
     pub fn member_by_name(&self, name: &str) -> Option<StructMember> {
@@ -462,11 +462,16 @@ impl Argument {
         Self { raw: retain(raw) }
     }
 
-    pub fn name(&self) -> Option<String> {
+    pub fn name(&self) -> Option<NSString> {
         if self.raw.is_null() {
             return None;
         }
-        ns_string_to_string(msg_id(self.raw, sel(b"name\0")))
+        let ptr = msg_id(self.raw, sel(b"name\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(NSString::from_raw(ptr))
+        }
     }
 
     pub fn type_(&self) -> ArgumentType {
@@ -627,16 +632,27 @@ pub struct Binding {
     pub raw: id,
 }
 
+impl FromRawId for Binding {
+    fn from_raw_id(raw: id) -> Self {
+        Self::new_with_raw(raw)
+    }
+}
+
 impl Binding {
     pub fn new_with_raw(raw: id) -> Self {
         Self { raw: retain(raw) }
     }
 
-    pub fn name(&self) -> Option<String> {
+    pub fn name(&self) -> Option<NSString> {
         if self.raw.is_null() {
             return None;
         }
-        ns_string_to_string(msg_id(self.raw, sel(b"name\0")))
+        let ptr = msg_id(self.raw, sel(b"name\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(NSString::from_raw(ptr))
+        }
     }
 
     pub fn type_(&self) -> BindingType {
@@ -874,12 +890,8 @@ impl Drop for Binding {
 
 // --- MTLFunctionReflection ---
 
-pub(crate) fn bindings_from_array(array: id) -> Vec<Binding> {
-    ns_array_to_vec(array)
-        .into_iter()
-        .filter(|item| !item.is_null())
-        .map(|item| Binding::new_with_raw(item))
-        .collect()
+pub(crate) fn bindings_from_array(array: id) -> NSArrayIterator<Binding> {
+    NSArrayIterator::new(array)
 }
 
 #[derive(Debug)]
@@ -892,15 +904,15 @@ impl FunctionReflection {
         Self { raw: retain(raw) }
     }
 
-    pub fn bindings(&self) -> Vec<Binding> {
+    pub fn bindings(&self) -> NSArrayIterator<Binding> {
         if self.raw.is_null() {
-            return Vec::new();
+            return NSArrayIterator::new(std::ptr::null_mut());
         }
         let selector = sel(b"bindings\0");
         if responds_to_selector(self.raw, selector) {
             bindings_from_array(msg_id(self.raw, selector))
         } else {
-            Vec::new()
+            NSArrayIterator::new(std::ptr::null_mut())
         }
     }
 
@@ -938,31 +950,20 @@ impl FunctionReflection {
         }
     }
 
-    pub fn user_annotation_keys(&self) -> Vec<String> {
+    pub fn user_annotation_keys(&self) -> NSArrayIterator<String> {
         if self.raw.is_null() {
-            return Vec::new();
+            return NSArrayIterator::new(std::ptr::null_mut());
         }
         let selector = sel(b"userAnnotation\0");
         if !responds_to_selector(self.raw, selector) {
-            return Vec::new();
+            return NSArrayIterator::new(std::ptr::null_mut());
         }
         let annotation = msg_id(self.raw, selector);
         if annotation.is_null() || !responds_to_selector(annotation, sel(b"allKeys")) {
-            return Vec::new();
+            return NSArrayIterator::new(std::ptr::null_mut());
         }
         let keys = ns_dictionary_all_keys(annotation);
-        if keys.is_null() {
-            return Vec::new();
-        }
-        let count = ns_dictionary_count(annotation);
-        let mut result = Vec::with_capacity(count);
-        for i in 0..count {
-            let key = msg_id_usize(keys, sel(b"objectAtIndex:\0"), i);
-            if let Some(name) = ns_string_to_string(key) {
-                result.push(name);
-            }
-        }
-        result
+        NSArrayIterator::new(keys)
     }
 }
 

@@ -55,8 +55,8 @@ fn raytracing_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     bbox_desc.set_opaque(false);
 
     let primitive_desc = PrimitiveAccelerationStructureDescriptor::new();
-    primitive_desc.set_geometry_descriptors(&[&tri_desc]);
-    primitive_desc.set_bounding_box_geometry_descriptors(&[&bbox_desc]);
+    primitive_desc.set_geometry_descriptors(&[tri_desc.clone()]);
+    primitive_desc.set_bounding_box_geometry_descriptors(&[bbox_desc.clone()]);
 
     let instance_desc = InstanceAccelerationStructureDescriptor::new();
     instance_desc.set_instance_descriptor_buffer_offset(0);
@@ -178,7 +178,7 @@ fn raytracing_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     assert!(compacted_size > 0);
 
     // Test instances
-    instance_desc.set_instanced_acceleration_structures(&[&primitive_as]);
+    instance_desc.set_instanced_acceleration_structures(&[primitive_as]);
     let instance_sizes = device.instance_acceleration_structure_sizes(&instance_desc)?;
     assert!(instance_sizes.acceleration_structure_size > 0);
 

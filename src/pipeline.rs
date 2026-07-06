@@ -40,11 +40,20 @@ impl ShaderValidation {
     }
 }
 
-fn functions_from_array(array: id) -> Vec<Function> {
-    ns_array_to_vec(array)
-        .into_iter()
-        .map(|raw| Function { raw: retain(raw) })
-        .collect()
+fn functions_from_array(array: id) -> NSArrayIterator<Function> {
+    NSArrayIterator::new(array)
+}
+
+fn pipeline_label(raw: id) -> Option<NSString> {
+    if raw.is_null() {
+        return None;
+    }
+    let ptr = msg_id(raw, sel(b"label\0"));
+    if ptr.is_null() {
+        None
+    } else {
+        Some(NSString::from_raw(ptr))
+    }
 }
 
 #[derive(Debug)]
@@ -191,7 +200,7 @@ impl BinaryArchiveDescriptor {
         }
     }
 
-    pub fn url(&self) -> Option<String> {
+    pub fn url(&self) -> Option<NSString> {
         let url = msg_id(self.raw, sel(b"url\0"));
         ns_url_to_path(url)
     }
@@ -215,8 +224,23 @@ impl Drop for BinaryArchiveDescriptor {
 }
 
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct BinaryArchive {
     pub raw: id,
+}
+
+impl Clone for BinaryArchive {
+    fn clone(&self) -> Self {
+        Self {
+            raw: retain(self.raw),
+        }
+    }
+}
+
+impl FromRawId for BinaryArchive {
+    fn from_raw_id(raw: id) -> Self {
+        Self { raw: retain(raw) }
+    }
 }
 
 impl BinaryArchive {
@@ -225,8 +249,8 @@ impl BinaryArchive {
         Device { raw: ptr }
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        pipeline_label(self.raw)
     }
 
     pub fn set_label(&self, label: &str) {
@@ -452,12 +476,9 @@ pub struct ComputePipelineReflection {
 }
 
 impl ComputePipelineReflection {
-    pub fn bindings(&self) -> Vec<Binding> {
+    pub fn bindings(&self) -> NSArrayIterator<Binding> {
         let array = msg_id(self.raw, sel(b"bindings\0"));
-        ns_array_to_vec(array)
-            .into_iter()
-            .map(Binding::new_with_raw)
-            .collect()
+        NSArrayIterator::new(array)
     }
 }
 
@@ -484,9 +505,10 @@ impl ComputePipelineDescriptor {
         msg_void_id(self.raw, sel(b"setComputeFunction:\0"), function.raw);
     }
 
-    pub fn set_binary_archives(&self, archives: &[&BinaryArchive]) {
-        let raw: Vec<id> = archives.iter().map(|archive| archive.raw).collect();
-        let array = ns_array_from_ids(&raw);
+    pub fn set_binary_archives(&self, archives: &[BinaryArchive]) {
+        let raw_ptrs =
+            unsafe { std::slice::from_raw_parts(archives.as_ptr() as *const id, archives.len()) };
+        let array = ns_array_from_ids(raw_ptrs);
         msg_void_id(self.raw, sel(b"setBinaryArchives:\0"), array);
     }
 
@@ -546,8 +568,8 @@ impl ComputePipelineDescriptor {
         );
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        pipeline_label(self.raw)
     }
 
     pub fn set_label(&self, label: &str) {
@@ -597,14 +619,11 @@ impl ComputePipelineDescriptor {
         }
     }
 
-    pub fn preloaded_libraries(&self) -> Result<Vec<DynamicLibrary>, MetalError> {
+    pub fn preloaded_libraries(&self) -> Result<NSArrayIterator<DynamicLibrary>, MetalError> {
         let selector = sel(b"preloadedLibraries\0");
         if responds_to_selector(self.raw, selector) {
             let array = msg_id(self.raw, selector);
-            Ok(ns_array_to_vec(array)
-                .into_iter()
-                .map(|raw| DynamicLibrary { raw: retain(raw) })
-                .collect())
+            Ok(NSArrayIterator::new(array))
         } else {
             Err(MetalError::new(
                 "preloadedLibraries not supported on ComputePipelineDescriptor",
@@ -612,11 +631,13 @@ impl ComputePipelineDescriptor {
         }
     }
 
-    pub fn set_preloaded_libraries(&self, libraries: &[&DynamicLibrary]) -> Result<(), MetalError> {
+    pub fn set_preloaded_libraries(&self, libraries: &[DynamicLibrary]) -> Result<(), MetalError> {
         let selector = sel(b"setPreloadedLibraries:\0");
         if responds_to_selector(self.raw, selector) {
-            let raw: Vec<id> = libraries.iter().map(|library| library.raw).collect();
-            let array = ns_array_from_ids(&raw);
+            let raw_ptrs = unsafe {
+                std::slice::from_raw_parts(libraries.as_ptr() as *const id, libraries.len())
+            };
+            let array = ns_array_from_ids(raw_ptrs);
             msg_void_id(self.raw, selector, array);
             Ok(())
         } else {
@@ -626,14 +647,11 @@ impl ComputePipelineDescriptor {
         }
     }
 
-    pub fn binary_archives(&self) -> Result<Vec<BinaryArchive>, MetalError> {
+    pub fn binary_archives(&self) -> Result<NSArrayIterator<BinaryArchive>, MetalError> {
         let selector = sel(b"binaryArchives\0");
         if responds_to_selector(self.raw, selector) {
             let array = msg_id(self.raw, selector);
-            Ok(ns_array_to_vec(array)
-                .into_iter()
-                .map(|raw| BinaryArchive { raw: retain(raw) })
-                .collect())
+            Ok(NSArrayIterator::new(array))
         } else {
             Err(MetalError::new(
                 "binaryArchives not supported on ComputePipelineDescriptor",
@@ -697,9 +715,12 @@ impl Drop for ComputePipelineDescriptor {
 }
 
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct ComputePipelineState {
     pub raw: id,
 }
+
+impl crate::ffi::TransparentId for ComputePipelineState {}
 
 impl Drop for ComputePipelineState {
     fn drop(&mut self) {
@@ -708,13 +729,20 @@ impl Drop for ComputePipelineState {
 }
 
 impl ComputePipelineState {
+    #[inline]
+    pub const fn null() -> Self {
+        Self {
+            raw: std::ptr::null_mut(),
+        }
+    }
+
     pub fn device(&self) -> Device {
         let ptr = retain(msg_id(self.raw, sel(b"device\0")));
         Device { raw: ptr }
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        pipeline_label(self.raw)
     }
 
     pub fn imageblock_memory_length_for_dimensions(&self, dimensions: Size) -> usize {
@@ -1255,9 +1283,10 @@ impl RenderPipelineDescriptor {
         msg_void_usize(attachment, sel(b"setWriteMask:\0"), mask.as_raw());
     }
 
-    pub fn set_binary_archives(&self, archives: &[&BinaryArchive]) {
-        let raw: Vec<id> = archives.iter().map(|archive| archive.raw).collect();
-        let array = ns_array_from_ids(&raw);
+    pub fn set_binary_archives(&self, archives: &[BinaryArchive]) {
+        let raw_ptrs =
+            unsafe { std::slice::from_raw_parts(archives.as_ptr() as *const id, archives.len()) };
+        let array = ns_array_from_ids(raw_ptrs);
         msg_void_id(self.raw, sel(b"setBinaryArchives:\0"), array);
     }
 
@@ -1314,8 +1343,8 @@ impl RenderPipelineDescriptor {
         }
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        pipeline_label(self.raw)
     }
 
     pub fn vertex_function(&self) -> Option<Function> {
@@ -1457,9 +1486,12 @@ impl Drop for MeshRenderPipelineDescriptor {
 }
 
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct RenderPipelineState {
     pub raw: id,
 }
+
+impl crate::ffi::TransparentId for RenderPipelineState {}
 
 impl Drop for RenderPipelineState {
     fn drop(&mut self) {
@@ -1468,13 +1500,20 @@ impl Drop for RenderPipelineState {
 }
 
 impl RenderPipelineState {
+    #[inline]
+    pub const fn null() -> Self {
+        Self {
+            raw: std::ptr::null_mut(),
+        }
+    }
+
     pub fn device(&self) -> Device {
         let ptr = retain(msg_id(self.raw, sel(b"device\0")));
         Device { raw: ptr }
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        pipeline_label(self.raw)
     }
 
     pub fn imageblock_sample_length(&self) -> usize {
@@ -1802,8 +1841,8 @@ impl DepthStencilDescriptor {
         StencilDescriptor::borrowed(msg_id(self.raw, sel(b"backFaceStencil\0")))
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        pipeline_label(self.raw)
     }
 
     pub fn set_label(&self, label: &str) {
@@ -1830,8 +1869,8 @@ pub struct DepthStencilState {
 }
 
 impl DepthStencilState {
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        pipeline_label(self.raw)
     }
 
     pub fn device(&self) -> Device {
@@ -2113,8 +2152,8 @@ impl SamplerDescriptor {
         }
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        pipeline_label(self.raw)
     }
 
     pub fn set_label(&self, label: &str) {
@@ -2136,9 +2175,12 @@ impl Drop for SamplerDescriptor {
 }
 
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct SamplerState {
     pub raw: id,
 }
+
+impl crate::ffi::TransparentId for SamplerState {}
 
 impl Drop for SamplerState {
     fn drop(&mut self) {
@@ -2147,8 +2189,15 @@ impl Drop for SamplerState {
 }
 
 impl SamplerState {
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    #[inline]
+    pub const fn null() -> Self {
+        Self {
+            raw: std::ptr::null_mut(),
+        }
+    }
+
+    pub fn label(&self) -> Option<NSString> {
+        pipeline_label(self.raw)
     }
 
     pub fn set_label(&self, label: &str) {
@@ -2184,8 +2233,8 @@ impl Fence {
         Device { raw: ptr }
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        pipeline_label(self.raw)
     }
 
     pub fn set_label(&self, label: &str) {
@@ -2222,8 +2271,13 @@ impl FunctionDescriptor {
         }
     }
 
-    pub fn name(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"name\0")))
+    pub fn name(&self) -> Option<NSString> {
+        let ptr = msg_id(self.raw, sel(b"name\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(NSString::from_raw(ptr))
+        }
     }
 
     pub fn set_name(&self, name: &str) {
@@ -2231,8 +2285,13 @@ impl FunctionDescriptor {
         msg_void_id(self.raw, sel(b"setName:\0"), ns_name.raw());
     }
 
-    pub fn specialized_name(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"specializedName\0")))
+    pub fn specialized_name(&self) -> Option<NSString> {
+        let ptr = msg_id(self.raw, sel(b"specializedName\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(NSString::from_raw(ptr))
+        }
     }
 
     pub fn set_specialized_name(&self, name: &str) {
@@ -2261,11 +2320,13 @@ impl FunctionDescriptor {
         msg_void_usize(self.raw, sel(b"setOptions:\0"), options.0);
     }
 
-    pub fn set_binary_archives(&self, archives: &[&BinaryArchive]) -> Result<(), MetalError> {
+    pub fn set_binary_archives(&self, archives: &[BinaryArchive]) -> Result<(), MetalError> {
         let selector = sel(b"setBinaryArchives:\0");
         if responds_to_selector(self.raw, selector) {
-            let raw_archives: Vec<id> = archives.iter().map(|a| a.raw).collect();
-            let array = ns_array_from_ids(&raw_archives);
+            let raw_ptrs = unsafe {
+                std::slice::from_raw_parts(archives.as_ptr() as *const id, archives.len())
+            };
+            let array = ns_array_from_ids(raw_ptrs);
             msg_void_id(self.raw, selector, array);
             Ok(())
         } else {
@@ -2275,14 +2336,11 @@ impl FunctionDescriptor {
         }
     }
 
-    pub fn binary_archives(&self) -> Result<Vec<BinaryArchive>, MetalError> {
+    pub fn binary_archives(&self) -> Result<NSArrayIterator<BinaryArchive>, MetalError> {
         let selector = sel(b"binaryArchives\0");
         if responds_to_selector(self.raw, selector) {
             let array = msg_id(self.raw, selector);
-            Ok(ns_array_to_vec(array)
-                .into_iter()
-                .map(|raw| BinaryArchive { raw: retain(raw) })
-                .collect())
+            Ok(NSArrayIterator::new(array))
         } else {
             Err(MetalError::new(
                 "binaryArchives not supported on FunctionDescriptor",
@@ -2349,57 +2407,86 @@ impl LinkedFunctions {
         }
     }
 
-    pub fn set_functions(&self, functions: &[&Function]) {
-        let raw_functions: Vec<id> = functions.iter().map(|f| f.raw).collect();
-        let array = ns_array_from_ids(&raw_functions);
+    pub fn set_functions(&self, functions: &[Function]) {
+        let raw_ptrs =
+            unsafe { std::slice::from_raw_parts(functions.as_ptr() as *const id, functions.len()) };
+        let array = ns_array_from_ids(raw_ptrs);
         msg_void_id(self.raw, sel(b"setFunctions:\0"), array);
     }
 
-    pub fn set_binary_functions(&self, functions: &[&Function]) {
-        let raw_functions: Vec<id> = functions.iter().map(|f| f.raw).collect();
-        let array = ns_array_from_ids(&raw_functions);
+    pub fn set_binary_functions(&self, functions: &[Function]) {
+        let raw_ptrs =
+            unsafe { std::slice::from_raw_parts(functions.as_ptr() as *const id, functions.len()) };
+        let array = ns_array_from_ids(raw_ptrs);
         msg_void_id(self.raw, sel(b"setBinaryFunctions:\0"), array);
     }
 
-    pub fn set_private_functions(&self, functions: &[&Function]) {
+    pub fn set_private_functions(&self, functions: &[Function]) {
         let selector = sel(b"setPrivateFunctions:\0");
         if responds_to_selector(self.raw, selector) {
-            let raw_functions: Vec<id> = functions.iter().map(|f| f.raw).collect();
-            let array = ns_array_from_ids(&raw_functions);
+            let raw_ptrs = unsafe {
+                std::slice::from_raw_parts(functions.as_ptr() as *const id, functions.len())
+            };
+            let array = ns_array_from_ids(raw_ptrs);
             msg_void_id(self.raw, selector, array);
         }
     }
 
-    pub fn functions(&self) -> Vec<Function> {
+    pub fn functions(&self) -> NSArrayIterator<Function> {
         functions_from_array(msg_id(self.raw, sel(b"functions\0")))
     }
 
-    pub fn private_functions(&self) -> Vec<Function> {
+    pub fn private_functions(&self) -> NSArrayIterator<Function> {
         let selector = sel(b"privateFunctions\0");
         if responds_to_selector(self.raw, selector) {
             functions_from_array(msg_id(self.raw, selector))
         } else {
-            Vec::new()
+            NSArrayIterator::new(std::ptr::null_mut())
         }
     }
 
-    pub fn groups(&self) -> Vec<(String, Vec<Function>)> {
+    pub fn groups(&self) -> DynamicLibraryGroupIterator {
         let dict = msg_id(self.raw, sel(b"groups\0"));
-        if dict.is_null() {
-            return Vec::new();
+        let keys = if dict.is_null() {
+            std::ptr::null_mut()
+        } else {
+            msg_id(dict, sel(b"allKeys\0"))
+        };
+        DynamicLibraryGroupIterator {
+            dict: retain(dict),
+            keys_iter: NSArrayIterator::new(keys),
         }
-        let keys = msg_id(dict, sel(b"allKeys\0"));
-        let count = ns_array_count(keys);
-        let mut result = Vec::with_capacity(count);
-        for i in 0..count {
-            let key = ns_array_object_at_index(keys, i);
-            let name = ns_string_to_string(key).unwrap_or_default();
-            let array = msg_id_id(dict, sel(b"objectForKey:\0"), key);
-            result.push((name, functions_from_array(array)));
-        }
-        result
     }
 }
+
+pub struct DynamicLibraryGroupIterator {
+    dict: id,
+    keys_iter: NSArrayIterator<id>,
+}
+
+impl Drop for DynamicLibraryGroupIterator {
+    fn drop(&mut self) {
+        release(self.dict);
+    }
+}
+
+impl Iterator for DynamicLibraryGroupIterator {
+    type Item = (String, NSArrayIterator<Function>);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.keys_iter.next().map(|key| {
+            let name = ns_string_to_string(key).unwrap_or_default();
+            let array = msg_id_id(self.dict, sel(b"objectForKey:\0"), key);
+            (name, NSArrayIterator::new(array))
+        })
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.keys_iter.size_hint()
+    }
+}
+
+impl ExactSizeIterator for DynamicLibraryGroupIterator {}
 
 impl Default for LinkedFunctions {
     fn default() -> Self {
@@ -2414,8 +2501,23 @@ impl Drop for LinkedFunctions {
 }
 
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct DynamicLibrary {
     pub raw: id,
+}
+
+impl Clone for DynamicLibrary {
+    fn clone(&self) -> Self {
+        Self {
+            raw: retain(self.raw),
+        }
+    }
+}
+
+impl FromRawId for DynamicLibrary {
+    fn from_raw_id(raw: id) -> Self {
+        Self { raw: retain(raw) }
+    }
 }
 
 impl DynamicLibrary {
@@ -2424,8 +2526,8 @@ impl DynamicLibrary {
         Device { raw: ptr }
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        pipeline_label(self.raw)
     }
 
     pub fn set_label(&self, label: &str) {
@@ -2433,8 +2535,13 @@ impl DynamicLibrary {
         msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
     }
 
-    pub fn install_name(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"installName\0")))
+    pub fn install_name(&self) -> Option<NSString> {
+        let ptr = msg_id(self.raw, sel(b"installName\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(NSString::from_raw(ptr))
+        }
     }
 
     pub fn serialize_to_url(&self, url_path: &str) -> Result<(), MetalError> {
@@ -2463,13 +2570,28 @@ impl Drop for DynamicLibrary {
 }
 
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct FunctionHandle {
     pub raw: id,
 }
 
+impl crate::ffi::TransparentId for FunctionHandle {}
+
 impl FunctionHandle {
-    pub fn name(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"name\0")))
+    #[inline]
+    pub const fn null() -> Self {
+        Self {
+            raw: std::ptr::null_mut(),
+        }
+    }
+
+    pub fn name(&self) -> Option<NSString> {
+        let ptr = msg_id(self.raw, sel(b"name\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(NSString::from_raw(ptr))
+        }
     }
 
     pub fn device(&self) -> Device {
@@ -2515,16 +2637,26 @@ pub struct FunctionLogDebugLocation {
 }
 
 impl FunctionLogDebugLocation {
-    pub fn function_name(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"functionName\0")))
+    pub fn function_name(&self) -> Option<NSString> {
+        let ptr = msg_id(self.raw, sel(b"functionName\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(NSString::from_raw(ptr))
+        }
     }
 
-    pub fn url_path(&self) -> Option<String> {
+    pub fn url_path(&self) -> Option<NSString> {
         let url = msg_id(self.raw, sel(b"URL\0"));
         if url.is_null() {
             None
         } else {
-            ns_string_to_string(msg_id(url, sel(b"path\0")))
+            let ptr = msg_id(url, sel(b"path\0"));
+            if ptr.is_null() {
+                None
+            } else {
+                Some(NSString::from_raw(ptr))
+            }
         }
     }
 
@@ -2548,6 +2680,20 @@ pub struct FunctionLog {
     pub raw: id,
 }
 
+impl Clone for FunctionLog {
+    fn clone(&self) -> Self {
+        Self {
+            raw: retain(self.raw),
+        }
+    }
+}
+
+impl FromRawId for FunctionLog {
+    fn from_raw_id(raw: id) -> Self {
+        Self { raw: retain(raw) }
+    }
+}
+
 impl FunctionLog {
     pub fn log_type(&self) -> FunctionLogType {
         let val = msg_usize(self.raw, sel(b"type\0"));
@@ -2557,8 +2703,13 @@ impl FunctionLog {
         }
     }
 
-    pub fn encoder_label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"encoderLabel\0")))
+    pub fn encoder_label(&self) -> Option<NSString> {
+        let ptr = msg_id(self.raw, sel(b"encoderLabel\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(NSString::from_raw(ptr))
+        }
     }
 
     pub fn function(&self) -> Option<Function> {
@@ -2637,8 +2788,8 @@ impl LogState {
         Device { raw: ptr }
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        pipeline_label(self.raw)
     }
 
     pub fn set_label(&self, label: &str) {
@@ -2691,18 +2842,28 @@ impl Drop for VisibleFunctionTableDescriptor {
 }
 
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct VisibleFunctionTable {
     pub raw: id,
 }
 
+impl crate::ffi::TransparentId for VisibleFunctionTable {}
+
 impl VisibleFunctionTable {
+    #[inline]
+    pub const fn null() -> Self {
+        Self {
+            raw: std::ptr::null_mut(),
+        }
+    }
+
     pub fn device(&self) -> Device {
         let ptr = retain(msg_id(self.raw, sel(b"device\0")));
         Device { raw: ptr }
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        pipeline_label(self.raw)
     }
 
     pub fn set_label(&self, label: &str) {
@@ -2728,12 +2889,11 @@ impl VisibleFunctionTable {
         );
     }
 
-    pub fn set_functions(&self, functions: &[Option<&FunctionHandle>], range: Range) {
-        let raw_functions: Vec<id> = functions.iter().map(|f| f.map_or(NIL, |h| h.raw)).collect();
+    pub fn set_functions(&self, functions: &[FunctionHandle], range: Range) {
         msg_void_ptr_range(
             self.raw,
             sel(b"setFunctions:withRange:\0"),
-            raw_functions.as_ptr(),
+            transparent_id_slice(functions).as_ptr(),
             range,
         );
     }
@@ -2797,11 +2957,21 @@ impl Drop for IntersectionFunctionTableDescriptor {
 }
 
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct IntersectionFunctionTable {
     pub raw: id,
 }
 
+impl crate::ffi::TransparentId for IntersectionFunctionTable {}
+
 impl IntersectionFunctionTable {
+    #[inline]
+    pub const fn null() -> Self {
+        Self {
+            raw: std::ptr::null_mut(),
+        }
+    }
+
     fn validate_range(&self, range: Range, count: usize) -> Result<(), MetalError> {
         if count != range.length {
             return Err(MetalError::new(format!(
@@ -2817,8 +2987,8 @@ impl IntersectionFunctionTable {
         Device { raw: ptr }
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        pipeline_label(self.raw)
     }
 
     pub fn set_label(&self, label: &str) {
@@ -2936,15 +3106,14 @@ impl IntersectionFunctionTable {
 
     pub fn set_functions(
         &self,
-        functions: &[Option<&FunctionHandle>],
+        functions: &[FunctionHandle],
         range: Range,
     ) -> Result<(), MetalError> {
         self.validate_range(range, functions.len())?;
-        let raw_functions: Vec<id> = functions.iter().map(|f| f.map_or(NIL, |h| h.raw)).collect();
         msg_void_ptr_range(
             self.raw,
             sel(b"setFunctions:withRange:\0"),
-            raw_functions.as_ptr(),
+            transparent_id_slice(functions).as_ptr(),
             range,
         );
         Ok(())
@@ -2968,7 +3137,7 @@ impl IntersectionFunctionTable {
 
     pub fn set_buffers(
         &self,
-        buffers: &[Option<&Buffer>],
+        buffers: &[Buffer],
         offsets: &[usize],
         range: Range,
     ) -> Result<(), MetalError> {
@@ -2980,14 +3149,10 @@ impl IntersectionFunctionTable {
                 buffers.len()
             )));
         }
-        let raw_buffers: Vec<id> = buffers
-            .iter()
-            .map(|b| b.map_or(NIL, |buf| buf.raw))
-            .collect();
         msg_void_ptr_ptr_range(
             self.raw,
             sel(b"setBuffers:offsets:withRange:\0"),
-            raw_buffers.as_ptr(),
+            transparent_id_slice(buffers).as_ptr(),
             offsets.as_ptr(),
             range,
         );
@@ -3089,18 +3254,14 @@ impl IntersectionFunctionTable {
 
     pub fn set_visible_function_tables(
         &self,
-        tables: &[Option<&VisibleFunctionTable>],
+        tables: &[VisibleFunctionTable],
         range: Range,
     ) -> Result<(), MetalError> {
         self.validate_range(range, tables.len())?;
-        let raw_tables: Vec<id> = tables
-            .iter()
-            .map(|t| t.map_or(NIL, |tbl| tbl.raw))
-            .collect();
         msg_void_ptr_range(
             self.raw,
             sel(b"setVisibleFunctionTables:withBufferRange:\0"),
-            raw_tables.as_ptr(),
+            transparent_id_slice(tables).as_ptr(),
             range,
         );
         Ok(())

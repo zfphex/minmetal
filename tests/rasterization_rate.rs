@@ -103,12 +103,12 @@ fn rasterization_rate_module_permutations() -> Result<(), Box<dyn std::error::Er
 
     // with_screen_size_and_layers using one layer and two layers
     let desc_layers1 =
-        RasterizationRateMapDescriptor::with_screen_size_and_layers(screen_size, &[&layer2]);
+        RasterizationRateMapDescriptor::with_screen_size_and_layers(screen_size, &[layer2.clone()]);
     assert_eq!(desc_layers1.layer_count(), 1);
 
     let desc_layers2 = RasterizationRateMapDescriptor::with_screen_size_and_layers(
         screen_size,
-        &[&layer2, &layer3],
+        &[layer2.clone(), layer3.clone()],
     );
     assert_eq!(desc_layers2.layer_count(), 2);
 
@@ -248,7 +248,7 @@ fn rasterization_rate_module_permutations() -> Result<(), Box<dyn std::error::Er
     if support_2 {
         let two_layer_desc = RasterizationRateMapDescriptor::with_screen_size_and_layers(
             screen_size,
-            &[&layer2, &layer3],
+            &[layer2.clone(), layer3.clone()],
         );
         let rate_map_2 = device.new_rasterization_rate_map(&two_layer_desc)?;
         assert_eq!(rate_map_2.layer_count(), 2);

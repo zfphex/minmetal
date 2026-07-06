@@ -42,12 +42,17 @@ impl CaptureDescriptor {
         msg_void_usize(self.raw, sel(b"setDestination:\0"), destination as usize);
     }
 
-    pub fn output_url(&self) -> Option<String> {
+    pub fn output_url(&self) -> Option<NSString> {
         let url = msg_id(self.raw, sel(b"outputURL\0"));
         if url.is_null() {
             None
         } else {
-            ns_string_to_string(msg_id(url, sel(b"path\0")))
+            let path_ptr = msg_id(url, sel(b"path\0"));
+            if path_ptr.is_null() {
+                None
+            } else {
+                Some(NSString::from_raw(path_ptr))
+            }
         }
     }
 
@@ -253,8 +258,13 @@ impl CaptureScope {
         msg_void(self.raw, sel(b"endScope\0"));
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        let ptr = msg_id(self.raw, sel(b"label\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(NSString::from_raw(ptr))
+        }
     }
 
     pub fn set_label(&self, label: &str) {

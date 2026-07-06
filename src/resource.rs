@@ -3,12 +3,34 @@ use std::ffi::c_void;
 use std::mem::transmute;
 use std::ptr;
 
+fn resource_label(raw: id) -> Option<NSString> {
+    if raw.is_null() {
+        return None;
+    }
+    let ptr = msg_id(raw, sel(b"label\0"));
+    if ptr.is_null() {
+        None
+    } else {
+        Some(NSString::from_raw(ptr))
+    }
+}
+
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct Buffer {
     pub raw: id,
 }
 
+impl crate::ffi::TransparentId for Buffer {}
+
 impl Buffer {
+    #[inline]
+    pub const fn null() -> Self {
+        Self {
+            raw: std::ptr::null_mut(),
+        }
+    }
+
     pub fn len(&self) -> usize {
         msg_usize(self.raw, sel(b"length\0"))
     }
@@ -69,8 +91,8 @@ impl Buffer {
         }
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        resource_label(self.raw)
     }
 
     pub fn set_label(&self, label: &str) {
@@ -629,11 +651,21 @@ impl Drop for TextureDescriptor {
 }
 
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct Texture {
     pub raw: id,
 }
 
+impl crate::ffi::TransparentId for Texture {}
+
 impl Texture {
+    #[inline]
+    pub const fn null() -> Self {
+        Self {
+            raw: std::ptr::null_mut(),
+        }
+    }
+
     pub fn replace_region(
         &self,
         region: Region,
@@ -1003,8 +1035,8 @@ impl Texture {
         msg_usize(self.raw, sel(b"pixelFormat\0"))
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        resource_label(self.raw)
     }
 
     pub fn set_label(&self, label: &str) {
@@ -1285,6 +1317,7 @@ impl Drop for HeapDescriptor {
 }
 
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct Heap {
     pub raw: id,
 }
@@ -1516,8 +1549,8 @@ impl Heap {
         }
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        resource_label(self.raw)
     }
 
     pub fn set_label(&self, label: &str) {
@@ -1609,8 +1642,17 @@ impl Drop for Heap {
 }
 
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct ArgumentDescriptor {
     pub raw: id,
+}
+
+impl Clone for ArgumentDescriptor {
+    fn clone(&self) -> Self {
+        Self {
+            raw: retain(self.raw),
+        }
+    }
 }
 
 impl ArgumentDescriptor {
@@ -1796,8 +1838,8 @@ impl ArgumentEncoder {
         }
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        resource_label(self.raw)
     }
 
     pub fn set_label(&self, label: &str) {
@@ -1807,7 +1849,7 @@ impl ArgumentEncoder {
 
     pub fn set_buffers(
         &self,
-        buffers: &[Option<&Buffer>],
+        buffers: &[Buffer],
         offsets: &[usize],
         range: Range,
     ) -> Result<(), MetalError> {
@@ -1819,34 +1861,22 @@ impl ArgumentEncoder {
                 range.length
             )));
         }
-        let raw_buffers: Vec<id> = buffers
-            .iter()
-            .map(|b| b.map_or(NIL, |buf| buf.raw))
-            .collect();
         msg_void_ptr_ptr_range(
             self.raw,
             sel(b"setBuffers:offsets:withRange:\0"),
-            raw_buffers.as_ptr(),
+            transparent_id_slice(buffers).as_ptr(),
             offsets.as_ptr(),
             range,
         );
         Ok(())
     }
 
-    pub fn set_textures(
-        &self,
-        textures: &[Option<&Texture>],
-        range: Range,
-    ) -> Result<(), MetalError> {
+    pub fn set_textures(&self, textures: &[Texture], range: Range) -> Result<(), MetalError> {
         self.validate_range(range, textures.len())?;
-        let raw_textures: Vec<id> = textures
-            .iter()
-            .map(|t| t.map_or(NIL, |tex| tex.raw))
-            .collect();
         msg_void_ptr_range(
             self.raw,
             sel(b"setTextures:withRange:\0"),
-            raw_textures.as_ptr(),
+            transparent_id_slice(textures).as_ptr(),
             range,
         );
         Ok(())
@@ -1854,18 +1884,14 @@ impl ArgumentEncoder {
 
     pub fn set_sampler_states(
         &self,
-        samplers: &[Option<&SamplerState>],
+        samplers: &[SamplerState],
         range: Range,
     ) -> Result<(), MetalError> {
         self.validate_range(range, samplers.len())?;
-        let raw_samplers: Vec<id> = samplers
-            .iter()
-            .map(|s| s.map_or(NIL, |sm| sm.raw))
-            .collect();
         msg_void_ptr_range(
             self.raw,
             sel(b"setSamplerStates:withRange:\0"),
-            raw_samplers.as_ptr(),
+            transparent_id_slice(samplers).as_ptr(),
             range,
         );
         Ok(())
@@ -1889,17 +1915,18 @@ impl ArgumentEncoder {
 
     pub fn set_visible_function_tables(
         &self,
-        tables: &[Option<&VisibleFunctionTable>],
+        tables: &[VisibleFunctionTable],
         range: Range,
     ) -> Result<(), MetalError> {
         self.validate_range(range, tables.len())?;
         let selector = sel(b"setVisibleFunctionTables:withRange:\0");
         if responds_to_selector(self.raw, selector) {
-            let raw_tables: Vec<id> = tables
-                .iter()
-                .map(|t| t.map_or(NIL, |tbl| tbl.raw))
-                .collect();
-            msg_void_ptr_range(self.raw, selector, raw_tables.as_ptr(), range);
+            msg_void_ptr_range(
+                self.raw,
+                selector,
+                transparent_id_slice(tables).as_ptr(),
+                range,
+            );
             Ok(())
         } else {
             Err(MetalError::new(
@@ -1926,17 +1953,18 @@ impl ArgumentEncoder {
 
     pub fn set_intersection_function_tables(
         &self,
-        tables: &[Option<&IntersectionFunctionTable>],
+        tables: &[IntersectionFunctionTable],
         range: Range,
     ) -> Result<(), MetalError> {
         self.validate_range(range, tables.len())?;
         let selector = sel(b"setIntersectionFunctionTables:withRange:\0");
         if responds_to_selector(self.raw, selector) {
-            let raw_tables: Vec<id> = tables
-                .iter()
-                .map(|t| t.map_or(NIL, |tbl| tbl.raw))
-                .collect();
-            msg_void_ptr_range(self.raw, selector, raw_tables.as_ptr(), range);
+            msg_void_ptr_range(
+                self.raw,
+                selector,
+                transparent_id_slice(tables).as_ptr(),
+                range,
+            );
             Ok(())
         } else {
             Err(MetalError::new(
@@ -1999,7 +2027,7 @@ impl ArgumentEncoder {
 
     pub fn set_render_pipeline_states(
         &self,
-        pipelines: &[Option<&RenderPipelineState>],
+        pipelines: &[RenderPipelineState],
         range: Range,
     ) -> Result<(), MetalError> {
         self.validate_range(range, pipelines.len())?;
@@ -2009,11 +2037,12 @@ impl ArgumentEncoder {
                 "setRenderPipelineStates:withRange: not supported",
             ));
         }
-        let raw_pipelines: Vec<id> = pipelines
-            .iter()
-            .map(|p| p.map_or(NIL, |pipe| pipe.raw))
-            .collect();
-        msg_void_ptr_range(self.raw, selector, raw_pipelines.as_ptr(), range);
+        msg_void_ptr_range(
+            self.raw,
+            selector,
+            transparent_id_slice(pipelines).as_ptr(),
+            range,
+        );
         Ok(())
     }
 
@@ -2035,7 +2064,7 @@ impl ArgumentEncoder {
 
     pub fn set_compute_pipeline_states(
         &self,
-        pipelines: &[Option<&ComputePipelineState>],
+        pipelines: &[ComputePipelineState],
         range: Range,
     ) -> Result<(), MetalError> {
         self.validate_range(range, pipelines.len())?;
@@ -2045,11 +2074,12 @@ impl ArgumentEncoder {
                 "setComputePipelineStates:withRange: not supported",
             ));
         }
-        let raw_pipelines: Vec<id> = pipelines
-            .iter()
-            .map(|p| p.map_or(NIL, |pipe| pipe.raw))
-            .collect();
-        msg_void_ptr_range(self.raw, selector, raw_pipelines.as_ptr(), range);
+        msg_void_ptr_range(
+            self.raw,
+            selector,
+            transparent_id_slice(pipelines).as_ptr(),
+            range,
+        );
         Ok(())
     }
 
@@ -2071,7 +2101,7 @@ impl ArgumentEncoder {
 
     pub fn set_indirect_command_buffers(
         &self,
-        buffers: &[Option<&IndirectCommandBuffer>],
+        buffers: &[IndirectCommandBuffer],
         range: Range,
     ) -> Result<(), MetalError> {
         self.validate_range(range, buffers.len())?;
@@ -2081,11 +2111,17 @@ impl ArgumentEncoder {
                 "setIndirectCommandBuffers:withRange: not supported",
             ));
         }
-        let raw_buffers: Vec<id> = buffers
-            .iter()
-            .map(|b| b.map_or(NIL, |buf| buf.raw))
-            .collect();
-        msg_void_ptr_range(self.raw, selector, raw_buffers.as_ptr(), range);
+        const STACK_CAP: usize = 32;
+        if buffers.len() <= STACK_CAP {
+            let mut stack = [NIL; STACK_CAP];
+            for (slot, buffer) in stack.iter_mut().zip(buffers) {
+                *slot = buffer.raw;
+            }
+            msg_void_ptr_range(self.raw, selector, stack.as_ptr(), range);
+        } else {
+            let raw_buffers: Vec<id> = buffers.iter().map(|buffer| buffer.raw).collect();
+            msg_void_ptr_range(self.raw, selector, raw_buffers.as_ptr(), range);
+        }
         Ok(())
     }
 
@@ -2132,8 +2168,8 @@ impl Event {
         }
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        resource_label(self.raw)
     }
 
     pub fn set_label(&self, label: &str) {
@@ -2163,8 +2199,8 @@ impl SharedEvent {
         }
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        resource_label(self.raw)
     }
 
     pub fn set_label(&self, label: &str) {
@@ -2215,8 +2251,8 @@ pub struct SharedEventHandle {
 }
 
 impl SharedEventHandle {
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        resource_label(self.raw)
     }
 }
 
@@ -2284,8 +2320,8 @@ impl SharedTextureHandle {
         Device { raw: ptr }
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        resource_label(self.raw)
     }
 }
 

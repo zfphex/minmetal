@@ -1151,8 +1151,13 @@ impl ParallelRenderCommandEncoder {
         Device { raw: ptr }
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        let ptr = msg_id(self.raw, sel(b"label\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(NSString::from_raw(ptr))
+        }
     }
 
     pub fn set_label(&self, label: &str) {

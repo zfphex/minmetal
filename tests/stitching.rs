@@ -68,31 +68,33 @@ fn stitching_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     let node4 = FunctionStitchingNode::from(input4);
 
     let fn_empty = FunctionStitchingFunctionNode::new("empty", &[], &[]);
-    let fn_one = FunctionStitchingFunctionNode::new("one", &[&node0], &[]);
-    let fn_multi = FunctionStitchingFunctionNode::new("multi", &[&node0, &node1], &[]);
-    let fn_dep = FunctionStitchingFunctionNode::new("dep", &[&node4], &[&fn_one]);
+    let fn_one = FunctionStitchingFunctionNode::new("one", &[node0.clone()], &[]);
+    let fn_multi =
+        FunctionStitchingFunctionNode::new("multi", &[node0.clone(), node1.clone()], &[]);
+    let fn_dep = FunctionStitchingFunctionNode::new("dep", &[node4], &[fn_one.clone()]);
 
     assert_eq!(fn_empty.name(), "empty");
     fn_empty.set_name("empty_new");
     assert_eq!(fn_empty.name(), "empty_new");
 
     assert_eq!(fn_one.arguments().len(), 1);
-    fn_one.set_arguments(&[&node0, &node1]);
+    fn_one.set_arguments(&[node0.clone(), node1.clone()]);
     assert_eq!(fn_one.arguments().len(), 2);
 
     assert_eq!(fn_dep.control_dependencies().len(), 1);
-    fn_dep.set_control_dependencies(&[&fn_one, &fn_multi]);
+    fn_dep.set_control_dependencies(&[fn_one.clone(), fn_multi]);
     assert_eq!(fn_dep.control_dependencies().len(), 2);
 
-    let graph_none = FunctionStitchingGraph::new("g1", &[&fn_empty], None, &[]);
-    let graph_some = FunctionStitchingGraph::new("g2", &[&fn_empty], Some(&fn_empty), &[&attr]);
+    let graph_none = FunctionStitchingGraph::new("g1", &[fn_empty.clone()], None, &[]);
+    let graph_some =
+        FunctionStitchingGraph::new("g2", &[fn_empty.clone()], Some(&fn_empty), &[attr.clone()]);
 
     assert_eq!(graph_none.function_name(), "g1");
     graph_none.set_function_name("g1_new");
     assert_eq!(graph_none.function_name(), "g1_new");
 
     assert_eq!(graph_none.nodes().len(), 1);
-    graph_none.set_nodes(&[&fn_empty, &fn_one]);
+    graph_none.set_nodes(&[fn_empty.clone(), fn_one.clone()]);
     assert_eq!(graph_none.nodes().len(), 2);
 
     assert!(graph_none.output_node().is_none());
@@ -105,7 +107,7 @@ fn stitching_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
 
     assert_eq!(graph_none.attributes().len(), 0);
     assert_eq!(graph_some.attributes().len(), 1);
-    graph_none.set_attributes(&[&attr]);
+    graph_none.set_attributes(&[attr]);
     assert_eq!(graph_none.attributes().len(), 1);
 
     // 3. Cover StitchedLibraryDescriptor
@@ -115,9 +117,9 @@ fn stitching_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
 
     desc.set_function_graphs(&[]);
     assert_eq!(desc.function_graphs().len(), 0);
-    desc.set_function_graphs(&[&graph_some]);
+    desc.set_function_graphs(&[graph_some.clone()]);
     assert_eq!(desc.function_graphs().len(), 1);
-    desc.set_function_graphs(&[&graph_none, &graph_some]);
+    desc.set_function_graphs(&[graph_none, graph_some]);
     assert_eq!(desc.function_graphs().len(), 2);
 
     // For options, set_options, binary_archives, and set_binary_archives, check selector availability explicitly
@@ -149,7 +151,7 @@ fn stitching_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
         if responds_to_selector(device.raw, archive_selector) {
             let archive_desc = BinaryArchiveDescriptor::new();
             if let Ok(archive) = device.new_binary_archive(&archive_desc) {
-                desc.set_binary_archives(&[&archive])?;
+                desc.set_binary_archives(&[archive])?;
                 assert_eq!(desc.binary_archives()?.len(), 1);
                 desc.set_binary_archives(&[])?;
             }
@@ -172,27 +174,27 @@ fn stitching_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     let base_func = library.function("multiply_by_two")?;
     let kernel_func = library.function("compute_main")?;
 
-    desc.set_functions(&[&base_func]);
+    desc.set_functions(&[base_func.clone()]);
     assert_eq!(desc.functions().len(), 1);
 
     desc.set_functions(&[]);
     assert_eq!(desc.functions().len(), 0);
 
-    desc.set_functions(&[&base_func]);
+    desc.set_functions(&[base_func.clone()]);
 
     // Re-create the graph to target the actual multiply_by_two function
     let input0_real = FunctionStitchingInputNode::new(0);
     let node_arg0_real = FunctionStitchingNode::from(input0_real);
     let func_node_real =
-        FunctionStitchingFunctionNode::new("multiply_by_two", &[&node_arg0_real], &[]);
+        FunctionStitchingFunctionNode::new("multiply_by_two", &[node_arg0_real], &[]);
     let graph_real = FunctionStitchingGraph::new(
         "stitched_scale",
-        &[&func_node_real],
+        &[func_node_real.clone()],
         Some(&func_node_real),
         &[],
     );
 
-    desc.set_function_graphs(&[&graph_real]);
+    desc.set_function_graphs(&[graph_real]);
 
     // Create a stitched library with Device::new_library_with_stitched_descriptor
     let stitched_lib = device.new_library_with_stitched_descriptor(&desc)?;
@@ -204,7 +206,7 @@ fn stitching_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     pipeline_desc.set_compute_function(&kernel_func);
 
     let linked_funcs = LinkedFunctions::new();
-    linked_funcs.set_functions(&[&stitched_func]);
+    linked_funcs.set_functions(&[stitched_func]);
     pipeline_desc.set_linked_functions(&linked_funcs);
 
     let pipeline = device.new_compute_pipeline_state(&pipeline_desc)?;
@@ -247,17 +249,17 @@ fn stitching_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     let input0_err = FunctionStitchingInputNode::new(0);
     let node_arg0_err = FunctionStitchingNode::from(input0_err);
     let invalid_func_node =
-        FunctionStitchingFunctionNode::new("non_existent_function", &[&node_arg0_err], &[]);
+        FunctionStitchingFunctionNode::new("non_existent_function", &[node_arg0_err], &[]);
     let invalid_graph = FunctionStitchingGraph::new(
         "invalid_stitched_name",
-        &[&invalid_func_node],
+        &[invalid_func_node.clone()],
         Some(&invalid_func_node),
         &[],
     );
 
     let invalid_desc = StitchedLibraryDescriptor::new();
-    invalid_desc.set_functions(&[&base_func]);
-    invalid_desc.set_function_graphs(&[&invalid_graph]);
+    invalid_desc.set_functions(&[base_func]);
+    invalid_desc.set_function_graphs(&[invalid_graph]);
 
     let compile_result = device.new_library_with_stitched_descriptor(&invalid_desc);
     assert!(

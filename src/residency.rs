@@ -4,9 +4,12 @@ use std::mem::transmute;
 
 /// Common protocol handle for resources that can be added to a residency set.
 #[derive(Debug, Clone, Copy)]
+#[repr(transparent)]
 pub struct Allocation {
     pub raw: id,
 }
+
+impl crate::ffi::TransparentId for Allocation {}
 
 impl Allocation {
     pub fn from_buffer(buffer: &Buffer) -> Self {
@@ -36,6 +39,7 @@ impl Allocation {
 }
 
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct ResidencySetDescriptor {
     pub raw: id,
 }
@@ -64,8 +68,13 @@ impl ResidencySetDescriptor {
         msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        let ptr = msg_id(self.raw, sel(b"label\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(NSString::from_raw(ptr))
+        }
     }
 
     pub fn set_initial_capacity(&self, capacity: usize) {
@@ -84,6 +93,7 @@ impl Drop for ResidencySetDescriptor {
 }
 
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct ResidencySet {
     pub raw: id,
 }
@@ -95,8 +105,13 @@ impl ResidencySet {
         }
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        let ptr = msg_id(self.raw, sel(b"label\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(NSString::from_raw(ptr))
+        }
     }
 
     pub fn set_label(&self, label: &str) {
@@ -140,11 +155,11 @@ impl ResidencySet {
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new("addAllocations:count: is not supported"));
         }
-        let raw_ptrs: Vec<id> = allocations.iter().map(|a| a.raw).collect();
+        let ids = transparent_id_slice(allocations);
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, *const id, usize) =
                 transmute(objc_msgSend as *const c_void);
-            f(self.raw, selector, raw_ptrs.as_ptr(), raw_ptrs.len());
+            f(self.raw, selector, ids.as_ptr(), ids.len());
         }
         Ok(())
     }
@@ -163,11 +178,11 @@ impl ResidencySet {
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new("removeAllocations:count: is not supported"));
         }
-        let raw_ptrs: Vec<id> = allocations.iter().map(|a| a.raw).collect();
+        let ids = transparent_id_slice(allocations);
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, *const id, usize) =
                 transmute(objc_msgSend as *const c_void);
-            f(self.raw, selector, raw_ptrs.as_ptr(), raw_ptrs.len());
+            f(self.raw, selector, ids.as_ptr(), ids.len());
         }
         Ok(())
     }

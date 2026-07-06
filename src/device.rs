@@ -65,26 +65,6 @@ fn device_notification_name_from_raw(raw: id) -> DeviceNotificationName {
     }
 }
 
-fn ns_array_to_strings(array: id) -> Vec<String> {
-    let count = ns_array_count(array);
-    let mut names = Vec::with_capacity(count);
-    for i in 0..count {
-        let item = ns_array_object_at_index(array, i);
-        if let Some(name) = ns_string_to_string(item) {
-            names.push(name);
-        }
-    }
-    names
-}
-
-fn devices_from_ns_array(array: id) -> Vec<Device> {
-    ns_array_to_vec(array)
-        .into_iter()
-        .filter(|raw| !raw.is_null())
-        .map(|raw| Device { raw: retain(raw) })
-        .collect()
-}
-
 #[repr(C)]
 struct BlockDescriptor {
     reserved: u64,
@@ -145,6 +125,20 @@ pub struct Device {
     pub raw: id,
 }
 
+impl Clone for Device {
+    fn clone(&self) -> Self {
+        Self {
+            raw: retain(self.raw),
+        }
+    }
+}
+
+impl FromRawId for Device {
+    fn from_raw_id(raw: id) -> Self {
+        Self { raw: retain(raw) }
+    }
+}
+
 impl Device {
     pub fn system_default() -> Option<Self> {
         unsafe {
@@ -158,9 +152,9 @@ impl Device {
             .ok_or_else(|| MetalError::new("no system default Metal device found"))
     }
 
-    pub fn name(&self) -> String {
-        ns_string_to_string(msg_id(self.raw, sel(b"name\0")))
-            .unwrap_or_else(|| "Unknown Metal Device".to_string())
+    pub fn name(&self) -> NSString {
+        let ptr = msg_id(self.raw, sel(b"name\0"));
+        NSString::from_raw(ptr)
     }
 
     pub fn registry_id(&self) -> u64 {
@@ -1062,13 +1056,12 @@ impl Device {
 
     pub fn new_argument_encoder(
         &self,
-        descriptors: &[&ArgumentDescriptor],
+        descriptors: &[ArgumentDescriptor],
     ) -> Result<ArgumentEncoder, MetalError> {
-        let raw_descriptors: Vec<id> = descriptors
-            .iter()
-            .map(|descriptor| descriptor.raw)
-            .collect();
-        let array = ns_array_from_ids(&raw_descriptors);
+        let raw_ptrs = unsafe {
+            std::slice::from_raw_parts(descriptors.as_ptr() as *const id, descriptors.len())
+        };
+        let array = ns_array_from_ids(raw_ptrs);
         let raw = msg_id_id(self.raw, sel(b"newArgumentEncoderWithArguments:\0"), array);
         if raw.is_null() {
             Err(MetalError::new("failed to create Metal argument encoder"))
@@ -1110,22 +1103,18 @@ impl Device {
         }
     }
 
-    pub fn copy_all_devices() -> Vec<Device> {
+    pub fn copy_all_devices() -> NSArrayIterator<Device> {
         unsafe {
             let array = MTLCopyAllDevices();
-            if array.is_null() {
-                Vec::new()
-            } else {
-                let devices = devices_from_ns_array(array);
-                release(array);
-                devices
-            }
+            let iter = NSArrayIterator::new(array);
+            release(array);
+            iter
         }
     }
 
     pub fn copy_all_devices_with_observer<F>(
         handler: F,
-    ) -> Result<(Vec<Device>, DeviceObserver), MetalError>
+    ) -> Result<(NSArrayIterator<Device>, DeviceObserver), MetalError>
     where
         F: Fn(Device, DeviceNotificationName) + 'static,
     {
@@ -1151,10 +1140,10 @@ impl Device {
                     "MTLCopyAllDevicesWithObserver is not supported on this macOS version",
                 ));
             }
-            let devices = devices_from_ns_array(array);
+            let iter = NSArrayIterator::new(array);
             release(array);
             Ok((
-                devices,
+                iter,
                 DeviceObserver {
                     raw: observer,
                     _handler: handler,
@@ -1276,8 +1265,13 @@ impl CommandQueue {
         Device { raw: ptr }
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        let ptr = msg_id(self.raw, sel(b"label\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(NSString::from_raw(ptr))
+        }
     }
 
     pub fn set_label(&self, label: &str) {
@@ -1292,14 +1286,18 @@ impl CommandQueue {
         }
     }
 
-    pub fn add_residency_sets(&self, residency_sets: &[&ResidencySet]) {
+    pub fn add_residency_sets(&self, residency_sets: &[ResidencySet]) {
         let selector = sel(b"addResidencySets:count:\0");
         if responds_to_selector(self.raw, selector) {
-            let raw_sets: Vec<id> = residency_sets.iter().map(|s| s.raw).collect();
             unsafe {
                 let f: unsafe extern "C" fn(id, SEL, *const id, usize) =
                     transmute(objc_msgSend as *const c_void);
-                f(self.raw, selector, raw_sets.as_ptr(), raw_sets.len());
+                f(
+                    self.raw,
+                    selector,
+                    residency_sets.as_ptr() as *const id,
+                    residency_sets.len(),
+                );
             }
         }
     }
@@ -1311,14 +1309,18 @@ impl CommandQueue {
         }
     }
 
-    pub fn remove_residency_sets(&self, residency_sets: &[&ResidencySet]) {
+    pub fn remove_residency_sets(&self, residency_sets: &[ResidencySet]) {
         let selector = sel(b"removeResidencySets:count:\0");
         if responds_to_selector(self.raw, selector) {
-            let raw_sets: Vec<id> = residency_sets.iter().map(|s| s.raw).collect();
             unsafe {
                 let f: unsafe extern "C" fn(id, SEL, *const id, usize) =
                     transmute(objc_msgSend as *const c_void);
-                f(self.raw, selector, raw_sets.as_ptr(), raw_sets.len());
+                f(
+                    self.raw,
+                    selector,
+                    residency_sets.as_ptr() as *const id,
+                    residency_sets.len(),
+                );
             }
         }
     }
@@ -1590,8 +1592,13 @@ impl CommandBuffer {
         CommandQueue { raw: ptr }
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        let ptr = msg_id(self.raw, sel(b"label\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(NSString::from_raw(ptr))
+        }
     }
 
     pub fn set_label(&self, label: &str) {
@@ -1673,14 +1680,18 @@ impl CommandBuffer {
         }
     }
 
-    pub fn use_residency_sets(&self, residency_sets: &[&ResidencySet]) {
+    pub fn use_residency_sets(&self, residency_sets: &[ResidencySet]) {
         let selector = sel(b"useResidencySets:count:\0");
         if responds_to_selector(self.raw, selector) {
-            let raw_sets: Vec<id> = residency_sets.iter().map(|s| s.raw).collect();
             unsafe {
                 let f: unsafe extern "C" fn(id, SEL, *const id, usize) =
                     transmute(objc_msgSend as *const c_void);
-                f(self.raw, selector, raw_sets.as_ptr(), raw_sets.len());
+                f(
+                    self.raw,
+                    selector,
+                    residency_sets.as_ptr() as *const id,
+                    residency_sets.len(),
+                );
             }
         }
     }
@@ -1739,8 +1750,13 @@ impl Library {
         }
     }
 
-    pub fn label(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"label\0")))
+    pub fn label(&self) -> Option<NSString> {
+        let ptr = msg_id(self.raw, sel(b"label\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(NSString::from_raw(ptr))
+        }
     }
 
     pub fn set_label(&self, label: &str) {
@@ -1761,10 +1777,15 @@ impl Library {
         }
     }
 
-    pub fn install_name(&self) -> Result<Option<String>, MetalError> {
+    pub fn install_name(&self) -> Result<Option<NSString>, MetalError> {
         let selector = sel(b"installName\0");
         if responds_to_selector(self.raw, selector) {
-            Ok(ns_string_to_string(msg_id(self.raw, selector)))
+            let ptr = msg_id(self.raw, selector);
+            if ptr.is_null() {
+                Ok(None)
+            } else {
+                Ok(Some(NSString::from_raw(ptr)))
+            }
         } else {
             Err(MetalError::new(
                 "installName is not supported on this macOS version",
@@ -1777,8 +1798,8 @@ impl Library {
         Device { raw: ptr }
     }
 
-    pub fn function_names(&self) -> Vec<String> {
-        ns_array_to_strings(msg_id(self.raw, sel(b"functionNames\0")))
+    pub fn function_names(&self) -> NSArrayIterator<String> {
+        NSArrayIterator::new(msg_id(self.raw, sel(b"functionNames\0")))
     }
 
     pub fn new_function_with_descriptor(
@@ -1858,20 +1879,40 @@ impl Drop for Library {
 }
 
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct Function {
     pub raw: id,
 }
 
+impl Clone for Function {
+    fn clone(&self) -> Self {
+        Self {
+            raw: retain(self.raw),
+        }
+    }
+}
+
+impl FromRawId for Function {
+    fn from_raw_id(raw: id) -> Self {
+        Self { raw: retain(raw) }
+    }
+}
+
 impl Function {
-    pub fn name(&self) -> String {
-        ns_string_to_string(msg_id(self.raw, sel(b"name\0")))
-            .unwrap_or_else(|| "unknown".to_string())
+    pub fn name(&self) -> NSString {
+        let ptr = msg_id(self.raw, sel(b"name\0"));
+        NSString::from_raw(ptr)
     }
 
-    pub fn label(&self) -> Option<String> {
+    pub fn label(&self) -> Option<NSString> {
         let selector = sel(b"label\0");
         if responds_to_selector(self.raw, selector) {
-            ns_string_to_string(msg_id(self.raw, selector))
+            let ptr = msg_id(self.raw, selector);
+            if ptr.is_null() {
+                None
+            } else {
+                Some(NSString::from_raw(ptr))
+            }
         } else {
             None
         }
@@ -1941,16 +1982,9 @@ impl Function {
         }
     }
 
-    pub fn vertex_attributes(&self) -> Vec<VertexAttribute> {
+    pub fn vertex_attributes(&self) -> NSArrayIterator<VertexAttribute> {
         let array = msg_id(self.raw, sel(b"vertexAttributes\0"));
-        if array.is_null() {
-            return Vec::new();
-        }
-        ns_array_to_vec(array)
-            .into_iter()
-            .filter(|raw| !raw.is_null())
-            .map(|raw| VertexAttribute { raw: retain(raw) })
-            .collect()
+        NSArrayIterator::new(array)
     }
 }
 
@@ -1965,9 +1999,28 @@ pub struct VertexAttribute {
     pub raw: id,
 }
 
+impl Clone for VertexAttribute {
+    fn clone(&self) -> Self {
+        Self {
+            raw: retain(self.raw),
+        }
+    }
+}
+
+impl FromRawId for VertexAttribute {
+    fn from_raw_id(raw: id) -> Self {
+        Self { raw: retain(raw) }
+    }
+}
+
 impl VertexAttribute {
-    pub fn name(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"name\0")))
+    pub fn name(&self) -> Option<NSString> {
+        let ptr = msg_id(self.raw, sel(b"name\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(NSString::from_raw(ptr))
+        }
     }
 
     pub fn attribute_index(&self) -> usize {
@@ -2006,21 +2059,21 @@ pub struct RenderPipelineReflection {
 }
 
 impl RenderPipelineReflection {
-    pub fn vertex_bindings(&self) -> Vec<Binding> {
+    pub fn vertex_bindings(&self) -> NSArrayIterator<Binding> {
         let selector = sel(b"vertexBindings\0");
         if responds_to_selector(self.raw, selector) {
             crate::reflection::bindings_from_array(msg_id(self.raw, selector))
         } else {
-            Vec::new()
+            NSArrayIterator::new(std::ptr::null_mut())
         }
     }
 
-    pub fn fragment_bindings(&self) -> Vec<Binding> {
+    pub fn fragment_bindings(&self) -> NSArrayIterator<Binding> {
         let selector = sel(b"fragmentBindings\0");
         if responds_to_selector(self.raw, selector) {
             crate::reflection::bindings_from_array(msg_id(self.raw, selector))
         } else {
-            Vec::new()
+            NSArrayIterator::new(std::ptr::null_mut())
         }
     }
 }
@@ -2100,10 +2153,15 @@ impl CompileOptions {
         }
     }
 
-    pub fn install_name(&self) -> Option<String> {
+    pub fn install_name(&self) -> Option<NSString> {
         let selector = sel(b"installName\0");
         if responds_to_selector(self.raw, selector) {
-            ns_string_to_string(msg_id(self.raw, selector))
+            let ptr = msg_id(self.raw, selector);
+            if ptr.is_null() {
+                None
+            } else {
+                Some(NSString::from_raw(ptr))
+            }
         } else {
             None
         }
@@ -2321,28 +2379,8 @@ impl LogContainer {
         self.len() == 0
     }
 
-    pub fn log_at(&self, index: usize) -> Option<FunctionLog> {
-        if self.raw.is_null() || index >= self.len() {
-            None
-        } else {
-            let item = msg_id_usize(self.raw, sel(b"objectAtIndexedSubscript:\0"), index);
-            if item.is_null() {
-                None
-            } else {
-                Some(FunctionLog { raw: retain(item) })
-            }
-        }
-    }
-
-    pub fn to_vec(&self) -> Vec<FunctionLog> {
-        let count = self.len();
-        let mut vec = Vec::with_capacity(count);
-        for i in 0..count {
-            if let Some(log) = self.log_at(i) {
-                vec.push(log);
-            }
-        }
-        vec
+    pub fn logs(&self) -> NSArrayIterator<FunctionLog> {
+        NSArrayIterator::new(self.raw)
     }
 }
 

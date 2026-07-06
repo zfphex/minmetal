@@ -28,8 +28,8 @@ pub use device::*;
 pub use encoder::*;
 pub(crate) use ffi::*;
 pub use ffi::{
-    AutoreleasePool, BOOL, Class, NIL, NO, NSString, SEL, YES, class, id, ns_string_to_string,
-    ns_url_from_path, release, responds_to_selector, retain, sel,
+    AutoreleasePool, BOOL, Class, FromRawId, NIL, NO, NSArrayIterator, NSData, NSString, SEL, YES,
+    class, id, ns_string_to_string, ns_url_from_path, release, responds_to_selector, retain, sel,
 };
 pub use indirect::*;
 pub use io::*;
@@ -219,5 +219,25 @@ mod tests {
         assert_eq!(LibraryOptimizationLevel::Size as isize, 1);
         assert_eq!(LibraryError::Unsupported as usize, 1);
         assert_eq!(LibraryError::FileNotFound as usize, 6);
+    }
+
+    #[test]
+    fn test_ns_array_iterator() {
+        let Some(_device) = Device::system_default() else {
+            return;
+        };
+        let iter = Device::copy_all_devices();
+        let total = iter.len();
+        assert!(total >= 1);
+
+        let iter2 = iter.clone();
+        assert_eq!(iter2.len(), total);
+
+        let devices: Vec<Device> = iter.collect();
+        assert_eq!(devices.len(), total);
+
+        let devices2: Vec<Device> = iter2.collect();
+        assert_eq!(devices2.len(), total);
+        assert_eq!(devices[0].raw, devices2[0].raw);
     }
 }

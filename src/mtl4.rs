@@ -50,8 +50,16 @@ fn m4_alloc_init(class_name: &[u8]) -> id {
     msg_id(allocated, sel(b"init\0"))
 }
 
-fn m4_label(raw: id) -> Option<String> {
-    ns_string_to_string(msg_id(raw, sel(b"label\0")))
+fn m4_label(raw: id) -> Option<NSString> {
+    if raw.is_null() {
+        return None;
+    }
+    let ptr = msg_id(raw, sel(b"label\0"));
+    if ptr.is_null() {
+        None
+    } else {
+        Some(NSString::from_raw(ptr))
+    }
 }
 
 fn m4_set_label(raw: id, label: &str) {
@@ -84,25 +92,16 @@ fn m4_set_buffer_range(raw: id, setter: SEL, range: M4BufferRange) {
     }
 }
 
-fn m4_function_descriptors_from_array(array: id) -> Vec<M4FunctionDescriptor> {
-    ns_array_to_vec(array)
-        .into_iter()
-        .map(|raw| M4FunctionDescriptor { raw: retain(raw) })
-        .collect()
+fn m4_function_descriptors_from_array(array: id) -> NSArrayIterator<M4FunctionDescriptor> {
+    NSArrayIterator::new(array)
 }
 
-fn m4_binary_functions_from_array(array: id) -> Vec<M4BinaryFunction> {
-    ns_array_to_vec(array)
-        .into_iter()
-        .map(|raw| M4BinaryFunction { raw: retain(raw) })
-        .collect()
+fn m4_binary_functions_from_array(array: id) -> NSArrayIterator<M4BinaryFunction> {
+    NSArrayIterator::new(array)
 }
 
-fn m4_archives_from_array(array: id) -> Vec<M4Archive> {
-    ns_array_to_vec(array)
-        .into_iter()
-        .map(|raw| M4Archive { raw: retain(raw) })
-        .collect()
+fn m4_archives_from_array(array: id) -> NSArrayIterator<M4Archive> {
+    NSArrayIterator::new(array)
 }
 
 fn m4_geometry_base_get(raw: id) -> M4AccelerationStructureGeometryDescriptorBase {
@@ -144,7 +143,7 @@ fn m4_geometry_base_set(raw: id, base: &M4AccelerationStructureGeometryDescripto
         },
     );
     if let Some(label) = &base.label {
-        m4_set_label(raw, label);
+        msg_void_id(raw, sel(b"setLabel:\0"), label.raw());
     }
     m4_set_buffer_range(
         raw,
@@ -168,7 +167,7 @@ pub struct M4AccelerationStructureGeometryDescriptorBase {
     pub intersection_function_table_offset: usize,
     pub opaque: bool,
     pub allow_duplicate_intersection_function_invocation: bool,
-    pub label: Option<String>,
+    pub label: Option<NSString>,
     pub primitive_data_buffer: M4BufferRange,
     pub primitive_data_stride: usize,
     pub primitive_data_element_size: usize,
@@ -277,7 +276,7 @@ impl M4PipelineDescriptor {
         }
     }
 
-    pub fn label(&self) -> Option<String> {
+    pub fn label(&self) -> Option<NSString> {
         m4_label(self.raw)
     }
 
@@ -311,8 +310,17 @@ impl Drop for M4PipelineDescriptor {
 // ---------------------------------------------------------------------------
 
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct M4FunctionDescriptor {
     pub raw: id,
+}
+
+impl Clone for M4FunctionDescriptor {
+    fn clone(&self) -> Self {
+        Self {
+            raw: retain(self.raw),
+        }
+    }
 }
 
 impl M4FunctionDescriptor {
@@ -347,8 +355,13 @@ impl M4LibraryDescriptor {
         }
     }
 
-    pub fn source(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"source\0")))
+    pub fn source(&self) -> Option<NSString> {
+        let ptr = msg_id(self.raw, sel(b"source\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(NSString::from_raw(ptr))
+        }
     }
 
     pub fn set_source(&self, source: &str) {
@@ -364,8 +377,13 @@ impl M4LibraryDescriptor {
         m4_set_optional_id(self.raw, sel(b"setOptions:\0"), options.map(|o| o.raw));
     }
 
-    pub fn name(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"name\0")))
+    pub fn name(&self) -> Option<NSString> {
+        let ptr = msg_id(self.raw, sel(b"name\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(NSString::from_raw(ptr))
+        }
     }
 
     pub fn set_name(&self, name: &str) {
@@ -398,8 +416,13 @@ impl M4LibraryFunctionDescriptor {
         }
     }
 
-    pub fn name(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"name\0")))
+    pub fn name(&self) -> Option<NSString> {
+        let ptr = msg_id(self.raw, sel(b"name\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(NSString::from_raw(ptr))
+        }
     }
 
     pub fn set_name(&self, name: &str) {
@@ -448,8 +471,13 @@ impl M4BinaryFunctionDescriptor {
         }
     }
 
-    pub fn name(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"name\0")))
+    pub fn name(&self) -> Option<NSString> {
+        let ptr = msg_id(self.raw, sel(b"name\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(NSString::from_raw(ptr))
+        }
     }
 
     pub fn set_name(&self, name: &str) {
@@ -516,8 +544,13 @@ impl M4SpecializedFunctionDescriptor {
         );
     }
 
-    pub fn specialized_name(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"specializedName\0")))
+    pub fn specialized_name(&self) -> Option<NSString> {
+        let ptr = msg_id(self.raw, sel(b"specializedName\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(NSString::from_raw(ptr))
+        }
     }
 
     pub fn set_specialized_name(&self, name: &str) {
@@ -570,16 +603,18 @@ impl M4StitchedFunctionDescriptor {
         m4_set_optional_id(self.raw, sel(b"setFunctionGraph:\0"), graph.map(|g| g.raw));
     }
 
-    pub fn function_descriptors(&self) -> Vec<M4FunctionDescriptor> {
+    pub fn function_descriptors(&self) -> NSArrayIterator<M4FunctionDescriptor> {
         m4_function_descriptors_from_array(msg_id(self.raw, sel(b"functionDescriptors\0")))
     }
 
-    pub fn set_function_descriptors(&self, descriptors: &[&M4FunctionDescriptor]) {
-        let raw: Vec<id> = descriptors.iter().map(|d| d.raw).collect();
+    pub fn set_function_descriptors(&self, descriptors: &[M4FunctionDescriptor]) {
+        let raw_ptrs = unsafe {
+            std::slice::from_raw_parts(descriptors.as_ptr() as *const id, descriptors.len())
+        };
         msg_void_id(
             self.raw,
             sel(b"setFunctionDescriptors:\0"),
-            ns_array_from_ids(&raw),
+            ns_array_from_ids(raw_ptrs),
         );
     }
 }
@@ -601,8 +636,17 @@ impl Drop for M4StitchedFunctionDescriptor {
 // ---------------------------------------------------------------------------
 
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct M4BinaryFunction {
     pub raw: id,
+}
+
+impl Clone for M4BinaryFunction {
+    fn clone(&self) -> Self {
+        Self {
+            raw: retain(self.raw),
+        }
+    }
 }
 
 impl M4BinaryFunction {
@@ -610,8 +654,13 @@ impl M4BinaryFunction {
         Self { raw: retain(raw) }
     }
 
-    pub fn name(&self) -> Option<String> {
-        ns_string_to_string(msg_id(self.raw, sel(b"name\0")))
+    pub fn name(&self) -> Option<NSString> {
+        let ptr = msg_id(self.raw, sel(b"name\0"));
+        if ptr.is_null() {
+            None
+        } else {
+            Some(NSString::from_raw(ptr))
+        }
     }
 
     pub fn function_type(&self) -> FunctionType {
@@ -649,29 +698,33 @@ impl M4StaticLinkingDescriptor {
         }
     }
 
-    pub fn function_descriptors(&self) -> Vec<M4FunctionDescriptor> {
+    pub fn function_descriptors(&self) -> NSArrayIterator<M4FunctionDescriptor> {
         m4_function_descriptors_from_array(msg_id(self.raw, sel(b"functionDescriptors\0")))
     }
 
-    pub fn set_function_descriptors(&self, descriptors: &[&M4FunctionDescriptor]) {
-        let raw: Vec<id> = descriptors.iter().map(|d| d.raw).collect();
+    pub fn set_function_descriptors(&self, descriptors: &[M4FunctionDescriptor]) {
+        let raw_ptrs = unsafe {
+            std::slice::from_raw_parts(descriptors.as_ptr() as *const id, descriptors.len())
+        };
         msg_void_id(
             self.raw,
             sel(b"setFunctionDescriptors:\0"),
-            ns_array_from_ids(&raw),
+            ns_array_from_ids(raw_ptrs),
         );
     }
 
-    pub fn private_function_descriptors(&self) -> Vec<M4FunctionDescriptor> {
+    pub fn private_function_descriptors(&self) -> NSArrayIterator<M4FunctionDescriptor> {
         m4_function_descriptors_from_array(msg_id(self.raw, sel(b"privateFunctionDescriptors\0")))
     }
 
-    pub fn set_private_function_descriptors(&self, descriptors: &[&M4FunctionDescriptor]) {
-        let raw: Vec<id> = descriptors.iter().map(|d| d.raw).collect();
+    pub fn set_private_function_descriptors(&self, descriptors: &[M4FunctionDescriptor]) {
+        let raw_ptrs = unsafe {
+            std::slice::from_raw_parts(descriptors.as_ptr() as *const id, descriptors.len())
+        };
         msg_void_id(
             self.raw,
             sel(b"setPrivateFunctionDescriptors:\0"),
-            ns_array_from_ids(&raw),
+            ns_array_from_ids(raw_ptrs),
         );
     }
 }
@@ -708,32 +761,31 @@ impl M4PipelineStageDynamicLinkingDescriptor {
         msg_void_usize(self.raw, sel(b"setMaxCallStackDepth:\0"), depth);
     }
 
-    pub fn binary_linked_functions(&self) -> Vec<M4BinaryFunction> {
+    pub fn binary_linked_functions(&self) -> NSArrayIterator<M4BinaryFunction> {
         m4_binary_functions_from_array(msg_id(self.raw, sel(b"binaryLinkedFunctions\0")))
     }
 
-    pub fn set_binary_linked_functions(&self, functions: &[&M4BinaryFunction]) {
-        let raw: Vec<id> = functions.iter().map(|f| f.raw).collect();
+    pub fn set_binary_linked_functions(&self, functions: &[M4BinaryFunction]) {
+        let raw_ptrs =
+            unsafe { std::slice::from_raw_parts(functions.as_ptr() as *const id, functions.len()) };
         msg_void_id(
             self.raw,
             sel(b"setBinaryLinkedFunctions:\0"),
-            ns_array_from_ids(&raw),
+            ns_array_from_ids(raw_ptrs),
         );
     }
 
-    pub fn preloaded_libraries(&self) -> Vec<DynamicLibrary> {
-        ns_array_to_vec(msg_id(self.raw, sel(b"preloadedLibraries\0")))
-            .into_iter()
-            .map(|raw| DynamicLibrary { raw: retain(raw) })
-            .collect()
+    pub fn preloaded_libraries(&self) -> NSArrayIterator<DynamicLibrary> {
+        NSArrayIterator::new(msg_id(self.raw, sel(b"preloadedLibraries\0")))
     }
 
-    pub fn set_preloaded_libraries(&self, libraries: &[&DynamicLibrary]) {
-        let raw: Vec<id> = libraries.iter().map(|l| l.raw).collect();
+    pub fn set_preloaded_libraries(&self, libraries: &[DynamicLibrary]) {
+        let raw_ptrs =
+            unsafe { std::slice::from_raw_parts(libraries.as_ptr() as *const id, libraries.len()) };
         msg_void_id(
             self.raw,
             sel(b"setPreloadedLibraries:\0"),
-            ns_array_from_ids(&raw),
+            ns_array_from_ids(raw_ptrs),
         );
     }
 }
@@ -959,7 +1011,7 @@ impl M4RenderPipelineDescriptor {
         }
     }
 
-    pub fn label(&self) -> Option<String> {
+    pub fn label(&self) -> Option<NSString> {
         m4_label(self.raw)
     }
 
@@ -1101,7 +1153,7 @@ impl M4ComputePipelineDescriptor {
         }
     }
 
-    pub fn label(&self) -> Option<String> {
+    pub fn label(&self) -> Option<NSString> {
         m4_label(self.raw)
     }
 
@@ -1370,7 +1422,7 @@ impl M4MachineLearningPipelineDescriptor {
         }
     }
 
-    pub fn label(&self) -> Option<String> {
+    pub fn label(&self) -> Option<NSString> {
         m4_label(self.raw)
     }
 
@@ -1442,12 +1494,8 @@ pub struct M4MachineLearningPipelineReflection {
 }
 
 impl M4MachineLearningPipelineReflection {
-    pub fn bindings(&self) -> Vec<Binding> {
-        ns_array_to_vec(msg_id(self.raw, sel(b"bindings\0")))
-            .into_iter()
-            .filter(|item| !item.is_null())
-            .map(|item| Binding::new_with_raw(item))
-            .collect()
+    pub fn bindings(&self) -> NSArrayIterator<Binding> {
+        NSArrayIterator::new(msg_id(self.raw, sel(b"bindings\0")))
     }
 }
 
@@ -1467,7 +1515,7 @@ impl M4MachineLearningPipelineState {
         Self { raw: retain(raw) }
     }
 
-    pub fn label(&self) -> Option<String> {
+    pub fn label(&self) -> Option<NSString> {
         m4_label(self.raw)
     }
 
@@ -1565,7 +1613,7 @@ impl M4CounterHeap {
         Self { raw: retain(raw) }
     }
 
-    pub fn label(&self) -> Option<String> {
+    pub fn label(&self) -> Option<NSString> {
         m4_label(self.raw)
     }
 
@@ -1584,7 +1632,7 @@ impl M4CounterHeap {
         }
     }
 
-    pub fn resolve_counter_range(&self, range: Range) -> Option<Vec<u8>> {
+    pub fn resolve_counter_range(&self, range: Range) -> Option<NSData> {
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, Range) -> id =
                 transmute(objc_msgSend as *const c_void);
@@ -1592,12 +1640,7 @@ impl M4CounterHeap {
             if data.is_null() {
                 return None;
             }
-            let len = msg_usize(data, sel(b"length\0"));
-            let bytes = msg_id(data, sel(b"bytes\0")) as *const u8;
-            if bytes.is_null() {
-                return None;
-            }
-            Some(std::slice::from_raw_parts(bytes, len).to_vec())
+            Some(NSData::from_raw(data))
         }
     }
 
@@ -1676,7 +1719,7 @@ impl M4ArgumentTableDescriptor {
         );
     }
 
-    pub fn label(&self) -> Option<String> {
+    pub fn label(&self) -> Option<NSString> {
         m4_label(self.raw)
     }
 
@@ -1784,7 +1827,7 @@ impl M4ArgumentTable {
         }
     }
 
-    pub fn label(&self) -> Option<String> {
+    pub fn label(&self) -> Option<NSString> {
         m4_label(self.raw)
     }
 }
@@ -1800,8 +1843,17 @@ impl Drop for M4ArgumentTable {
 // ---------------------------------------------------------------------------
 
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct M4Archive {
     pub raw: id,
+}
+
+impl Clone for M4Archive {
+    fn clone(&self) -> Self {
+        Self {
+            raw: retain(self.raw),
+        }
+    }
 }
 
 impl M4Archive {
@@ -1809,7 +1861,7 @@ impl M4Archive {
         Self { raw: retain(raw) }
     }
 
-    pub fn label(&self) -> Option<String> {
+    pub fn label(&self) -> Option<NSString> {
         m4_label(self.raw)
     }
 
@@ -1903,7 +1955,7 @@ impl M4CommandAllocatorDescriptor {
         }
     }
 
-    pub fn label(&self) -> Option<String> {
+    pub fn label(&self) -> Option<NSString> {
         m4_label(self.raw)
     }
 
@@ -1940,7 +1992,7 @@ impl M4CommandAllocator {
         }
     }
 
-    pub fn label(&self) -> Option<String> {
+    pub fn label(&self) -> Option<NSString> {
         m4_label(self.raw)
     }
 
@@ -1997,8 +2049,17 @@ impl Drop for M4CommandBufferOptions {
 }
 
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct M4CommandBuffer {
     pub raw: id,
+}
+
+impl Clone for M4CommandBuffer {
+    fn clone(&self) -> Self {
+        Self {
+            raw: retain(self.raw),
+        }
+    }
 }
 
 impl M4CommandBuffer {
@@ -2012,7 +2073,7 @@ impl M4CommandBuffer {
         }
     }
 
-    pub fn label(&self) -> Option<String> {
+    pub fn label(&self) -> Option<NSString> {
         m4_label(self.raw)
     }
 
@@ -2145,7 +2206,7 @@ impl M4CommandEncoder {
         Self { raw: retain(raw) }
     }
 
-    pub fn label(&self) -> Option<String> {
+    pub fn label(&self) -> Option<NSString> {
         m4_label(self.raw)
     }
 
@@ -2297,7 +2358,7 @@ impl M4CommandQueueDescriptor {
         }
     }
 
-    pub fn label(&self) -> Option<String> {
+    pub fn label(&self) -> Option<NSString> {
         m4_label(self.raw)
     }
 
@@ -2334,39 +2395,42 @@ impl M4CommandQueue {
         }
     }
 
-    pub fn label(&self) -> Option<String> {
+    pub fn label(&self) -> Option<NSString> {
         m4_label(self.raw)
     }
 
-    pub fn commit(&self, command_buffers: &[&M4CommandBuffer]) {
+    pub fn commit(&self, command_buffers: &[M4CommandBuffer]) {
         if command_buffers.is_empty() {
             return;
         }
-        let raw: Vec<id> = command_buffers.iter().map(|b| b.raw).collect();
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, *const id, usize) =
                 transmute(objc_msgSend as *const c_void);
-            f(self.raw, sel(b"commit:count:\0"), raw.as_ptr(), raw.len());
+            f(
+                self.raw,
+                sel(b"commit:count:\0"),
+                command_buffers.as_ptr() as *const id,
+                command_buffers.len(),
+            );
         }
     }
 
     pub fn commit_with_options(
         &self,
-        command_buffers: &[&M4CommandBuffer],
+        command_buffers: &[M4CommandBuffer],
         options: &M4CommitOptions,
     ) {
         if command_buffers.is_empty() {
             return;
         }
-        let raw: Vec<id> = command_buffers.iter().map(|b| b.raw).collect();
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, *const id, usize, id) =
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
                 sel(b"commit:count:options:\0"),
-                raw.as_ptr(),
-                raw.len(),
+                command_buffers.as_ptr() as *const id,
+                command_buffers.len(),
                 options.raw,
             );
         }
@@ -2449,7 +2513,7 @@ impl M4CompilerDescriptor {
         }
     }
 
-    pub fn label(&self) -> Option<String> {
+    pub fn label(&self) -> Option<NSString> {
         m4_label(self.raw)
     }
 
@@ -2498,16 +2562,17 @@ impl M4CompilerTaskOptions {
         }
     }
 
-    pub fn lookup_archives(&self) -> Vec<M4Archive> {
+    pub fn lookup_archives(&self) -> NSArrayIterator<M4Archive> {
         m4_archives_from_array(msg_id(self.raw, sel(b"lookupArchives\0")))
     }
 
-    pub fn set_lookup_archives(&self, archives: &[&M4Archive]) {
-        let raw: Vec<id> = archives.iter().map(|a| a.raw).collect();
+    pub fn set_lookup_archives(&self, archives: &[M4Archive]) {
+        let raw_ptrs =
+            unsafe { std::slice::from_raw_parts(archives.as_ptr() as *const id, archives.len()) };
         msg_void_id(
             self.raw,
             sel(b"setLookupArchives:\0"),
-            ns_array_from_ids(&raw),
+            ns_array_from_ids(raw_ptrs),
         );
     }
 }
@@ -2585,7 +2650,7 @@ impl M4Compiler {
         }
     }
 
-    pub fn label(&self) -> Option<String> {
+    pub fn label(&self) -> Option<NSString> {
         m4_label(self.raw)
     }
 
@@ -2798,7 +2863,7 @@ impl M4PipelineDataSetSerializer {
         }
     }
 
-    pub fn serialize_as_pipelines_script(&self) -> Result<Vec<u8>, MetalError> {
+    pub fn serialize_as_pipelines_script(&self) -> Result<NSData, MetalError> {
         unsafe {
             let mut error = NIL;
             let f: unsafe extern "C" fn(id, SEL, *mut id) -> id =
@@ -2814,9 +2879,7 @@ impl M4PipelineDataSetSerializer {
                     "serializeAsPipelinesScriptWithError failed",
                 )));
             }
-            let len = msg_usize(data, sel(b"length\0"));
-            let bytes = msg_id(data, sel(b"bytes\0")) as *const u8;
-            Ok(std::slice::from_raw_parts(bytes, len).to_vec())
+            Ok(NSData::from_raw(data))
         }
     }
 }
@@ -3180,8 +3243,17 @@ impl Drop for M4AccelerationStructureDescriptor {
 }
 
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct M4AccelerationStructureGeometryDescriptor {
     pub raw: id,
+}
+
+impl Clone for M4AccelerationStructureGeometryDescriptor {
+    fn clone(&self) -> Self {
+        Self {
+            raw: retain(self.raw),
+        }
+    }
 }
 
 impl M4AccelerationStructureGeometryDescriptor {
@@ -3224,22 +3296,23 @@ impl M4PrimitiveAccelerationStructureDescriptor {
         }
     }
 
-    pub fn geometry_descriptors(&self) -> Vec<M4AccelerationStructureGeometryDescriptor> {
-        ns_array_to_vec(msg_id(self.raw, sel(b"geometryDescriptors\0")))
-            .into_iter()
-            .map(|raw| M4AccelerationStructureGeometryDescriptor { raw: retain(raw) })
-            .collect()
+    pub fn geometry_descriptors(
+        &self,
+    ) -> NSArrayIterator<M4AccelerationStructureGeometryDescriptor> {
+        NSArrayIterator::new(msg_id(self.raw, sel(b"geometryDescriptors\0")))
     }
 
     pub fn set_geometry_descriptors(
         &self,
-        descriptors: &[&M4AccelerationStructureGeometryDescriptor],
+        descriptors: &[M4AccelerationStructureGeometryDescriptor],
     ) {
-        let raw: Vec<id> = descriptors.iter().map(|d| d.raw).collect();
+        let raw_ptrs = unsafe {
+            std::slice::from_raw_parts(descriptors.as_ptr() as *const id, descriptors.len())
+        };
         msg_void_id(
             self.raw,
             sel(b"setGeometryDescriptors:\0"),
-            ns_array_from_ids(&raw),
+            ns_array_from_ids(raw_ptrs),
         );
     }
 

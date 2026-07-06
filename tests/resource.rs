@@ -234,7 +234,13 @@ fn resource_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     byte_arg.set_access(ArgumentAccess::ReadOnly);
 
     let arg_encoder = device.new_argument_encoder(&[
-        &buf_arg0, &buf_arg1, &tex_arg0, &tex_arg1, &samp_arg0, &samp_arg1, &byte_arg,
+        buf_arg0.clone(),
+        buf_arg1.clone(),
+        tex_arg0.clone(),
+        tex_arg1.clone(),
+        samp_arg0.clone(),
+        samp_arg1.clone(),
+        byte_arg.clone(),
     ])?;
     assert!(arg_encoder.encoded_length() > 0);
     assert!(arg_encoder.alignment() > 0);
@@ -261,13 +267,38 @@ fn resource_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     arg_encoder.set_sampler_state(4, &sampler_state);
 
     println!("Step 14.5: set_buffers range");
-    arg_encoder.set_buffers(&[Some(&buffer), None], &[0, 0], Range::new(0, 2))?;
+    arg_encoder.set_buffers(
+        &[
+            Buffer {
+                raw: retain(buffer.raw),
+            },
+            Buffer::null(),
+        ],
+        &[0, 0],
+        Range::new(0, 2),
+    )?;
 
     println!("Step 14.6: set_textures range");
-    arg_encoder.set_textures(&[Some(&texture), None], Range::new(2, 2))?;
+    arg_encoder.set_textures(
+        &[
+            Texture {
+                raw: retain(texture.raw),
+            },
+            Texture::null(),
+        ],
+        Range::new(2, 2),
+    )?;
 
     println!("Step 14.7: set_sampler_states range");
-    arg_encoder.set_sampler_states(&[Some(&sampler_state), None], Range::new(4, 2))?;
+    arg_encoder.set_sampler_states(
+        &[
+            SamplerState {
+                raw: retain(sampler_state.raw),
+            },
+            SamplerState::null(),
+        ],
+        Range::new(4, 2),
+    )?;
 
     println!("Step 14.8: set_bytes");
     println!(
@@ -291,15 +322,30 @@ fn resource_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
         if let Ok(v_table) = state.new_visible_function_table(&table_desc) {
             arg_encoder.set_visible_function_table(Some(&v_table), 0)?;
             arg_encoder.set_visible_function_table(None, 0)?;
-            arg_encoder.set_visible_function_tables(&[Some(&v_table), None], Range::new(0, 2))?;
+            arg_encoder.set_visible_function_tables(
+                &[
+                    VisibleFunctionTable {
+                        raw: retain(v_table.raw),
+                    },
+                    VisibleFunctionTable::null(),
+                ],
+                Range::new(0, 2),
+            )?;
         }
         let isect_desc = IntersectionFunctionTableDescriptor::new();
         isect_desc.set_function_count(4);
         if let Ok(i_table) = state.new_intersection_function_table(&isect_desc) {
             arg_encoder.set_intersection_function_table(Some(&i_table), 0)?;
             arg_encoder.set_intersection_function_table(None, 0)?;
-            arg_encoder
-                .set_intersection_function_tables(&[Some(&i_table), None], Range::new(0, 2))?;
+            arg_encoder.set_intersection_function_tables(
+                &[
+                    IntersectionFunctionTable {
+                        raw: retain(i_table.raw),
+                    },
+                    IntersectionFunctionTable::null(),
+                ],
+                Range::new(0, 2),
+            )?;
         }
     }
 
@@ -313,7 +359,7 @@ fn resource_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
         tri_desc.set_vertex_format(VertexFormat::Float3);
         tri_desc.set_triangle_count(1);
         let primitive_desc = PrimitiveAccelerationStructureDescriptor::new();
-        primitive_desc.set_geometry_descriptors(&[&tri_desc]);
+        primitive_desc.set_geometry_descriptors(&[tri_desc]);
         let sizes = device.acceleration_structure_sizes(&primitive_desc)?;
         if let Ok(accel) = device.new_acceleration_structure(sizes.acceleration_structure_size) {
             arg_encoder.set_acceleration_structure(Some(&accel), 0)?;
