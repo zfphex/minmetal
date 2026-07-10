@@ -720,8 +720,6 @@ pub struct ComputePipelineState {
     pub raw: id,
 }
 
-impl crate::ffi::TransparentId for ComputePipelineState {}
-
 impl Drop for ComputePipelineState {
     fn drop(&mut self) {
         release(self.raw);
@@ -1491,8 +1489,6 @@ pub struct RenderPipelineState {
     pub raw: id,
 }
 
-impl crate::ffi::TransparentId for RenderPipelineState {}
-
 impl Drop for RenderPipelineState {
     fn drop(&mut self) {
         release(self.raw);
@@ -2180,8 +2176,6 @@ pub struct SamplerState {
     pub raw: id,
 }
 
-impl crate::ffi::TransparentId for SamplerState {}
-
 impl Drop for SamplerState {
     fn drop(&mut self) {
         release(self.raw);
@@ -2574,8 +2568,6 @@ pub struct FunctionHandle {
     pub raw: id,
 }
 
-impl crate::ffi::TransparentId for FunctionHandle {}
-
 impl FunctionHandle {
     #[inline]
     pub const fn null() -> Self {
@@ -2846,8 +2838,6 @@ pub struct VisibleFunctionTable {
     pub raw: id,
 }
 
-impl crate::ffi::TransparentId for VisibleFunctionTable {}
-
 impl VisibleFunctionTable {
     #[inline]
     pub const fn null() -> Self {
@@ -2892,7 +2882,7 @@ impl VisibleFunctionTable {
         msg_void_ptr_range(
             self.raw,
             sel(b"setFunctions:withRange:\0"),
-            transparent_id_slice(functions).as_ptr(),
+            functions.as_ptr() as *const id,
             range,
         );
     }
@@ -2960,8 +2950,6 @@ impl Drop for IntersectionFunctionTableDescriptor {
 pub struct IntersectionFunctionTable {
     pub raw: id,
 }
-
-impl crate::ffi::TransparentId for IntersectionFunctionTable {}
 
 impl IntersectionFunctionTable {
     #[inline]
@@ -3112,7 +3100,7 @@ impl IntersectionFunctionTable {
         msg_void_ptr_range(
             self.raw,
             sel(b"setFunctions:withRange:\0"),
-            transparent_id_slice(functions).as_ptr(),
+            functions.as_ptr() as *const id,
             range,
         );
         Ok(())
@@ -3151,7 +3139,7 @@ impl IntersectionFunctionTable {
         msg_void_ptr_ptr_range(
             self.raw,
             sel(b"setBuffers:offsets:withRange:\0"),
-            transparent_id_slice(buffers).as_ptr(),
+            buffers.as_ptr() as *const id,
             offsets.as_ptr(),
             range,
         );
@@ -3260,7 +3248,7 @@ impl IntersectionFunctionTable {
         msg_void_ptr_range(
             self.raw,
             sel(b"setVisibleFunctionTables:withBufferRange:\0"),
-            transparent_id_slice(tables).as_ptr(),
+            tables.as_ptr() as *const id,
             range,
         );
         Ok(())

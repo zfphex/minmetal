@@ -989,7 +989,7 @@ impl RenderCommandEncoder {
         msg_void_ptr_ptr_range(
             self.raw,
             sel(b"setVertexBuffers:offsets:withRange:\0"),
-            transparent_id_slice(buffers).as_ptr(),
+            buffers.as_ptr() as *const id,
             offsets.as_ptr(),
             range,
         );
@@ -999,7 +999,7 @@ impl RenderCommandEncoder {
         msg_void_ptr_range(
             self.raw,
             sel(b"setVertexTextures:withRange:\0"),
-            transparent_id_slice(textures).as_ptr(),
+            textures.as_ptr() as *const id,
             range,
         );
     }
@@ -1008,7 +1008,7 @@ impl RenderCommandEncoder {
         msg_void_ptr_range(
             self.raw,
             sel(b"setVertexSamplerStates:withRange:\0"),
-            transparent_id_slice(samplers).as_ptr(),
+            samplers.as_ptr() as *const id,
             range,
         );
     }
@@ -1017,7 +1017,7 @@ impl RenderCommandEncoder {
         msg_void_ptr_ptr_range(
             self.raw,
             sel(b"setFragmentBuffers:offsets:withRange:\0"),
-            transparent_id_slice(buffers).as_ptr(),
+            buffers.as_ptr() as *const id,
             offsets.as_ptr(),
             range,
         );
@@ -1027,7 +1027,7 @@ impl RenderCommandEncoder {
         msg_void_ptr_range(
             self.raw,
             sel(b"setFragmentTextures:withRange:\0"),
-            transparent_id_slice(textures).as_ptr(),
+            textures.as_ptr() as *const id,
             range,
         );
     }
@@ -1036,7 +1036,7 @@ impl RenderCommandEncoder {
         msg_void_ptr_range(
             self.raw,
             sel(b"setFragmentSamplerStates:withRange:\0"),
-            transparent_id_slice(samplers).as_ptr(),
+            samplers.as_ptr() as *const id,
             range,
         );
     }
@@ -1049,7 +1049,7 @@ impl RenderCommandEncoder {
         msg_void_ptr_range(
             self.raw,
             sel(b"setVertexVisibleFunctionTables:withBufferRange:\0"),
-            transparent_id_slice(tables).as_ptr(),
+            tables.as_ptr() as *const id,
             range,
         );
     }
@@ -1062,7 +1062,7 @@ impl RenderCommandEncoder {
         msg_void_ptr_range(
             self.raw,
             sel(b"setVertexIntersectionFunctionTables:withBufferRange:\0"),
-            transparent_id_slice(tables).as_ptr(),
+            tables.as_ptr() as *const id,
             range,
         );
     }
@@ -1075,7 +1075,7 @@ impl RenderCommandEncoder {
         msg_void_ptr_range(
             self.raw,
             sel(b"setFragmentVisibleFunctionTables:withBufferRange:\0"),
-            transparent_id_slice(tables).as_ptr(),
+            tables.as_ptr() as *const id,
             range,
         );
     }
@@ -1088,7 +1088,7 @@ impl RenderCommandEncoder {
         msg_void_ptr_range(
             self.raw,
             sel(b"setFragmentIntersectionFunctionTables:withBufferRange:\0"),
-            transparent_id_slice(tables).as_ptr(),
+            tables.as_ptr() as *const id,
             range,
         );
     }
@@ -1097,7 +1097,7 @@ impl RenderCommandEncoder {
         msg_void_ptr_range(
             self.raw,
             sel(b"setTileVisibleFunctionTables:withBufferRange:\0"),
-            transparent_id_slice(tables).as_ptr(),
+            tables.as_ptr() as *const id,
             range,
         );
     }
@@ -1110,7 +1110,7 @@ impl RenderCommandEncoder {
         msg_void_ptr_range(
             self.raw,
             sel(b"setTileIntersectionFunctionTables:withBufferRange:\0"),
-            transparent_id_slice(tables).as_ptr(),
+            tables.as_ptr() as *const id,
             range,
         );
     }
@@ -1317,7 +1317,7 @@ impl ComputeCommandEncoder {
         msg_void_ptr_ptr_range(
             self.raw,
             sel(b"setBuffers:offsets:withRange:\0"),
-            transparent_id_slice(buffers).as_ptr(),
+            buffers.as_ptr() as *const id,
             offsets.as_ptr(),
             range,
         );
@@ -1327,7 +1327,7 @@ impl ComputeCommandEncoder {
         msg_void_ptr_range(
             self.raw,
             sel(b"setTextures:withRange:\0"),
-            transparent_id_slice(textures).as_ptr(),
+            textures.as_ptr() as *const id,
             range,
         );
     }
@@ -1336,7 +1336,7 @@ impl ComputeCommandEncoder {
         msg_void_ptr_range(
             self.raw,
             sel(b"setSamplerStates:withRange:\0"),
-            transparent_id_slice(samplers).as_ptr(),
+            samplers.as_ptr() as *const id,
             range,
         );
     }
@@ -1345,7 +1345,7 @@ impl ComputeCommandEncoder {
         msg_void_ptr_range(
             self.raw,
             sel(b"setVisibleFunctionTables:withBufferRange:\0"),
-            transparent_id_slice(tables).as_ptr(),
+            tables.as_ptr() as *const id,
             range,
         );
     }
@@ -1358,7 +1358,7 @@ impl ComputeCommandEncoder {
         msg_void_ptr_range(
             self.raw,
             sel(b"setIntersectionFunctionTables:withBufferRange:\0"),
-            transparent_id_slice(tables).as_ptr(),
+            tables.as_ptr() as *const id,
             range,
         );
     }
@@ -1432,7 +1432,7 @@ impl ComputeCommandEncoder {
             f(
                 self.raw,
                 sel(b"setBuffers:offsets:attributeStrides:withRange:\0"),
-                transparent_id_slice(buffers).as_ptr(),
+                buffers.as_ptr() as *const id,
                 offsets.as_ptr(),
                 strides.as_ptr(),
                 range,
@@ -1489,7 +1489,7 @@ impl ComputeCommandEncoder {
             f(
                 self.raw,
                 sel(b"setSamplerStates:lodMinClamps:lodMaxClamps:withRange:\0"),
-                transparent_id_slice(samplers).as_ptr(),
+                samplers.as_ptr() as *const id,
                 lod_min_clamps.as_ptr(),
                 lod_max_clamps.as_ptr(),
                 range,

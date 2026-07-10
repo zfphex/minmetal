@@ -235,16 +235,6 @@ pub(crate) fn msg_id_ptr_usize_usize(
     }
 }
 
-/// Marker for `#[repr(transparent)]` wrappers over `id`.
-pub(crate) trait TransparentId {}
-
-#[inline]
-pub(crate) fn transparent_id_slice<T: TransparentId>(slice: &[T]) -> &[id] {
-    debug_assert_eq!(std::mem::size_of::<T>(), std::mem::size_of::<id>());
-    debug_assert_eq!(std::mem::align_of::<T>(), std::mem::align_of::<id>());
-    unsafe { std::slice::from_raw_parts(slice.as_ptr().cast(), slice.len()) }
-}
-
 pub(crate) fn ns_array_from_ids(objects: &[id]) -> id {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL, *const id, usize) -> id =

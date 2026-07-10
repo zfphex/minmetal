@@ -21,8 +21,6 @@ pub struct Buffer {
     pub raw: id,
 }
 
-impl crate::ffi::TransparentId for Buffer {}
-
 impl Buffer {
     #[inline]
     pub const fn null() -> Self {
@@ -655,8 +653,6 @@ impl Drop for TextureDescriptor {
 pub struct Texture {
     pub raw: id,
 }
-
-impl crate::ffi::TransparentId for Texture {}
 
 impl Texture {
     #[inline]
@@ -1864,7 +1860,7 @@ impl ArgumentEncoder {
         msg_void_ptr_ptr_range(
             self.raw,
             sel(b"setBuffers:offsets:withRange:\0"),
-            transparent_id_slice(buffers).as_ptr(),
+            buffers.as_ptr() as *const id,
             offsets.as_ptr(),
             range,
         );
@@ -1876,7 +1872,7 @@ impl ArgumentEncoder {
         msg_void_ptr_range(
             self.raw,
             sel(b"setTextures:withRange:\0"),
-            transparent_id_slice(textures).as_ptr(),
+            textures.as_ptr() as *const id,
             range,
         );
         Ok(())
@@ -1891,7 +1887,7 @@ impl ArgumentEncoder {
         msg_void_ptr_range(
             self.raw,
             sel(b"setSamplerStates:withRange:\0"),
-            transparent_id_slice(samplers).as_ptr(),
+            samplers.as_ptr() as *const id,
             range,
         );
         Ok(())
@@ -1921,12 +1917,7 @@ impl ArgumentEncoder {
         self.validate_range(range, tables.len())?;
         let selector = sel(b"setVisibleFunctionTables:withRange:\0");
         if responds_to_selector(self.raw, selector) {
-            msg_void_ptr_range(
-                self.raw,
-                selector,
-                transparent_id_slice(tables).as_ptr(),
-                range,
-            );
+            msg_void_ptr_range(self.raw, selector, tables.as_ptr() as *const id, range);
             Ok(())
         } else {
             Err(MetalError::new(
@@ -1959,12 +1950,7 @@ impl ArgumentEncoder {
         self.validate_range(range, tables.len())?;
         let selector = sel(b"setIntersectionFunctionTables:withRange:\0");
         if responds_to_selector(self.raw, selector) {
-            msg_void_ptr_range(
-                self.raw,
-                selector,
-                transparent_id_slice(tables).as_ptr(),
-                range,
-            );
+            msg_void_ptr_range(self.raw, selector, tables.as_ptr() as *const id, range);
             Ok(())
         } else {
             Err(MetalError::new(
@@ -2037,12 +2023,7 @@ impl ArgumentEncoder {
                 "setRenderPipelineStates:withRange: not supported",
             ));
         }
-        msg_void_ptr_range(
-            self.raw,
-            selector,
-            transparent_id_slice(pipelines).as_ptr(),
-            range,
-        );
+        msg_void_ptr_range(self.raw, selector, pipelines.as_ptr() as *const id, range);
         Ok(())
     }
 
@@ -2074,12 +2055,7 @@ impl ArgumentEncoder {
                 "setComputePipelineStates:withRange: not supported",
             ));
         }
-        msg_void_ptr_range(
-            self.raw,
-            selector,
-            transparent_id_slice(pipelines).as_ptr(),
-            range,
-        );
+        msg_void_ptr_range(self.raw, selector, pipelines.as_ptr() as *const id, range);
         Ok(())
     }
 

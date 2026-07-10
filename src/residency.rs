@@ -9,8 +9,6 @@ pub struct Allocation {
     pub raw: id,
 }
 
-impl crate::ffi::TransparentId for Allocation {}
-
 impl Allocation {
     pub fn from_buffer(buffer: &Buffer) -> Self {
         Self { raw: buffer.raw }
@@ -155,11 +153,15 @@ impl ResidencySet {
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new("addAllocations:count: is not supported"));
         }
-        let ids = transparent_id_slice(allocations);
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, *const id, usize) =
                 transmute(objc_msgSend as *const c_void);
-            f(self.raw, selector, ids.as_ptr(), ids.len());
+            f(
+                self.raw,
+                selector,
+                allocations.as_ptr() as *const id,
+                allocations.len(),
+            );
         }
         Ok(())
     }
@@ -178,11 +180,15 @@ impl ResidencySet {
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new("removeAllocations:count: is not supported"));
         }
-        let ids = transparent_id_slice(allocations);
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, *const id, usize) =
                 transmute(objc_msgSend as *const c_void);
-            f(self.raw, selector, ids.as_ptr(), ids.len());
+            f(
+                self.raw,
+                selector,
+                allocations.as_ptr() as *const id,
+                allocations.len(),
+            );
         }
         Ok(())
     }
