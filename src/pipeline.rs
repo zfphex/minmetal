@@ -1665,11 +1665,20 @@ impl RenderPipelineState {
 #[derive(Debug)]
 pub struct StencilDescriptor {
     pub raw: id,
+    owned: bool,
 }
 
 impl StencilDescriptor {
+    pub fn new() -> Self {
+        let allocated = msg_id(class(b"MTLStencilDescriptor\0"), sel(b"alloc\0"));
+        Self {
+            raw: msg_id(allocated, sel(b"init\0")),
+            owned: true,
+        }
+    }
+
     fn borrowed(raw: id) -> Self {
-        Self { raw }
+        Self { raw, owned: false }
     }
 
     pub fn stencil_compare_function(&self) -> CompareFunction {
@@ -1837,6 +1846,14 @@ impl DepthStencilDescriptor {
         StencilDescriptor::borrowed(msg_id(self.raw, sel(b"backFaceStencil\0")))
     }
 
+    pub fn set_front_face_stencil(&self, stencil: &StencilDescriptor) {
+        msg_void_id(self.raw, sel(b"setFrontFaceStencil:\0"), stencil.raw);
+    }
+
+    pub fn set_back_face_stencil(&self, stencil: &StencilDescriptor) {
+        msg_void_id(self.raw, sel(b"setBackFaceStencil:\0"), stencil.raw);
+    }
+
     pub fn label(&self) -> Option<NSString> {
         pipeline_label(self.raw)
     }
@@ -1844,6 +1861,14 @@ impl DepthStencilDescriptor {
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
         msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+    }
+}
+
+impl Drop for StencilDescriptor {
+    fn drop(&mut self) {
+        if self.owned {
+            release(self.raw);
+        }
     }
 }
 

@@ -1,4 +1,4 @@
-use miniwin::*;
+use minwin::*;
 use minmetal::*;
 
 #[repr(C)]
