@@ -53,6 +53,17 @@ fn device_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     );
     assert!(empty_command_buffer.error().is_none());
 
+    let cb_handler = queue.command_buffer()?;
+    let called = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+    let called_clone = called.clone();
+    cb_handler.add_completed_handler(move |cb_arg| {
+        assert_eq!(cb_arg.status(), CommandBufferStatus::Completed);
+        called_clone.store(true, std::sync::atomic::Ordering::Relaxed);
+    });
+    cb_handler.commit();
+    cb_handler.wait_until_completed();
+    assert!(called.load(std::sync::atomic::Ordering::Relaxed));
+
     let fence = device.new_fence()?;
     assert!(!fence.raw.is_null());
 
@@ -91,7 +102,8 @@ fn device_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(func.name(), "test_kernel");
 
     // Source compilation with options
-    let lib_opts = device.new_library_with_source_and_options(source, &opts)?;
+    let clean_opts = CompileOptions::new();
+    let lib_opts = device.new_library_with_source_and_options(source, &clean_opts)?;
     assert!(!lib_opts.raw.is_null());
 
     let bad_source = device.new_library_with_source("this is not metal");

@@ -13,7 +13,9 @@ unsafe extern "C" {
     static MTLDeviceWasAddedNotification: id;
     static MTLDeviceRemovalRequestedNotification: id;
     static MTLDeviceWasRemovedNotification: id;
-    static _NSConcreteGlobalBlock: *const c_void;
+    static _NSConcreteGlobalBlock: c_void;
+    static _NSConcreteStackBlock: c_void;
+    static _NSConcreteMallocBlock: c_void;
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -114,9 +116,72 @@ fn device_notification_block() -> id {
         };
         static INIT: std::sync::Once = std::sync::Once::new();
         INIT.call_once(|| {
-            BLOCK.isa = _NSConcreteGlobalBlock;
+            BLOCK.isa = &_NSConcreteGlobalBlock as *const c_void;
         });
         &raw const BLOCK as *const GlobalBlock as id
+    }
+}
+
+type CompletedHandlerFn = Box<dyn FnOnce(&CommandBuffer) + Send>;
+
+#[repr(C)]
+struct CompletedHandlerBlock {
+    isa: *const c_void,
+    flags: i32,
+    reserved: i32,
+    invoke: unsafe extern "C" fn(*mut CompletedHandlerBlock, id),
+    descriptor: *const CompletedHandlerBlockDescriptor,
+    closure: *mut CompletedHandlerFn,
+}
+
+#[repr(C)]
+struct CompletedHandlerBlockDescriptor {
+    reserved: u64,
+    size: u64,
+    copy_helper: unsafe extern "C" fn(*mut c_void, *mut c_void),
+    dispose_helper: unsafe extern "C" fn(*mut c_void),
+    signature: *const std::ffi::c_char,
+}
+
+unsafe impl Sync for CompletedHandlerBlockDescriptor {}
+
+static COMPLETED_HANDLER_SIGNATURE: &[u8] = b"v16@?0@\"<MTLCommandBuffer>\"8\0";
+
+static COMPLETED_HANDLER_BLOCK_DESCRIPTOR: CompletedHandlerBlockDescriptor =
+    CompletedHandlerBlockDescriptor {
+        reserved: 0,
+        size: size_of::<CompletedHandlerBlock>() as u64,
+        copy_helper: completed_handler_block_copy,
+        dispose_helper: completed_handler_block_dispose,
+        signature: COMPLETED_HANDLER_SIGNATURE.as_ptr() as *const std::ffi::c_char,
+    };
+
+// Pointer field is POD from ObjC's perspective, so copy is a plain memcpy —
+// the block runtime already does that for the whole struct. We only need
+// dispose to free the closure if it was never invoked.
+unsafe extern "C" fn completed_handler_block_copy(_dst: *mut c_void, _src: *mut c_void) {}
+
+unsafe extern "C" fn completed_handler_block_dispose(src: *mut c_void) {
+    let block = src as *mut CompletedHandlerBlock;
+    unsafe {
+        let ptr = (*block).closure;
+        if !ptr.is_null() {
+            drop(Box::from_raw(ptr));
+        }
+    }
+}
+
+unsafe extern "C" fn completed_handler_block_invoke(block: *mut CompletedHandlerBlock, cb_raw: id) {
+    unsafe {
+        let ptr = (*block).closure;
+        if !ptr.is_null() {
+            (*block).closure = ptr::null_mut();
+            let f = *Box::from_raw(ptr);
+            let cb = CommandBuffer {
+                raw: retain(cb_raw),
+            };
+            f(&cb);
+        }
     }
 }
 
@@ -1555,6 +1620,31 @@ impl CommandBuffer {
 
     pub fn wait_until_completed(&self) {
         msg_void(self.raw, sel(b"waitUntilCompleted\0"));
+    }
+
+    pub fn add_completed_handler<F>(&self, f: F)
+    where
+        F: FnOnce(&CommandBuffer) + Send + 'static,
+    {
+        let closure: CompletedHandlerFn = Box::new(f);
+        let closure_ptr = Box::into_raw(Box::new(closure));
+        let mut block = CompletedHandlerBlock {
+            isa: unsafe { &_NSConcreteStackBlock as *const c_void },
+            flags: (1 << 25) | (1 << 30),
+            reserved: 0,
+            invoke: completed_handler_block_invoke,
+            descriptor: &COMPLETED_HANDLER_BLOCK_DESCRIPTOR,
+            closure: closure_ptr,
+        };
+        let selector = sel(b"addCompletedHandler:\0");
+        if responds_to_selector(self.raw, selector) {
+            msg_void_id(self.raw, selector, &mut block as *mut _ as id);
+        } else {
+            // selector not supported: avoid leaking the closure
+            unsafe {
+                drop(Box::from_raw(closure_ptr));
+            }
+        }
     }
 
     pub fn status(&self) -> CommandBufferStatus {
