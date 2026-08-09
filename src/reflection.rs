@@ -186,7 +186,7 @@ impl StructType {
 
     pub fn members(&self) -> NSArrayIterator<StructMember> {
         if self.Type.raw.is_null() {
-            return NSArrayIterator::new(std::ptr::null_mut());
+            return NSArrayIterator::new(NIL);
         }
         let array = msg_id(self.Type.raw, sel(b"members\0"));
         NSArrayIterator::new(array)
@@ -906,13 +906,13 @@ impl FunctionReflection {
 
     pub fn bindings(&self) -> NSArrayIterator<Binding> {
         if self.raw.is_null() {
-            return NSArrayIterator::new(std::ptr::null_mut());
+            return NSArrayIterator::new(NIL);
         }
         let selector = sel(b"bindings\0");
         if responds_to_selector(self.raw, selector) {
             bindings_from_array(msg_id(self.raw, selector))
         } else {
-            NSArrayIterator::new(std::ptr::null_mut())
+            NSArrayIterator::new(NIL)
         }
     }
 
@@ -962,15 +962,15 @@ impl FunctionReflection {
 
     pub fn user_annotation_keys(&self) -> NSArrayIterator<NSString> {
         if self.raw.is_null() {
-            return NSArrayIterator::new(std::ptr::null_mut());
+            return NSArrayIterator::new(NIL);
         }
         let selector = sel(b"userAnnotation\0");
         if !responds_to_selector(self.raw, selector) {
-            return NSArrayIterator::new(std::ptr::null_mut());
+            return NSArrayIterator::new(NIL);
         }
         let annotation = msg_id(self.raw, selector);
         if annotation.is_null() || !responds_to_selector(annotation, sel(b"allKeys")) {
-            return NSArrayIterator::new(std::ptr::null_mut());
+            return NSArrayIterator::new(NIL);
         }
         let keys = ns_dictionary_all_keys(annotation);
         NSArrayIterator::new(keys)

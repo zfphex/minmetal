@@ -28,7 +28,7 @@ fn capture_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
             desc.set_capture_object(queue.raw);
         }
     } else {
-        desc.set_capture_object(std::ptr::null_mut());
+        desc.set_capture_object(NIL);
     }
 
     drop(desc);

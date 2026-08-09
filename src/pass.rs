@@ -1217,7 +1217,7 @@ impl AccelerationStructurePassSampleBufferAttachmentDescriptor {
     }
 
     pub fn set_sample_buffer(&self, sample_buffer: Option<&CounterSampleBuffer>) {
-        let ptr = sample_buffer.map(|b| b.raw).unwrap_or(std::ptr::null_mut());
+        let ptr = sample_buffer.map(|b| b.raw).unwrap_or(NIL);
         msg_void_id(self.raw, sel(b"setSampleBuffer:\0"), ptr);
     }
 
@@ -1289,7 +1289,7 @@ impl AccelerationStructurePassSampleBufferAttachmentDescriptorArray {
             index < 4,
             "AccelerationStructurePass sample buffer attachment index must be < 4"
         );
-        let ptr = attachment.map(|a| a.raw).unwrap_or(std::ptr::null_mut());
+        let ptr = attachment.map(|a| a.raw).unwrap_or(NIL);
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, id, usize) =
                 transmute(objc_msgSend as *const c_void);

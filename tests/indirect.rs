@@ -60,7 +60,7 @@ fn indirect_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     drop(desc_default);
 
     // 3. Nil-safe / Out-of-bounds error behavior
-    let nil_icb = IndirectCommandBuffer::from_raw(std::ptr::null_mut());
+    let nil_icb = IndirectCommandBuffer::from_raw(NIL);
     assert!(nil_icb.render_command(0).is_err());
     assert!(nil_icb.compute_command(0).is_err());
 

@@ -17,7 +17,7 @@ impl MetalLayer {
     }
 
     pub unsafe fn attach_to_view(
-        ns_view: *mut c_void,
+        ns_view: id,
         device: &Device,
         pixel_format: PixelFormat,
         width: usize,
@@ -179,11 +179,11 @@ impl MetalLayer {
     }
 
     pub fn colorspace(&self) -> *mut c_void {
-        msg_id(self.raw, sel(b"colorspace\0")) as *mut c_void
+        msg_id(self.raw, sel(b"colorspace\0")).0
     }
 
     pub fn set_colorspace(&self, colorspace: *mut c_void) {
-        msg_void_id(self.raw, sel(b"setColorspace:\0"), colorspace as id);
+        msg_void_id(self.raw, sel(b"setColorspace:\0"), id(colorspace));
     }
 
     pub fn wants_extended_dynamic_range_content(&self) -> Result<bool, MetalError> {

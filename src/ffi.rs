@@ -3,14 +3,32 @@ use std::ffi::{CStr, c_char, c_void};
 use std::mem::transmute;
 use std::ptr;
 
-pub type id = *mut c_void;
+#[repr(transparent)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct id(pub *mut c_void);
+unsafe impl Send for id {}
+unsafe impl Sync for id {}
+
+impl std::ops::Deref for id {
+    type Target = *mut c_void;
+    fn deref(&self) -> &*mut c_void {
+        &self.0
+    }
+}
+
+impl From<*mut c_void> for id {
+    fn from(ptr: *mut c_void) -> Self {
+        id(ptr)
+    }
+}
+
 pub type Class = *mut c_void;
 pub type SEL = *mut c_void;
 pub type BOOL = i8;
 
 pub const YES: BOOL = 1;
 pub const NO: BOOL = 0;
-pub const NIL: id = ptr::null_mut();
+pub const NIL: id = id(ptr::null_mut());
 
 #[link(name = "objc")]
 #[link(name = "Foundation", kind = "framework")]
@@ -23,8 +41,8 @@ unsafe extern "C" {
     pub fn MTLCreateSystemDefaultDevice() -> id;
 }
 
-pub fn class(name: &[u8]) -> Class {
-    unsafe { objc_getClass(name.as_ptr() as *const c_char) }
+pub fn class(name: &[u8]) -> id {
+    unsafe { id(objc_getClass(name.as_ptr() as *const c_char)) }
 }
 
 pub fn sel(name: &[u8]) -> SEL {
@@ -258,7 +276,7 @@ pub(crate) fn ns_array_count(array: id) -> usize {
 
 pub(crate) fn ns_array_object_at_index(array: id, index: usize) -> id {
     if array.is_null() {
-        ptr::null_mut()
+        NIL
     } else {
         msg_id_usize(array, sel(b"objectAtIndex:\0"), index)
     }
@@ -338,7 +356,7 @@ impl<T: FromRawId> Iterator for NSArrayIterator<T> {
 impl<T: FromRawId> ExactSizeIterator for NSArrayIterator<T> {}
 
 pub fn retain(obj: id) -> id {
-    if !obj.is_null() {
+    if !obj.0.is_null() {
         msg_id(obj, sel(b"retain\0"))
     } else {
         obj
@@ -346,7 +364,7 @@ pub fn retain(obj: id) -> id {
 }
 
 pub fn release(obj: id) {
-    if !obj.is_null() {
+    if !obj.0.is_null() {
         msg_void(obj, sel(b"release\0"));
     }
 }
@@ -400,7 +418,7 @@ impl NSString {
             return None;
         }
         unsafe {
-            let utf8_ptr = msg_id(self.raw, sel(b"UTF8String\0")) as *const std::ffi::c_char;
+            let utf8_ptr = msg_id(self.raw, sel(b"UTF8String\0")).0 as *const std::ffi::c_char;
             if utf8_ptr.is_null() {
                 None
             } else {
@@ -488,7 +506,7 @@ impl NSData {
             return &[];
         }
         unsafe {
-            let bytes_ptr = msg_id(self.raw, sel(b"bytes\0")) as *const u8;
+            let bytes_ptr = msg_id(self.raw, sel(b"bytes\0")).0 as *const u8;
             let length = msg_usize(self.raw, sel(b"length\0"));
             if bytes_ptr.is_null() || length == 0 {
                 &[]
@@ -749,7 +767,7 @@ pub(crate) fn ns_data_from_bytes(bytes: &[u8]) -> id {
 
 pub(crate) fn ns_dictionary_object_for_key(dictionary: id, key: id) -> id {
     if dictionary.is_null() {
-        ptr::null_mut()
+        NIL
     } else {
         msg_id_id(dictionary, sel(b"objectForKey:\0"), key)
     }
@@ -757,7 +775,7 @@ pub(crate) fn ns_dictionary_object_for_key(dictionary: id, key: id) -> id {
 
 pub(crate) fn ns_dictionary_all_keys(dictionary: id) -> id {
     if dictionary.is_null() {
-        ptr::null_mut()
+        NIL
     } else {
         msg_id(dictionary, sel(b"allKeys\0"))
     }

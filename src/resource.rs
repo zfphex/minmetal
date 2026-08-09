@@ -25,7 +25,7 @@ impl Buffer {
     #[inline]
     pub const fn null() -> Self {
         Self {
-            raw: std::ptr::null_mut(),
+            raw: NIL,
         }
     }
 
@@ -38,7 +38,7 @@ impl Buffer {
     }
 
     pub fn contents(&self) -> *mut c_void {
-        msg_id(self.raw, sel(b"contents\0"))
+        msg_id(self.raw, sel(b"contents\0")).0
     }
 
     pub fn did_modify_range(&self, range: Range) {
@@ -325,6 +325,12 @@ impl Buffer {
         } else {
             Ok(Tensor { raw })
         }
+    }
+}
+
+impl Clone for Buffer {
+    fn clone(&self) -> Self {
+        Self { raw: retain(self.raw) }
     }
 }
 
@@ -658,7 +664,7 @@ impl Texture {
     #[inline]
     pub const fn null() -> Self {
         Self {
-            raw: std::ptr::null_mut(),
+            raw: NIL,
         }
     }
 
@@ -1168,6 +1174,12 @@ impl Texture {
         } else {
             0
         }
+    }
+}
+
+impl Clone for Texture {
+    fn clone(&self) -> Self {
+        Self { raw: retain(self.raw) }
     }
 }
 
@@ -2212,6 +2224,12 @@ impl SharedEvent {
                 timeout_ms,
             ) != 0
         }
+    }
+}
+
+impl Clone for SharedEvent {
+    fn clone(&self) -> Self {
+        Self { raw: retain(self.raw) }
     }
 }
 

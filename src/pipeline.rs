@@ -720,6 +720,12 @@ pub struct ComputePipelineState {
     pub raw: id,
 }
 
+impl Clone for ComputePipelineState {
+    fn clone(&self) -> Self {
+        Self { raw: retain(self.raw) }
+    }
+}
+
 impl Drop for ComputePipelineState {
     fn drop(&mut self) {
         release(self.raw);
@@ -730,7 +736,7 @@ impl ComputePipelineState {
     #[inline]
     pub const fn null() -> Self {
         Self {
-            raw: std::ptr::null_mut(),
+            raw: NIL,
         }
     }
 
@@ -1489,6 +1495,12 @@ pub struct RenderPipelineState {
     pub raw: id,
 }
 
+impl Clone for RenderPipelineState {
+    fn clone(&self) -> Self {
+        Self { raw: retain(self.raw) }
+    }
+}
+
 impl Drop for RenderPipelineState {
     fn drop(&mut self) {
         release(self.raw);
@@ -1499,7 +1511,7 @@ impl RenderPipelineState {
     #[inline]
     pub const fn null() -> Self {
         Self {
-            raw: std::ptr::null_mut(),
+            raw: NIL,
         }
     }
 
@@ -1911,6 +1923,12 @@ impl DepthStencilState {
     }
 }
 
+impl Clone for DepthStencilState {
+    fn clone(&self) -> Self {
+        Self { raw: retain(self.raw) }
+    }
+}
+
 impl Drop for DepthStencilState {
     fn drop(&mut self) {
         release(self.raw);
@@ -2211,7 +2229,7 @@ impl SamplerState {
     #[inline]
     pub const fn null() -> Self {
         Self {
-            raw: std::ptr::null_mut(),
+            raw: NIL,
         }
     }
 
@@ -2460,14 +2478,14 @@ impl LinkedFunctions {
         if responds_to_selector(self.raw, selector) {
             functions_from_array(msg_id(self.raw, selector))
         } else {
-            NSArrayIterator::new(std::ptr::null_mut())
+            NSArrayIterator::new(NIL)
         }
     }
 
     pub fn groups(&self) -> DynamicLibraryGroupIterator {
         let dict = msg_id(self.raw, sel(b"groups\0"));
         let keys = if dict.is_null() {
-            std::ptr::null_mut()
+            NIL
         } else {
             msg_id(dict, sel(b"allKeys\0"))
         };
@@ -2597,7 +2615,7 @@ impl FunctionHandle {
     #[inline]
     pub const fn null() -> Self {
         Self {
-            raw: std::ptr::null_mut(),
+            raw: NIL,
         }
     }
 
@@ -2867,7 +2885,7 @@ impl VisibleFunctionTable {
     #[inline]
     pub const fn null() -> Self {
         Self {
-            raw: std::ptr::null_mut(),
+            raw: NIL,
         }
     }
 
@@ -2980,7 +2998,7 @@ impl IntersectionFunctionTable {
     #[inline]
     pub const fn null() -> Self {
         Self {
-            raw: std::ptr::null_mut(),
+            raw: NIL,
         }
     }
 

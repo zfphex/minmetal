@@ -118,7 +118,7 @@ fn device_notification_block() -> id {
         INIT.call_once(|| {
             BLOCK.isa = &_NSConcreteGlobalBlock as *const c_void;
         });
-        &raw const BLOCK as *const GlobalBlock as id
+        id(&raw const BLOCK as *mut c_void)
     }
 }
 
@@ -790,7 +790,7 @@ impl Device {
     ) -> Result<RenderPipelineState, MetalError> {
         unsafe {
             let mut error = NIL;
-            let mut reflection_out = ptr::null_mut();
+            let mut reflection_out = NIL;
             let f: unsafe extern "C" fn(id, SEL, id, usize, *mut id, *mut id) -> id =
                 transmute(objc_msgSend as *const c_void);
             let raw = f(
@@ -846,7 +846,7 @@ impl Device {
     ) -> Result<ComputePipelineState, MetalError> {
         unsafe {
             let mut error = NIL;
-            let mut reflection_out = ptr::null_mut();
+            let mut reflection_out = NIL;
             let f: unsafe extern "C" fn(id, SEL, id, usize, *mut id, *mut id) -> id =
                 transmute(objc_msgSend as *const c_void);
             let raw = f(
@@ -908,7 +908,7 @@ impl Device {
     ) -> Result<ComputePipelineState, MetalError> {
         unsafe {
             let mut error = NIL;
-            let mut reflection_out = ptr::null_mut();
+            let mut reflection_out = NIL;
             let f: unsafe extern "C" fn(id, SEL, id, usize, *mut id, *mut id) -> id =
                 transmute(objc_msgSend as *const c_void);
             let raw = f(
@@ -1195,7 +1195,7 @@ impl Device {
         });
 
         unsafe {
-            let mut observer = ptr::null_mut();
+            let mut observer = NIL;
             let array = MTLCopyAllDevicesWithObserver(&mut observer, device_notification_block());
             if array.is_null() {
                 DEVICE_NOTIFICATION_HANDLER.with(|slot| {
@@ -1638,7 +1638,7 @@ impl CommandBuffer {
         };
         let selector = sel(b"addCompletedHandler:\0");
         if responds_to_selector(self.raw, selector) {
-            msg_void_id(self.raw, selector, &mut block as *mut _ as id);
+            msg_void_id(self.raw, selector, id(&mut block as *mut _ as *mut c_void));
         } else {
             // selector not supported: avoid leaking the closure
             unsafe {
@@ -2154,7 +2154,7 @@ impl RenderPipelineReflection {
         if responds_to_selector(self.raw, selector) {
             crate::reflection::bindings_from_array(msg_id(self.raw, selector))
         } else {
-            NSArrayIterator::new(std::ptr::null_mut())
+            NSArrayIterator::new(NIL)
         }
     }
 
@@ -2163,7 +2163,7 @@ impl RenderPipelineReflection {
         if responds_to_selector(self.raw, selector) {
             crate::reflection::bindings_from_array(msg_id(self.raw, selector))
         } else {
-            NSArrayIterator::new(std::ptr::null_mut())
+            NSArrayIterator::new(NIL)
         }
     }
 }

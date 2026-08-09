@@ -274,7 +274,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let layer = unsafe {
         MetalLayer::attach_to_view(
-            window.ns_view,
+            id(window.ns_view),
             &device,
             PixelFormat::Bgra8Unorm,
             drawable_width,

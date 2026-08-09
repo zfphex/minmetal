@@ -110,7 +110,7 @@ mod tests {
 
     #[test]
     fn test_nil_indirect_command_access() {
-        let icb = IndirectCommandBuffer::from_raw(std::ptr::null_mut());
+        let icb = IndirectCommandBuffer::from_raw(NIL);
         let result = icb.render_command(0);
         assert!(result.is_err());
     }
@@ -128,10 +128,10 @@ mod tests {
     #[test]
     fn test_unsupported_api_paths_returning_metal_error() {
         let encoder = BlitCommandEncoder {
-            raw: std::ptr::null_mut(),
+            raw: NIL,
         };
         let sample_buf = CounterSampleBuffer {
-            raw: std::ptr::null_mut(),
+            raw: NIL,
         };
         let result = encoder.sample_counters_in_buffer(&sample_buf, 0, false);
         assert!(result.is_err());
@@ -141,7 +141,7 @@ mod tests {
     #[test]
     fn test_nil_object_creation_paths() {
         let device = Device {
-            raw: std::ptr::null_mut(),
+            raw: NIL,
         };
         let result = device.counter_sets();
         assert!(result.is_err());
