@@ -199,7 +199,13 @@ impl CounterSampleBuffer {
         if self.raw.is_null() {
             return Err(MetalError::new("counter sample buffer is null"));
         }
-        let val = msg_usize(self.raw, sel(b"storageMode\0"));
+        let selector = sel(b"storageMode\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "MTLCounterSampleBuffer does not respond to storageMode",
+            ));
+        }
+        let val = msg_usize(self.raw, selector);
         match val {
             0 => Ok(StorageMode::Shared),
             1 => Ok(StorageMode::Managed),
@@ -243,7 +249,9 @@ impl CounterSampleBuffer {
             return Err(MetalError::new("counter sample buffer is null"));
         }
         self.validate_resolve_range(range)?;
-        if self.storage_mode()? != StorageMode::Shared {
+        // storageMode is only implemented on the descriptor, not on every backing
+        // MTLCounterSampleBuffer, so enforce the requirement only when it can be read.
+        if matches!(self.storage_mode(), Ok(mode) if mode != StorageMode::Shared) {
             return Err(MetalError::new(
                 "resolveCounterRange: requires MTLStorageModeShared counter sample buffer",
             ));

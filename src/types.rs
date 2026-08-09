@@ -362,6 +362,46 @@ impl PixelFormat {
             _ => Self::Invalid,
         }
     }
+
+    pub fn is_depth(self) -> bool {
+        matches!(
+            self,
+            Self::Depth16Unorm
+                | Self::Depth32Float
+                | Self::Depth24UnormStencil8
+                | Self::Depth32FloatStencil8
+        )
+    }
+
+    pub fn is_stencil(self) -> bool {
+        matches!(
+            self,
+            Self::Stencil8
+                | Self::Depth24UnormStencil8
+                | Self::Depth32FloatStencil8
+                | Self::X32Stencil8
+                | Self::X24Stencil8
+        )
+    }
+
+    pub fn is_depth_or_stencil(self) -> bool {
+        self.is_depth() || self.is_stencil()
+    }
+
+    pub fn is_color(self) -> bool {
+        !self.is_depth_or_stencil() && self != Self::Invalid
+    }
+
+    pub fn bytes_per_pixel(self) -> Option<usize> {
+        match self {
+            Self::R8Unorm | Self::R8UnormSrgb | Self::R8Snorm | Self::R8Uint | Self::R8Sint | Self::A8Unorm | Self::Stencil8 => Some(1),
+            Self::R16Unorm | Self::R16Snorm | Self::R16Uint | Self::R16Sint | Self::R16Float | Self::Rg8Unorm | Self::Rg8UnormSrgb | Self::Rg8Snorm | Self::Rg8Uint | Self::Rg8Sint | Self::B5G6R5Unorm | Self::A1Bgr5Unorm | Self::Abgr4Unorm | Self::Bgr5A1Unorm | Self::Depth16Unorm => Some(2),
+            Self::R32Uint | Self::R32Sint | Self::R32Float | Self::Rg16Unorm | Self::Rg16Snorm | Self::Rg16Uint | Self::Rg16Sint | Self::Rg16Float | Self::Rgba8Unorm | Self::Rgba8UnormSrgb | Self::Rgba8Snorm | Self::Rgba8Uint | Self::Rgba8Sint | Self::Bgra8Unorm | Self::Bgra8UnormSrgb | Self::Rgb10A2Unorm | Self::Rgb10A2Uint | Self::Rg11B10Float | Self::Rgb9E5Float | Self::Bgr10A2Unorm | Self::Depth32Float | Self::Depth24UnormStencil8 | Self::X24Stencil8 => Some(4),
+            Self::Rg32Uint | Self::Rg32Sint | Self::Rg32Float | Self::Rgba16Unorm | Self::Rgba16Snorm | Self::Rgba16Uint | Self::Rgba16Sint | Self::Rgba16Float | Self::Depth32FloatStencil8 | Self::X32Stencil8 => Some(8),
+            Self::Rgba32Uint | Self::Rgba32Sint | Self::Rgba32Float => Some(16),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
