@@ -1,5 +1,5 @@
-use minwin::*;
 use minmetal::*;
+use minwin::*;
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
@@ -268,7 +268,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     let scale = window.scale_factor();
-    let (width, height) = window.content_size();
+    let (width, height) = window.scaled_size();
     let mut drawable_width = (width as f64 * scale).max(1.0) as usize;
     let mut drawable_height = (height as f64 * scale).max(1.0) as usize;
 
@@ -305,7 +305,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         window.draw(|win| {
             let win_scale = win.scale_factor();
-            let (win_width, win_height) = win.content_size();
+            let (win_width, win_height) = win.scaled_size();
             let current_draw_w = (win_width as f64 * win_scale).max(1.0) as usize;
             let current_draw_h = (win_height as f64 * win_scale).max(1.0) as usize;
 

@@ -12,4 +12,4 @@ dependencies = [
 [[package]]
 name = "minwin"
 version = "0.1.0"
-source = "git+https://github.com/zfphex/minwin.git#12d41a0b625c1c3476a202136733378f76868d21"
+source = "git+https://github.com/zfphex/minwin.git#1b5a85d312b3492f3094197315836c22582de314"

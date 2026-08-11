@@ -2240,14 +2240,42 @@ impl M4VisibilityOptions {
     pub const RESOURCE_ALIAS: Self = Self(1 << 1);
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct M4Stages(pub usize);
-
-impl M4Stages {
-    pub const DISPATCH: Self = Self(1 << 0);
-    pub const BLIT: Self = Self(1 << 1);
-    pub const ACCELERATION_STRUCTURE: Self = Self(1 << 2);
+impl std::ops::BitOr for M4VisibilityOptions {
+    type Output = Self;
+    fn bitor(self, rhs: Self) -> Self::Output {
+        Self(self.0 | rhs.0)
+    }
 }
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Stages(pub usize);
+
+impl Stages {
+    pub const NONE: Self = Self(0);
+    pub const VERTEX: Self = Self(1 << 0);
+    pub const FRAGMENT: Self = Self(1 << 1);
+    pub const TILE: Self = Self(1 << 2);
+    pub const OBJECT: Self = Self(1 << 3);
+    pub const MESH: Self = Self(1 << 4);
+    pub const RESOURCE_STATE: Self = Self(1 << 26);
+    pub const DISPATCH: Self = Self(1 << 27);
+    pub const BLIT: Self = Self(1 << 28);
+    pub const ACCELERATION_STRUCTURE: Self = Self(1 << 29);
+    pub const MACHINE_LEARNING: Self = Self(1 << 30);
+    pub const ALL: Self = Self(isize::MAX as usize);
+
+    pub fn contains(self, other: Self) -> bool {
+        self.0 & other.0 == other.0
+    }
+}
+
+impl std::ops::BitOr for Stages {
+    type Output = Self;
+    fn bitor(self, rhs: Self) -> Self::Output {
+        Self(self.0 | rhs.0)
+    }
+}
+
 
 #[derive(Debug)]
 pub struct M4CommandEncoder {
@@ -2289,7 +2317,64 @@ impl M4CommandEncoder {
         msg_void(self.raw, sel(b"popDebugGroup\0"));
     }
 
-    pub fn update_fence(&self, fence: &Fence, after_encoder_stages: M4Stages) {
+    pub fn barrier_after_queue_stages(
+        &self,
+        after_queue_stages: Stages,
+        before_stages: Stages,
+        visibility: M4VisibilityOptions,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, usize, usize, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"barrierAfterQueueStages:beforeStages:visibilityOptions:\0"),
+                after_queue_stages.0,
+                before_stages.0,
+                visibility.0,
+            );
+        }
+    }
+
+    pub fn barrier_before_queue_stages(
+        &self,
+        after_stages: Stages,
+        before_queue_stages: Stages,
+        visibility: M4VisibilityOptions,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, usize, usize, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"barrierAfterStages:beforeQueueStages:visibilityOptions:\0"),
+                after_stages.0,
+                before_queue_stages.0,
+                visibility.0,
+            );
+        }
+    }
+
+    pub fn barrier(
+        &self,
+        after_encoder_stages: Stages,
+        before_encoder_stages: Stages,
+        visibility: M4VisibilityOptions,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, usize, usize, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"barrierAfterEncoderStages:beforeEncoderStages:visibilityOptions:\0"),
+                after_encoder_stages.0,
+                before_encoder_stages.0,
+                visibility.0,
+            );
+        }
+    }
+
+    pub fn update_fence(&self, fence: &Fence, after_encoder_stages: Stages) {
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, id, usize) =
                 transmute(objc_msgSend as *const c_void);
@@ -2302,7 +2387,7 @@ impl M4CommandEncoder {
         }
     }
 
-    pub fn wait_for_fence(&self, fence: &Fence, before_encoder_stages: M4Stages) {
+    pub fn wait_for_fence(&self, fence: &Fence, before_encoder_stages: Stages) {
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, id, usize) =
                 transmute(objc_msgSend as *const c_void);
@@ -3053,8 +3138,91 @@ impl M4ComputeCommandEncoder {
         Self { raw: retain(raw) }
     }
 
-    pub fn stages(&self) -> M4Stages {
-        M4Stages(msg_usize(self.raw, sel(b"stages\0")))
+    pub fn stages(&self) -> Stages {
+        Stages(msg_usize(self.raw, sel(b"stages\0")))
+    }
+
+    pub fn barrier_after_queue_stages(
+        &self,
+        after_queue_stages: Stages,
+        before_stages: Stages,
+        visibility: M4VisibilityOptions,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, usize, usize, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"barrierAfterQueueStages:beforeStages:visibilityOptions:\0"),
+                after_queue_stages.0,
+                before_stages.0,
+                visibility.0,
+            );
+        }
+    }
+
+    pub fn barrier_before_queue_stages(
+        &self,
+        after_stages: Stages,
+        before_queue_stages: Stages,
+        visibility: M4VisibilityOptions,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, usize, usize, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"barrierAfterStages:beforeQueueStages:visibilityOptions:\0"),
+                after_stages.0,
+                before_queue_stages.0,
+                visibility.0,
+            );
+        }
+    }
+
+    pub fn barrier(
+        &self,
+        after_encoder_stages: Stages,
+        before_encoder_stages: Stages,
+        visibility: M4VisibilityOptions,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, usize, usize, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"barrierAfterEncoderStages:beforeEncoderStages:visibilityOptions:\0"),
+                after_encoder_stages.0,
+                before_encoder_stages.0,
+                visibility.0,
+            );
+        }
+    }
+
+    pub fn update_fence(&self, fence: &Fence, after_encoder_stages: Stages) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"updateFence:afterEncoderStages:\0"),
+                fence.raw,
+                after_encoder_stages.0,
+            );
+        }
+    }
+
+    pub fn wait_for_fence(&self, fence: &Fence, before_encoder_stages: Stages) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"waitForFence:beforeEncoderStages:\0"),
+                fence.raw,
+                before_encoder_stages.0,
+            );
+        }
     }
 
     pub fn set_compute_pipeline_state(&self, state: &ComputePipelineState) {
@@ -3159,6 +3327,89 @@ pub struct M4RenderCommandEncoder {
 impl M4RenderCommandEncoder {
     pub fn from_raw(raw: id) -> Self {
         Self { raw: retain(raw) }
+    }
+
+    pub fn barrier_after_queue_stages(
+        &self,
+        after_queue_stages: Stages,
+        before_stages: Stages,
+        visibility: M4VisibilityOptions,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, usize, usize, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"barrierAfterQueueStages:beforeStages:visibilityOptions:\0"),
+                after_queue_stages.0,
+                before_stages.0,
+                visibility.0,
+            );
+        }
+    }
+
+    pub fn barrier_before_queue_stages(
+        &self,
+        after_stages: Stages,
+        before_queue_stages: Stages,
+        visibility: M4VisibilityOptions,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, usize, usize, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"barrierAfterStages:beforeQueueStages:visibilityOptions:\0"),
+                after_stages.0,
+                before_queue_stages.0,
+                visibility.0,
+            );
+        }
+    }
+
+    pub fn barrier(
+        &self,
+        after_encoder_stages: Stages,
+        before_encoder_stages: Stages,
+        visibility: M4VisibilityOptions,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, usize, usize, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"barrierAfterEncoderStages:beforeEncoderStages:visibilityOptions:\0"),
+                after_encoder_stages.0,
+                before_encoder_stages.0,
+                visibility.0,
+            );
+        }
+    }
+
+    pub fn update_fence(&self, fence: &Fence, after_encoder_stages: Stages) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"updateFence:afterEncoderStages:\0"),
+                fence.raw,
+                after_encoder_stages.0,
+            );
+        }
+    }
+
+    pub fn wait_for_fence(&self, fence: &Fence, before_encoder_stages: Stages) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"waitForFence:beforeEncoderStages:\0"),
+                fence.raw,
+                before_encoder_stages.0,
+            );
+        }
     }
 
     pub fn tile_width(&self) -> usize {
