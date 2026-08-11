@@ -22,6 +22,10 @@ impl Allocation {
         Self { raw: heap.raw }
     }
 
+    pub fn from_indirect_command_buffer(buffer: &IndirectCommandBuffer) -> Self {
+        Self { raw: buffer.raw }
+    }
+
     pub fn from_acceleration_structure(structure: &AccelerationStructure) -> Self {
         Self { raw: structure.raw }
     }

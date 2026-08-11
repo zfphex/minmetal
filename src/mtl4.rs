@@ -3276,6 +3276,60 @@ impl M4ComputeCommandEncoder {
         }
     }
 
+    pub fn dispatch_threads_with_indirect_buffer(&self, indirect_buffer: u64) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, u64) = transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"dispatchThreadsWithIndirectBuffer:\0"),
+                indirect_buffer,
+            );
+        }
+    }
+
+    pub fn execute_commands_in_buffer(&self, buffer: &IndirectCommandBuffer, range: Range) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, Range) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"executeCommandsInBuffer:withRange:\0"),
+                buffer.raw,
+                range,
+            );
+        }
+    }
+
+    pub fn execute_commands_in_buffer_with_indirect_buffer(
+        &self,
+        buffer: &IndirectCommandBuffer,
+        indirect_range_buffer: u64,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, u64) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"executeCommandsInBuffer:indirectBuffer:\0"),
+                buffer.raw,
+                indirect_range_buffer,
+            );
+        }
+    }
+
+    pub fn reset_commands_in_buffer(&self, buffer: &IndirectCommandBuffer, range: Range) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, Range) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"resetCommandsInBuffer:withRange:\0"),
+                buffer.raw,
+                range,
+            );
+        }
+    }
+
     pub fn write_timestamp_with_granularity(
         &self,
         granularity: M4TimestampGranularity,
@@ -3544,6 +3598,76 @@ impl M4RenderCommandEncoder {
                 index_type as usize,
                 index_buffer,
                 index_buffer_length,
+            );
+        }
+    }
+
+    pub fn draw_primitives_with_indirect_buffer(
+        &self,
+        primitive_type: PrimitiveType,
+        indirect_buffer: u64,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, usize, u64) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"drawPrimitives:indirectBuffer:\0"),
+                primitive_type as usize,
+                indirect_buffer,
+            );
+        }
+    }
+
+    pub fn draw_indexed_primitives_with_indirect_buffer(
+        &self,
+        primitive_type: PrimitiveType,
+        index_type: IndexType,
+        index_buffer: u64,
+        index_buffer_length: usize,
+        indirect_buffer: u64,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, usize, usize, u64, usize, u64) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"drawIndexedPrimitives:indexType:indexBuffer:indexBufferLength:indirectBuffer:\0"),
+                primitive_type as usize,
+                index_type as usize,
+                index_buffer,
+                index_buffer_length,
+                indirect_buffer,
+            );
+        }
+    }
+
+    pub fn execute_commands_in_buffer(&self, buffer: &IndirectCommandBuffer, range: Range) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, Range) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"executeCommandsInBuffer:withRange:\0"),
+                buffer.raw,
+                range,
+            );
+        }
+    }
+
+    pub fn execute_commands_in_buffer_with_indirect_buffer(
+        &self,
+        buffer: &IndirectCommandBuffer,
+        indirect_range_buffer: u64,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, u64) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"executeCommandsInBuffer:indirectBuffer:\0"),
+                buffer.raw,
+                indirect_range_buffer,
             );
         }
     }
