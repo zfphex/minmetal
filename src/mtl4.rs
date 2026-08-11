@@ -434,6 +434,12 @@ impl M4LibraryFunctionDescriptor {
         m4_optional_id(self.raw, sel(b"library\0")).map(|raw| Library { raw })
     }
 
+    pub fn as_function_descriptor(&self) -> M4FunctionDescriptor {
+        M4FunctionDescriptor {
+            raw: retain(self.raw),
+        }
+    }
+
     pub fn set_library(&self, library: Option<&Library>) {
         m4_set_optional_id(self.raw, sel(b"setLibrary:\0"), library.map(|l| l.raw));
     }
@@ -900,6 +906,47 @@ impl M4RenderPipelineColorAttachmentDescriptor {
         msg_void_usize(self.raw, sel(b"setBlendingState:\0"), state as usize);
     }
 
+    pub fn set_blend_factors(
+        &self,
+        source_rgb: BlendFactor,
+        destination_rgb: BlendFactor,
+        rgb_operation: BlendOperation,
+        source_alpha: BlendFactor,
+        destination_alpha: BlendFactor,
+        alpha_operation: BlendOperation,
+    ) {
+        msg_void_usize(
+            self.raw,
+            sel(b"setSourceRGBBlendFactor:\0"),
+            source_rgb as usize,
+        );
+        msg_void_usize(
+            self.raw,
+            sel(b"setDestinationRGBBlendFactor:\0"),
+            destination_rgb as usize,
+        );
+        msg_void_usize(
+            self.raw,
+            sel(b"setRgbBlendOperation:\0"),
+            rgb_operation as usize,
+        );
+        msg_void_usize(
+            self.raw,
+            sel(b"setSourceAlphaBlendFactor:\0"),
+            source_alpha as usize,
+        );
+        msg_void_usize(
+            self.raw,
+            sel(b"setDestinationAlphaBlendFactor:\0"),
+            destination_alpha as usize,
+        );
+        msg_void_usize(
+            self.raw,
+            sel(b"setAlphaBlendOperation:\0"),
+            alpha_operation as usize,
+        );
+    }
+
     pub fn write_mask(&self) -> ColorWriteMask {
         let raw = msg_usize(self.raw, sel(b"writeMask\0"));
         unsafe { std::mem::transmute(raw) }
@@ -1017,6 +1064,12 @@ impl M4RenderPipelineDescriptor {
 
     pub fn set_label(&self, label: &str) {
         m4_set_label(self.raw, label);
+    }
+
+    pub fn as_pipeline_descriptor(&self) -> M4PipelineDescriptor {
+        M4PipelineDescriptor {
+            raw: retain(self.raw),
+        }
     }
 
     pub fn vertex_function_descriptor(&self) -> Option<M4FunctionDescriptor> {
@@ -2444,6 +2497,14 @@ impl M4CommandQueue {
         msg_void_id_u64(self.raw, sel(b"waitForEvent:value:\0"), event.raw, value);
     }
 
+    pub fn signal_drawable(&self, drawable: &Drawable) {
+        msg_void_id(self.raw, sel(b"signalDrawable:\0"), drawable.raw);
+    }
+
+    pub fn wait_for_drawable(&self, drawable: &Drawable) {
+        msg_void_id(self.raw, sel(b"waitForDrawable:\0"), drawable.raw);
+    }
+
     pub fn add_residency_set(&self, residency_set: &ResidencySet) {
         msg_void_id(self.raw, sel(b"addResidencySet:\0"), residency_set.raw);
     }
@@ -3116,12 +3177,82 @@ impl M4RenderCommandEncoder {
         );
     }
 
-    pub fn set_argument_table(&self, argument_table: &M4ArgumentTable) {
-        msg_void_id(self.raw, sel(b"setArgumentTable:\0"), argument_table.raw);
+    pub fn set_argument_table(&self, argument_table: &M4ArgumentTable, stages: RenderStages) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"setArgumentTable:atStages:\0"),
+                argument_table.raw,
+                stages.0,
+            );
+        }
     }
 
     pub fn set_viewport(&self, viewport: Viewport) {
         msg_void_viewport(self.raw, sel(b"setViewport:\0"), viewport);
+    }
+
+    pub fn set_scissor_rect(&self, rect: ScissorRect) {
+        msg_void_scissor_rect(self.raw, sel(b"setScissorRect:\0"), rect);
+    }
+
+    pub fn set_depth_stencil_state(&self, state: &DepthStencilState) {
+        msg_void_id(self.raw, sel(b"setDepthStencilState:\0"), state.raw);
+    }
+
+    pub fn set_stencil_reference_value(&self, value: u32) {
+        msg_void_usize(
+            self.raw,
+            sel(b"setStencilReferenceValue:\0"),
+            value as usize,
+        );
+    }
+
+    pub fn set_cull_mode(&self, mode: CullMode) {
+        msg_void_usize(self.raw, sel(b"setCullMode:\0"), mode as usize);
+    }
+
+    pub fn set_front_facing_winding(&self, winding: Winding) {
+        msg_void_usize(self.raw, sel(b"setFrontFacingWinding:\0"), winding as usize);
+    }
+
+    pub fn set_triangle_fill_mode(&self, mode: TriangleFillMode) {
+        msg_void_usize(self.raw, sel(b"setTriangleFillMode:\0"), mode as usize);
+    }
+
+    pub fn set_depth_clip_mode(&self, mode: DepthClipMode) {
+        msg_void_usize(self.raw, sel(b"setDepthClipMode:\0"), mode as usize);
+    }
+
+    pub fn set_depth_bias(&self, bias: f32, slope_scale: f32, clamp: f32) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, f32, f32, f32) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"setDepthBias:slopeScale:clamp:\0"),
+                bias,
+                slope_scale,
+                clamp,
+            );
+        }
+    }
+
+    pub fn set_blend_color(&self, red: f32, green: f32, blue: f32, alpha: f32) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, f32, f32, f32, f32) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"setBlendColorRed:green:blue:alpha:\0"),
+                red,
+                green,
+                blue,
+                alpha,
+            );
+        }
     }
 
     pub fn draw_primitives(
@@ -3149,19 +3280,19 @@ impl M4RenderCommandEncoder {
         index_count: usize,
         index_type: IndexType,
         index_buffer: u64,
-        index_buffer_offset: usize,
+        index_buffer_length: usize,
     ) {
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, usize, usize, usize, u64, usize) =
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"drawIndexedPrimitives:indexCount:indexType:indexBuffer:indexBufferOffset:\0"),
+                sel(b"drawIndexedPrimitives:indexCount:indexType:indexBuffer:indexBufferLength:\0"),
                 primitive_type as usize,
                 index_count,
                 index_type as usize,
                 index_buffer,
-                index_buffer_offset,
+                index_buffer_length,
             );
         }
     }

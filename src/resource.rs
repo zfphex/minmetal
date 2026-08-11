@@ -2196,6 +2196,12 @@ impl SharedEvent {
         msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
     }
 
+    pub fn as_event(&self) -> Event {
+        Event {
+            raw: retain(self.raw),
+        }
+    }
+
     pub fn signaled_value(&self) -> u64 {
         msg_u64(self.raw, sel(b"signaledValue\0"))
     }

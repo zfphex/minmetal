@@ -1475,6 +1475,112 @@ impl MeshRenderPipelineDescriptor {
     pub fn set_fragment_function(&self, function: &Function) {
         msg_void_id(self.raw, sel(b"setFragmentFunction:\0"), function.raw);
     }
+
+    pub fn set_color_attachment_pixel_format(&self, index: usize, pixel_format: PixelFormat) {
+        let attachments = msg_id(self.raw, sel(b"colorAttachments\0"));
+        let attachment = msg_id_usize(attachments, sel(b"objectAtIndexedSubscript:\0"), index);
+        msg_void_usize(attachment, sel(b"setPixelFormat:\0"), pixel_format.as_raw());
+    }
+
+    pub fn set_color_attachment_write_mask(&self, index: usize, mask: ColorWriteMask) {
+        let attachments = msg_id(self.raw, sel(b"colorAttachments\0"));
+        let attachment = msg_id_usize(attachments, sel(b"objectAtIndexedSubscript:\0"), index);
+        msg_void_usize(attachment, sel(b"setWriteMask:\0"), mask.as_raw());
+    }
+
+    pub fn set_color_attachment_blending(
+        &self,
+        index: usize,
+        enabled: bool,
+        source_rgb: BlendFactor,
+        destination_rgb: BlendFactor,
+        rgb_operation: BlendOperation,
+        source_alpha: BlendFactor,
+        destination_alpha: BlendFactor,
+        alpha_operation: BlendOperation,
+    ) {
+        let attachments = msg_id(self.raw, sel(b"colorAttachments\0"));
+        let attachment = msg_id_usize(attachments, sel(b"objectAtIndexedSubscript:\0"), index);
+        msg_void_bool(
+            attachment,
+            sel(b"setBlendingEnabled:\0"),
+            if enabled { YES } else { NO },
+        );
+        msg_void_usize(
+            attachment,
+            sel(b"setSourceRGBBlendFactor:\0"),
+            source_rgb as usize,
+        );
+        msg_void_usize(
+            attachment,
+            sel(b"setDestinationRGBBlendFactor:\0"),
+            destination_rgb as usize,
+        );
+        msg_void_usize(
+            attachment,
+            sel(b"setRgbBlendOperation:\0"),
+            rgb_operation as usize,
+        );
+        msg_void_usize(
+            attachment,
+            sel(b"setSourceAlphaBlendFactor:\0"),
+            source_alpha as usize,
+        );
+        msg_void_usize(
+            attachment,
+            sel(b"setDestinationAlphaBlendFactor:\0"),
+            destination_alpha as usize,
+        );
+        msg_void_usize(
+            attachment,
+            sel(b"setAlphaBlendOperation:\0"),
+            alpha_operation as usize,
+        );
+    }
+
+    pub fn set_depth_attachment_pixel_format(&self, pixel_format: PixelFormat) {
+        msg_void_usize(
+            self.raw,
+            sel(b"setDepthAttachmentPixelFormat:\0"),
+            pixel_format.as_raw(),
+        );
+    }
+
+    pub fn set_stencil_attachment_pixel_format(&self, pixel_format: PixelFormat) {
+        msg_void_usize(
+            self.raw,
+            sel(b"setStencilAttachmentPixelFormat:\0"),
+            pixel_format.as_raw(),
+        );
+    }
+
+    pub fn set_raster_sample_count(&self, sample_count: usize) {
+        msg_void_usize(self.raw, sel(b"setRasterSampleCount:\0"), sample_count);
+    }
+
+    pub fn set_alpha_to_coverage_enabled(&self, enabled: bool) {
+        msg_void_bool(
+            self.raw,
+            sel(b"setAlphaToCoverageEnabled:\0"),
+            if enabled { YES } else { NO },
+        );
+    }
+
+    pub fn set_max_total_threads_per_object_threadgroup(&self, threads: usize) {
+        msg_void_usize(
+            self.raw,
+            sel(b"setMaxTotalThreadsPerObjectThreadgroup:\0"),
+            threads,
+        );
+    }
+
+    pub fn set_max_total_threads_per_mesh_threadgroup(&self, threads: usize) {
+        msg_void_usize(
+            self.raw,
+            sel(b"setMaxTotalThreadsPerMeshThreadgroup:\0"),
+            threads,
+        );
+    }
 }
 
 impl Default for MeshRenderPipelineDescriptor {

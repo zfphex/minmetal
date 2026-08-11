@@ -817,6 +817,40 @@ impl Device {
         }
     }
 
+    pub fn new_render_pipeline_state_with_mesh_descriptor(
+        &self,
+        descriptor: &MeshRenderPipelineDescriptor,
+    ) -> Result<RenderPipelineState, MetalError> {
+        let selector = sel(b"newRenderPipelineStateWithMeshDescriptor:options:reflection:error:\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new(
+                "newRenderPipelineStateWithMeshDescriptor: is not supported on this device",
+            ));
+        }
+        unsafe {
+            let mut error = NIL;
+            let mut reflection_out = NIL;
+            let f: unsafe extern "C" fn(id, SEL, id, usize, *mut id, *mut id) -> id =
+                transmute(objc_msgSend as *const c_void);
+            let raw = f(
+                self.raw,
+                selector,
+                descriptor.raw,
+                0,
+                &mut reflection_out,
+                &mut error,
+            );
+            if raw.is_null() {
+                Err(MetalError::new(error_message(
+                    error,
+                    "failed to create Metal mesh render pipeline state",
+                )))
+            } else {
+                Ok(RenderPipelineState { raw })
+            }
+        }
+    }
+
     pub fn new_compute_pipeline_state_with_function(
         &self,
         function: &Function,
