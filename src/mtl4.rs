@@ -4264,6 +4264,27 @@ impl M4RenderCommandEncoder {
         }
     }
 
+    pub fn write_timestamp_with_granularity(
+        &self,
+        granularity: M4TimestampGranularity,
+        after_stage: RenderStages,
+        counter_heap: &M4CounterHeap,
+        index: usize,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, isize, usize, id, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"writeTimestampWithGranularity:afterStage:intoHeap:atIndex:\0"),
+                granularity as isize,
+                after_stage.0,
+                counter_heap.raw,
+                index,
+            );
+        }
+    }
+
     pub fn end_encoding(&self) {
         msg_void(self.raw, sel(b"endEncoding\0"));
     }

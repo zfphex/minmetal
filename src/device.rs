@@ -226,6 +226,21 @@ impl Device {
         msg_u64(self.raw, sel(b"registryID\0"))
     }
 
+    pub fn sample_timestamps(&self) -> (u64, u64) {
+        let (mut cpu, mut gpu) = (0u64, 0u64);
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, *mut u64, *mut u64) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"sampleTimestamps:gpuTimestamp:\0"),
+                &mut cpu,
+                &mut gpu,
+            );
+        }
+        (cpu, gpu)
+    }
+
     pub fn is_low_power(&self) -> bool {
         msg_bool(self.raw, sel(b"isLowPower\0")) != 0
     }
