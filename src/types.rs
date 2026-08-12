@@ -589,6 +589,15 @@ pub enum PrimitiveType {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(usize)]
+pub enum PrimitiveTopologyClass {
+    Unspecified = 0,
+    Point = 1,
+    Line = 2,
+    Triangle = 3,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(usize)]
 pub enum TextureType {
     D1 = 0,
     D1Array = 1,

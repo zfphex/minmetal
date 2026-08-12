@@ -410,6 +410,19 @@ impl TextureDescriptor {
         descriptor
     }
 
+    pub fn texture_3d(
+        pixel_format: PixelFormat,
+        width: usize,
+        height: usize,
+        depth: usize,
+        mipmapped: bool,
+    ) -> Self {
+        let descriptor = Self::texture_2d(pixel_format, width, height, mipmapped);
+        descriptor.set_texture_type(TextureType::D3);
+        descriptor.set_depth(depth);
+        descriptor
+    }
+
     pub fn texture_cube(
         pixel_format: PixelFormat,
         size: usize,

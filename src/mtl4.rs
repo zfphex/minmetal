@@ -1129,6 +1129,23 @@ impl M4RenderPipelineDescriptor {
         msg_void_usize(self.raw, sel(b"setAlphaToCoverageState:\0"), state as usize);
     }
 
+    pub fn input_primitive_topology(&self) -> PrimitiveTopologyClass {
+        match msg_usize(self.raw, sel(b"inputPrimitiveTopology\0")) {
+            1 => PrimitiveTopologyClass::Point,
+            2 => PrimitiveTopologyClass::Line,
+            3 => PrimitiveTopologyClass::Triangle,
+            _ => PrimitiveTopologyClass::Unspecified,
+        }
+    }
+
+    pub fn set_input_primitive_topology(&self, topology: PrimitiveTopologyClass) {
+        msg_void_usize(
+            self.raw,
+            sel(b"setInputPrimitiveTopology:\0"),
+            topology as usize,
+        );
+    }
+
     pub fn alpha_to_one_state(&self) -> M4AlphaToOneState {
         match msg_usize(self.raw, sel(b"alphaToOneState\0")) {
             1 => M4AlphaToOneState::Enabled,
@@ -1319,8 +1336,31 @@ impl Drop for M4ComputePipelineDescriptor {
 }
 
 #[derive(Debug)]
+pub struct TileRenderPipelineColorAttachmentDescriptor {
+    pub raw: id,
+}
+
+impl TileRenderPipelineColorAttachmentDescriptor {
+    pub fn pixel_format(&self) -> PixelFormat {
+        PixelFormat::from_raw(msg_usize(self.raw, sel(b"pixelFormat\0")))
+    }
+
+    pub fn set_pixel_format(&self, pixel_format: PixelFormat) {
+        msg_void_usize(self.raw, sel(b"setPixelFormat:\0"), pixel_format as usize);
+    }
+}
+
+#[derive(Debug)]
 pub struct TileRenderPipelineColorAttachmentDescriptorArray {
     pub raw: id,
+}
+
+impl TileRenderPipelineColorAttachmentDescriptorArray {
+    pub fn object_at(&self, index: usize) -> TileRenderPipelineColorAttachmentDescriptor {
+        TileRenderPipelineColorAttachmentDescriptor {
+            raw: msg_id_usize(self.raw, sel(b"objectAtIndexedSubscript:\0"), index),
+        }
+    }
 }
 
 impl Drop for TileRenderPipelineColorAttachmentDescriptorArray {
@@ -1339,6 +1379,20 @@ impl M4TileRenderPipelineDescriptor {
         Self {
             raw: m4_alloc_init(b"MTL4TileRenderPipelineDescriptor\0"),
         }
+    }
+
+    pub fn as_pipeline_descriptor(&self) -> M4PipelineDescriptor {
+        M4PipelineDescriptor {
+            raw: retain(self.raw),
+        }
+    }
+
+    pub fn label(&self) -> Option<NSString> {
+        m4_label(self.raw)
+    }
+
+    pub fn set_label(&self, label: &str) {
+        m4_set_label(self.raw, label);
     }
 
     pub fn tile_function_descriptor(&self) -> Option<M4FunctionDescriptor> {
@@ -1397,6 +1451,20 @@ impl M4MeshRenderPipelineDescriptor {
         }
     }
 
+    pub fn label(&self) -> Option<NSString> {
+        m4_label(self.raw)
+    }
+
+    pub fn set_label(&self, label: &str) {
+        m4_set_label(self.raw, label);
+    }
+
+    pub fn as_pipeline_descriptor(&self) -> M4PipelineDescriptor {
+        M4PipelineDescriptor {
+            raw: retain(self.raw),
+        }
+    }
+
     pub fn object_function_descriptor(&self) -> Option<M4FunctionDescriptor> {
         m4_optional_id(self.raw, sel(b"objectFunctionDescriptor\0"))
             .map(|raw| M4FunctionDescriptor { raw })
@@ -1433,6 +1501,100 @@ impl M4MeshRenderPipelineDescriptor {
             self.raw,
             sel(b"setFragmentFunctionDescriptor:\0"),
             descriptor.map(|d| d.raw),
+        );
+    }
+
+    pub fn max_total_threads_per_object_threadgroup(&self) -> usize {
+        msg_usize(self.raw, sel(b"maxTotalThreadsPerObjectThreadgroup\0"))
+    }
+
+    pub fn set_max_total_threads_per_object_threadgroup(&self, count: usize) {
+        msg_void_usize(
+            self.raw,
+            sel(b"setMaxTotalThreadsPerObjectThreadgroup:\0"),
+            count,
+        );
+    }
+
+    pub fn max_total_threads_per_mesh_threadgroup(&self) -> usize {
+        msg_usize(self.raw, sel(b"maxTotalThreadsPerMeshThreadgroup\0"))
+    }
+
+    pub fn set_max_total_threads_per_mesh_threadgroup(&self, count: usize) {
+        msg_void_usize(
+            self.raw,
+            sel(b"setMaxTotalThreadsPerMeshThreadgroup:\0"),
+            count,
+        );
+    }
+
+    pub fn payload_memory_length(&self) -> usize {
+        msg_usize(self.raw, sel(b"payloadMemoryLength\0"))
+    }
+
+    pub fn set_payload_memory_length(&self, length: usize) {
+        msg_void_usize(self.raw, sel(b"setPayloadMemoryLength:\0"), length);
+    }
+
+    pub fn max_total_threadgroups_per_mesh_grid(&self) -> usize {
+        msg_usize(self.raw, sel(b"maxTotalThreadgroupsPerMeshGrid\0"))
+    }
+
+    pub fn set_max_total_threadgroups_per_mesh_grid(&self, count: usize) {
+        msg_void_usize(
+            self.raw,
+            sel(b"setMaxTotalThreadgroupsPerMeshGrid:\0"),
+            count,
+        );
+    }
+
+    pub fn raster_sample_count(&self) -> usize {
+        msg_usize(self.raw, sel(b"rasterSampleCount\0"))
+    }
+
+    pub fn set_raster_sample_count(&self, count: usize) {
+        msg_void_usize(self.raw, sel(b"setRasterSampleCount:\0"), count);
+    }
+
+    pub fn alpha_to_coverage_state(&self) -> M4AlphaToCoverageState {
+        match msg_usize(self.raw, sel(b"alphaToCoverageState\0")) {
+            1 => M4AlphaToCoverageState::Enabled,
+            _ => M4AlphaToCoverageState::Disabled,
+        }
+    }
+
+    pub fn set_alpha_to_coverage_state(&self, state: M4AlphaToCoverageState) {
+        msg_void_usize(
+            self.raw,
+            sel(b"setAlphaToCoverageState:\0"),
+            state as usize,
+        );
+    }
+
+    pub fn is_rasterization_enabled(&self) -> bool {
+        msg_bool(self.raw, sel(b"isRasterizationEnabled\0")) != NO
+    }
+
+    pub fn set_rasterization_enabled(&self, enabled: bool) {
+        msg_void_bool(
+            self.raw,
+            sel(b"setRasterizationEnabled:\0"),
+            if enabled { YES } else { NO },
+        );
+    }
+
+    pub fn support_indirect_command_buffers(&self) -> M4IndirectCommandBufferSupportState {
+        match msg_usize(self.raw, sel(b"supportIndirectCommandBuffers\0")) {
+            1 => M4IndirectCommandBufferSupportState::Enabled,
+            _ => M4IndirectCommandBufferSupportState::Disabled,
+        }
+    }
+
+    pub fn set_support_indirect_command_buffers(&self, state: M4IndirectCommandBufferSupportState) {
+        msg_void_usize(
+            self.raw,
+            sel(b"setSupportIndirectCommandBuffers:\0"),
+            state as usize,
         );
     }
 
@@ -3083,6 +3245,69 @@ impl M4RenderPassDescriptor {
         msg_void_usize(self.raw, sel(b"setRenderTargetArrayLength:\0"), length);
     }
 
+    pub fn render_target_width(&self) -> usize {
+        msg_usize(self.raw, sel(b"renderTargetWidth\0"))
+    }
+
+    pub fn set_render_target_width(&self, width: usize) {
+        msg_void_usize(self.raw, sel(b"setRenderTargetWidth:\0"), width);
+    }
+
+    pub fn render_target_height(&self) -> usize {
+        msg_usize(self.raw, sel(b"renderTargetHeight\0"))
+    }
+
+    pub fn set_render_target_height(&self, height: usize) {
+        msg_void_usize(self.raw, sel(b"setRenderTargetHeight:\0"), height);
+    }
+
+    pub fn default_raster_sample_count(&self) -> usize {
+        msg_usize(self.raw, sel(b"defaultRasterSampleCount\0"))
+    }
+
+    pub fn set_default_raster_sample_count(&self, count: usize) {
+        msg_void_usize(self.raw, sel(b"setDefaultRasterSampleCount:\0"), count);
+    }
+
+    pub fn imageblock_sample_length(&self) -> usize {
+        msg_usize(self.raw, sel(b"imageblockSampleLength\0"))
+    }
+
+    pub fn set_imageblock_sample_length(&self, length: usize) {
+        msg_void_usize(self.raw, sel(b"setImageblockSampleLength:\0"), length);
+    }
+
+    pub fn threadgroup_memory_length(&self) -> usize {
+        msg_usize(self.raw, sel(b"threadgroupMemoryLength\0"))
+    }
+
+    pub fn set_threadgroup_memory_length(&self, length: usize) {
+        msg_void_usize(self.raw, sel(b"setThreadgroupMemoryLength:\0"), length);
+    }
+
+    pub fn visibility_result_buffer(&self) -> Option<Buffer> {
+        m4_optional_id(self.raw, sel(b"visibilityResultBuffer\0")).map(|raw| Buffer { raw })
+    }
+
+    pub fn set_visibility_result_buffer(&self, buffer: Option<&Buffer>) {
+        m4_set_optional_id(
+            self.raw,
+            sel(b"setVisibilityResultBuffer:\0"),
+            buffer.map(|b| b.raw),
+        );
+    }
+
+    pub fn visibility_result_type(&self) -> VisibilityResultType {
+        match msg_usize(self.raw, sel(b"visibilityResultType\0")) {
+            1 => VisibilityResultType::Accumulate,
+            _ => VisibilityResultType::Reset,
+        }
+    }
+
+    pub fn set_visibility_result_type(&self, kind: VisibilityResultType) {
+        msg_void_usize(self.raw, sel(b"setVisibilityResultType:\0"), kind as usize);
+    }
+
     pub fn tile_width(&self) -> usize {
         msg_usize(self.raw, sel(b"tileWidth\0"))
     }
@@ -3330,6 +3555,237 @@ impl M4ComputeCommandEncoder {
         }
     }
 
+    pub fn copy_buffer_to_buffer(
+        &self,
+        source: &Buffer,
+        source_offset: usize,
+        destination: &Buffer,
+        destination_offset: usize,
+        size: usize,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, usize, id, usize, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"copyFromBuffer:sourceOffset:toBuffer:destinationOffset:size:\0"),
+                source.raw,
+                source_offset,
+                destination.raw,
+                destination_offset,
+                size,
+            );
+        }
+    }
+
+    pub fn copy_buffer_to_texture(
+        &self,
+        source: &Buffer,
+        source_offset: usize,
+        source_bytes_per_row: usize,
+        source_bytes_per_image: usize,
+        source_size: Size,
+        destination: &Texture,
+        destination_slice: usize,
+        destination_level: usize,
+        destination_origin: Origin,
+        options: BlitOption,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(
+                id,
+                SEL,
+                id,
+                usize,
+                usize,
+                usize,
+                Size,
+                id,
+                usize,
+                usize,
+                Origin,
+                usize,
+            ) = transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"copyFromBuffer:sourceOffset:sourceBytesPerRow:sourceBytesPerImage:sourceSize:toTexture:destinationSlice:destinationLevel:destinationOrigin:options:\0"),
+                source.raw,
+                source_offset,
+                source_bytes_per_row,
+                source_bytes_per_image,
+                source_size,
+                destination.raw,
+                destination_slice,
+                destination_level,
+                destination_origin,
+                options.as_raw(),
+            );
+        }
+    }
+
+    pub fn copy_texture_to_buffer(
+        &self,
+        source: &Texture,
+        source_slice: usize,
+        source_level: usize,
+        source_origin: Origin,
+        source_size: Size,
+        destination: &Buffer,
+        destination_offset: usize,
+        destination_bytes_per_row: usize,
+        destination_bytes_per_image: usize,
+        options: BlitOption,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(
+                id,
+                SEL,
+                id,
+                usize,
+                usize,
+                Origin,
+                Size,
+                id,
+                usize,
+                usize,
+                usize,
+                usize,
+            ) = transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"copyFromTexture:sourceSlice:sourceLevel:sourceOrigin:sourceSize:toBuffer:destinationOffset:destinationBytesPerRow:destinationBytesPerImage:options:\0"),
+                source.raw,
+                source_slice,
+                source_level,
+                source_origin,
+                source_size,
+                destination.raw,
+                destination_offset,
+                destination_bytes_per_row,
+                destination_bytes_per_image,
+                options.as_raw(),
+            );
+        }
+    }
+
+    pub fn copy_textures(&self, source: &Texture, destination: &Texture) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, id) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"copyFromTexture:toTexture:\0"),
+                source.raw,
+                destination.raw,
+            );
+        }
+    }
+
+    pub fn copy_texture_to_texture(
+        &self,
+        source: &Texture,
+        source_slice: usize,
+        source_level: usize,
+        source_origin: Origin,
+        source_size: Size,
+        destination: &Texture,
+        destination_slice: usize,
+        destination_level: usize,
+        destination_origin: Origin,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(
+                id,
+                SEL,
+                id,
+                usize,
+                usize,
+                Origin,
+                Size,
+                id,
+                usize,
+                usize,
+                Origin,
+            ) = transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"copyFromTexture:sourceSlice:sourceLevel:sourceOrigin:sourceSize:toTexture:destinationSlice:destinationLevel:destinationOrigin:\0"),
+                source.raw,
+                source_slice,
+                source_level,
+                source_origin,
+                source_size,
+                destination.raw,
+                destination_slice,
+                destination_level,
+                destination_origin,
+            );
+        }
+    }
+
+    pub fn copy_texture_surfaces(
+        &self,
+        source: &Texture,
+        source_slice: usize,
+        source_level: usize,
+        destination: &Texture,
+        destination_slice: usize,
+        destination_level: usize,
+        slice_count: usize,
+        level_count: usize,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, usize, usize, id, usize, usize, usize, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"copyFromTexture:sourceSlice:sourceLevel:toTexture:destinationSlice:destinationLevel:sliceCount:levelCount:\0"),
+                source.raw,
+                source_slice,
+                source_level,
+                destination.raw,
+                destination_slice,
+                destination_level,
+                slice_count,
+                level_count,
+            );
+        }
+    }
+
+    pub fn fill_buffer(&self, buffer: &Buffer, range: Range, value: u8) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, id, Range, u8) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"fillBuffer:range:value:\0"),
+                buffer.raw,
+                range,
+                value,
+            );
+        }
+    }
+
+    pub fn generate_mipmaps(&self, texture: &Texture) {
+        msg_void_id(self.raw, sel(b"generateMipmapsForTexture:\0"), texture.raw);
+    }
+
+    pub fn optimize_contents_for_gpu_access(&self, texture: &Texture) {
+        msg_void_id(
+            self.raw,
+            sel(b"optimizeContentsForGPUAccess:\0"),
+            texture.raw,
+        );
+    }
+
+    pub fn optimize_contents_for_cpu_access(&self, texture: &Texture) {
+        msg_void_id(
+            self.raw,
+            sel(b"optimizeContentsForCPUAccess:\0"),
+            texture.raw,
+        );
+    }
+
     pub fn write_timestamp_with_granularity(
         &self,
         granularity: M4TimestampGranularity,
@@ -3503,6 +3959,32 @@ impl M4RenderCommandEncoder {
         msg_void_scissor_rect(self.raw, sel(b"setScissorRect:\0"), rect);
     }
 
+    pub fn set_viewports(&self, viewports: &[Viewport]) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, *const Viewport, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"setViewports:count:\0"),
+                viewports.as_ptr(),
+                viewports.len(),
+            );
+        }
+    }
+
+    pub fn set_scissor_rects(&self, rects: &[ScissorRect]) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, *const ScissorRect, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"setScissorRects:count:\0"),
+                rects.as_ptr(),
+                rects.len(),
+            );
+        }
+    }
+
     pub fn set_depth_stencil_state(&self, state: &DepthStencilState) {
         msg_void_id(self.raw, sel(b"setDepthStencilState:\0"), state.raw);
     }
@@ -3513,6 +3995,59 @@ impl M4RenderCommandEncoder {
             sel(b"setStencilReferenceValue:\0"),
             value as usize,
         );
+    }
+
+    pub fn set_stencil_reference_values(&self, front: u32, back: u32) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, u32, u32) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"setStencilFrontReferenceValue:backReferenceValue:\0"),
+                front,
+                back,
+            );
+        }
+    }
+
+    pub fn set_visibility_result_mode(&self, mode: VisibilityResultMode, offset: usize) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, usize, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"setVisibilityResultMode:offset:\0"),
+                mode as usize,
+                offset,
+            );
+        }
+    }
+
+    pub fn dispatch_threads_per_tile(&self, threads_per_tile: Size) {
+        msg_void_mtlsize(
+            self.raw,
+            sel(b"dispatchThreadsPerTile:\0"),
+            threads_per_tile,
+        );
+    }
+
+    pub fn set_threadgroup_memory_length_offset_index(
+        &self,
+        length: usize,
+        offset: usize,
+        index: usize,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, usize, usize, usize) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"setThreadgroupMemoryLength:offset:atIndex:\0"),
+                length,
+                offset,
+                index,
+            );
+        }
     }
 
     pub fn set_cull_mode(&self, mode: CullMode) {
@@ -3638,6 +4173,63 @@ impl M4RenderCommandEncoder {
                 index_buffer,
                 index_buffer_length,
                 indirect_buffer,
+            );
+        }
+    }
+
+    pub fn draw_mesh_threadgroups(
+        &self,
+        threadgroups_per_grid: Size,
+        threads_per_object_threadgroup: Size,
+        threads_per_mesh_threadgroup: Size,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, Size, Size, Size) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"drawMeshThreadgroups:threadsPerObjectThreadgroup:threadsPerMeshThreadgroup:\0"),
+                threadgroups_per_grid,
+                threads_per_object_threadgroup,
+                threads_per_mesh_threadgroup,
+            );
+        }
+    }
+
+    pub fn draw_mesh_threads(
+        &self,
+        threads_per_grid: Size,
+        threads_per_object_threadgroup: Size,
+        threads_per_mesh_threadgroup: Size,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, Size, Size, Size) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"drawMeshThreads:threadsPerObjectThreadgroup:threadsPerMeshThreadgroup:\0"),
+                threads_per_grid,
+                threads_per_object_threadgroup,
+                threads_per_mesh_threadgroup,
+            );
+        }
+    }
+
+    pub fn draw_mesh_threadgroups_with_indirect_buffer(
+        &self,
+        indirect_buffer: u64,
+        threads_per_object_threadgroup: Size,
+        threads_per_mesh_threadgroup: Size,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(id, SEL, u64, Size, Size) =
+                transmute(objc_msgSend as *const c_void);
+            f(
+                self.raw,
+                sel(b"drawMeshThreadgroupsWithIndirectBuffer:threadsPerObjectThreadgroup:threadsPerMeshThreadgroup:\0"),
+                indirect_buffer,
+                threads_per_object_threadgroup,
+                threads_per_mesh_threadgroup,
             );
         }
     }
