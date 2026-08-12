@@ -69,9 +69,9 @@ impl FunctionStitchingAttributeAlwaysInline {
     pub fn new() -> Self {
         let raw = msg_id(
             class(b"MTLFunctionStitchingAttributeAlwaysInline\0"),
-            sel(b"alloc\0"),
+            sel!(b"alloc\0"),
         );
-        let raw = msg_id(raw, sel(b"init\0"));
+        let raw = msg_id(raw, sel!(b"init\0"));
         Self { raw }
     }
 }
@@ -132,8 +132,8 @@ impl Clone for FunctionStitchingInputNode {
 
 impl FunctionStitchingInputNode {
     pub fn new(argument_index: usize) -> Self {
-        let raw = msg_id(class(b"MTLFunctionStitchingInputNode\0"), sel(b"alloc\0"));
-        let raw = msg_id_usize(raw, sel(b"initWithArgumentIndex:\0"), argument_index);
+        let raw = msg_id(class(b"MTLFunctionStitchingInputNode\0"), sel!(b"alloc\0"));
+        let raw = msg_id_usize(raw, sel!(b"initWithArgumentIndex:\0"), argument_index);
         Self { raw }
     }
 
@@ -144,11 +144,11 @@ impl FunctionStitchingInputNode {
     }
 
     pub fn argument_index(&self) -> usize {
-        msg_usize(self.raw, sel(b"argumentIndex\0"))
+        msg_usize(self.raw, sel!(b"argumentIndex\0"))
     }
 
     pub fn set_argument_index(&self, index: usize) {
-        msg_void_usize(self.raw, sel(b"setArgumentIndex:\0"), index);
+        msg_void_usize(self.raw, sel!(b"setArgumentIndex:\0"), index);
     }
 }
 
@@ -206,13 +206,13 @@ impl FunctionStitchingFunctionNode {
 
             let allocated = msg_id(
                 class(b"MTLFunctionStitchingFunctionNode\0"),
-                sel(b"alloc\0"),
+                sel!(b"alloc\0"),
             );
             let init: unsafe extern "C" fn(id, SEL, id, id, id) -> id =
                 transmute(objc_msgSend as *const c_void);
             let raw = init(
                 allocated,
-                sel(b"initWithName:arguments:controlDependencies:\0"),
+                sel!(b"initWithName:arguments:controlDependencies:\0"),
                 ns_name.raw(),
                 ns_args,
                 ns_deps,
@@ -228,17 +228,17 @@ impl FunctionStitchingFunctionNode {
     }
 
     pub fn name(&self) -> NSString {
-        let ptr = msg_id(self.raw, sel(b"name\0"));
+        let ptr = msg_id(self.raw, sel!(b"name\0"));
         NSString::from_raw(ptr)
     }
 
     pub fn set_name(&self, name: &str) {
         let ns_name = NSString::new(name);
-        msg_void_id(self.raw, sel(b"setName:\0"), ns_name.raw());
+        msg_void_id(self.raw, sel!(b"setName:\0"), ns_name.raw());
     }
 
     pub fn arguments(&self) -> NSArrayIterator<FunctionStitchingNode> {
-        let array = msg_id(self.raw, sel(b"arguments\0"));
+        let array = msg_id(self.raw, sel!(b"arguments\0"));
         NSArrayIterator::new(array)
     }
 
@@ -246,11 +246,11 @@ impl FunctionStitchingFunctionNode {
         let raw_ptrs =
             unsafe { std::slice::from_raw_parts(arguments.as_ptr() as *const id, arguments.len()) };
         let array = ns_array_from_ids(raw_ptrs);
-        msg_void_id(self.raw, sel(b"setArguments:\0"), array);
+        msg_void_id(self.raw, sel!(b"setArguments:\0"), array);
     }
 
     pub fn control_dependencies(&self) -> NSArrayIterator<FunctionStitchingFunctionNode> {
-        let array = msg_id(self.raw, sel(b"controlDependencies\0"));
+        let array = msg_id(self.raw, sel!(b"controlDependencies\0"));
         NSArrayIterator::new(array)
     }
 
@@ -262,7 +262,7 @@ impl FunctionStitchingFunctionNode {
             )
         };
         let array = ns_array_from_ids(raw_ptrs);
-        msg_void_id(self.raw, sel(b"setControlDependencies:\0"), array);
+        msg_void_id(self.raw, sel!(b"setControlDependencies:\0"), array);
     }
 }
 
@@ -327,12 +327,12 @@ impl FunctionStitchingGraph {
                 std::slice::from_raw_parts(attributes.as_ptr() as *const id, attributes.len());
             let ns_attrs = ns_array_from_ids(raw_attrs);
 
-            let allocated = msg_id(class(b"MTLFunctionStitchingGraph\0"), sel(b"alloc\0"));
+            let allocated = msg_id(class(b"MTLFunctionStitchingGraph\0"), sel!(b"alloc\0"));
             let init: unsafe extern "C" fn(id, SEL, id, id, id, id) -> id =
                 transmute(objc_msgSend as *const c_void);
             let raw = init(
                 allocated,
-                sel(b"initWithFunctionName:nodes:outputNode:attributes:\0"),
+                sel!(b"initWithFunctionName:nodes:outputNode:attributes:\0"),
                 ns_name.raw(),
                 ns_nodes,
                 raw_output,
@@ -343,17 +343,17 @@ impl FunctionStitchingGraph {
     }
 
     pub fn function_name(&self) -> NSString {
-        let ptr = msg_id(self.raw, sel(b"functionName\0"));
+        let ptr = msg_id(self.raw, sel!(b"functionName\0"));
         NSString::from_raw(ptr)
     }
 
     pub fn set_function_name(&self, function_name: &str) {
         let ns_name = NSString::new(function_name);
-        msg_void_id(self.raw, sel(b"setFunctionName:\0"), ns_name.raw());
+        msg_void_id(self.raw, sel!(b"setFunctionName:\0"), ns_name.raw());
     }
 
     pub fn nodes(&self) -> NSArrayIterator<FunctionStitchingFunctionNode> {
-        let array = msg_id(self.raw, sel(b"nodes\0"));
+        let array = msg_id(self.raw, sel!(b"nodes\0"));
         NSArrayIterator::new(array)
     }
 
@@ -361,11 +361,11 @@ impl FunctionStitchingGraph {
         let raw_ptrs =
             unsafe { std::slice::from_raw_parts(nodes.as_ptr() as *const id, nodes.len()) };
         let array = ns_array_from_ids(raw_ptrs);
-        msg_void_id(self.raw, sel(b"setNodes:\0"), array);
+        msg_void_id(self.raw, sel!(b"setNodes:\0"), array);
     }
 
     pub fn output_node(&self) -> Option<FunctionStitchingFunctionNode> {
-        let raw = msg_id(self.raw, sel(b"outputNode\0"));
+        let raw = msg_id(self.raw, sel!(b"outputNode\0"));
         if raw.is_null() {
             None
         } else {
@@ -375,7 +375,7 @@ impl FunctionStitchingGraph {
 
     pub fn set_output_node(&self, output_node: Option<&FunctionStitchingFunctionNode>) {
         let raw_output = output_node.map(|n| n.raw).unwrap_or(NIL);
-        msg_void_id(self.raw, sel(b"setOutputNode:\0"), raw_output);
+        msg_void_id(self.raw, sel!(b"setOutputNode:\0"), raw_output);
     }
 
     pub fn copy(&self) -> Self {
@@ -385,7 +385,7 @@ impl FunctionStitchingGraph {
     }
 
     pub fn attributes(&self) -> NSArrayIterator<FunctionStitchingAttribute> {
-        let array = msg_id(self.raw, sel(b"attributes\0"));
+        let array = msg_id(self.raw, sel!(b"attributes\0"));
         NSArrayIterator::new(array)
     }
 
@@ -394,7 +394,7 @@ impl FunctionStitchingGraph {
             std::slice::from_raw_parts(attributes.as_ptr() as *const id, attributes.len())
         };
         let array = ns_array_from_ids(raw_ptrs);
-        msg_void_id(self.raw, sel(b"setAttributes:\0"), array);
+        msg_void_id(self.raw, sel!(b"setAttributes:\0"), array);
     }
 }
 
@@ -420,8 +420,8 @@ impl Clone for StitchedLibraryDescriptor {
 
 impl StitchedLibraryDescriptor {
     pub fn new() -> Self {
-        let raw = msg_id(class(b"MTLStitchedLibraryDescriptor\0"), sel(b"alloc\0"));
-        let raw = msg_id(raw, sel(b"init\0"));
+        let raw = msg_id(class(b"MTLStitchedLibraryDescriptor\0"), sel!(b"alloc\0"));
+        let raw = msg_id(raw, sel!(b"init\0"));
         Self { raw }
     }
 
@@ -432,7 +432,7 @@ impl StitchedLibraryDescriptor {
     }
 
     pub fn function_graphs(&self) -> NSArrayIterator<FunctionStitchingGraph> {
-        let array = msg_id(self.raw, sel(b"functionGraphs\0"));
+        let array = msg_id(self.raw, sel!(b"functionGraphs\0"));
         NSArrayIterator::new(array)
     }
 
@@ -440,11 +440,11 @@ impl StitchedLibraryDescriptor {
         let raw_ptrs =
             unsafe { std::slice::from_raw_parts(graphs.as_ptr() as *const id, graphs.len()) };
         let array = ns_array_from_ids(raw_ptrs);
-        msg_void_id(self.raw, sel(b"setFunctionGraphs:\0"), array);
+        msg_void_id(self.raw, sel!(b"setFunctionGraphs:\0"), array);
     }
 
     pub fn functions(&self) -> NSArrayIterator<Function> {
-        let array = msg_id(self.raw, sel(b"functions\0"));
+        let array = msg_id(self.raw, sel!(b"functions\0"));
         NSArrayIterator::new(array)
     }
 
@@ -452,11 +452,11 @@ impl StitchedLibraryDescriptor {
         let raw_ptrs =
             unsafe { std::slice::from_raw_parts(functions.as_ptr() as *const id, functions.len()) };
         let array = ns_array_from_ids(raw_ptrs);
-        msg_void_id(self.raw, sel(b"setFunctions:\0"), array);
+        msg_void_id(self.raw, sel!(b"setFunctions:\0"), array);
     }
 
     pub fn binary_archives(&self) -> Result<NSArrayIterator<BinaryArchive>, MetalError> {
-        let selector = sel(b"binaryArchives\0");
+        let selector = sel!(b"binaryArchives\0");
         if responds_to_selector(self.raw, selector) {
             let array = msg_id(self.raw, selector);
             Ok(NSArrayIterator::new(array))
@@ -468,7 +468,7 @@ impl StitchedLibraryDescriptor {
     }
 
     pub fn set_binary_archives(&self, archives: &[BinaryArchive]) -> Result<(), MetalError> {
-        let selector = sel(b"setBinaryArchives:\0");
+        let selector = sel!(b"setBinaryArchives:\0");
         if responds_to_selector(self.raw, selector) {
             let raw_ptrs = unsafe {
                 std::slice::from_raw_parts(archives.as_ptr() as *const id, archives.len())
@@ -484,7 +484,7 @@ impl StitchedLibraryDescriptor {
     }
 
     pub fn options(&self) -> Result<StitchedLibraryOptions, MetalError> {
-        let selector = sel(b"options\0");
+        let selector = sel!(b"options\0");
         if responds_to_selector(self.raw, selector) {
             let val = msg_usize(self.raw, selector);
             Ok(StitchedLibraryOptions(val))
@@ -496,7 +496,7 @@ impl StitchedLibraryDescriptor {
     }
 
     pub fn set_options(&self, options: StitchedLibraryOptions) -> Result<(), MetalError> {
-        let selector = sel(b"setOptions:\0");
+        let selector = sel!(b"setOptions:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_usize(self.raw, selector, options.as_raw());
             Ok(())

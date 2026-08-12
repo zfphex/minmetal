@@ -36,7 +36,7 @@ impl FromRawId for Counter {
 
 impl Counter {
     pub fn name(&self) -> NSString {
-        let ptr = msg_id(self.raw, sel(b"name\0"));
+        let ptr = msg_id(self.raw, sel!(b"name\0"));
         NSString::from_raw(ptr)
     }
 }
@@ -68,12 +68,12 @@ impl FromRawId for CounterSet {
 
 impl CounterSet {
     pub fn name(&self) -> NSString {
-        let ptr = msg_id(self.raw, sel(b"name\0"));
+        let ptr = msg_id(self.raw, sel!(b"name\0"));
         NSString::from_raw(ptr)
     }
 
     pub fn counters(&self) -> NSArrayIterator<Counter> {
-        NSArrayIterator::new(msg_id(self.raw, sel(b"counters\0")))
+        NSArrayIterator::new(msg_id(self.raw, sel!(b"counters\0")))
     }
 }
 
@@ -92,15 +92,15 @@ impl CounterSampleBufferDescriptor {
     pub fn new() -> Self {
         let allocated = msg_id(
             class(b"MTLCounterSampleBufferDescriptor\0"),
-            sel(b"alloc\0"),
+            sel!(b"alloc\0"),
         );
         Self {
-            raw: msg_id(allocated, sel(b"init\0")),
+            raw: msg_id(allocated, sel!(b"init\0")),
         }
     }
 
     pub fn counter_set(&self) -> Option<CounterSet> {
-        let raw = msg_id(self.raw, sel(b"counterSet\0"));
+        let raw = msg_id(self.raw, sel!(b"counterSet\0"));
         if raw.is_null() {
             None
         } else {
@@ -109,11 +109,11 @@ impl CounterSampleBufferDescriptor {
     }
 
     pub fn set_counter_set(&self, counter_set: &CounterSet) {
-        msg_void_id(self.raw, sel(b"setCounterSet:\0"), counter_set.raw);
+        msg_void_id(self.raw, sel!(b"setCounterSet:\0"), counter_set.raw);
     }
 
     pub fn label(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"label\0"));
+        let ptr = msg_id(self.raw, sel!(b"label\0"));
         if ptr.is_null() {
             None
         } else {
@@ -123,11 +123,11 @@ impl CounterSampleBufferDescriptor {
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 
     pub fn storage_mode(&self) -> StorageMode {
-        match msg_usize(self.raw, sel(b"storageMode\0")) {
+        match msg_usize(self.raw, sel!(b"storageMode\0")) {
             0 => StorageMode::Shared,
             1 => StorageMode::Managed,
             2 => StorageMode::Private,
@@ -137,15 +137,15 @@ impl CounterSampleBufferDescriptor {
     }
 
     pub fn set_storage_mode(&self, storage_mode: StorageMode) {
-        msg_void_usize(self.raw, sel(b"setStorageMode:\0"), storage_mode as usize);
+        msg_void_usize(self.raw, sel!(b"setStorageMode:\0"), storage_mode as usize);
     }
 
     pub fn sample_count(&self) -> usize {
-        msg_usize(self.raw, sel(b"sampleCount\0"))
+        msg_usize(self.raw, sel!(b"sampleCount\0"))
     }
 
     pub fn set_sample_count(&self, sample_count: usize) {
-        msg_void_usize(self.raw, sel(b"setSampleCount:\0"), sample_count);
+        msg_void_usize(self.raw, sel!(b"setSampleCount:\0"), sample_count);
     }
 }
 
@@ -171,11 +171,11 @@ impl CounterSampleBuffer {
         if self.raw.is_null() {
             return Err(MetalError::new("counter sample buffer is null"));
         }
-        Ok(msg_usize(self.raw, sel(b"sampleCount\0")))
+        Ok(msg_usize(self.raw, sel!(b"sampleCount\0")))
     }
 
     pub fn label(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"label\0"));
+        let ptr = msg_id(self.raw, sel!(b"label\0"));
         if ptr.is_null() {
             None
         } else {
@@ -187,7 +187,7 @@ impl CounterSampleBuffer {
         if self.raw.is_null() {
             return Err(MetalError::new("counter sample buffer is null"));
         }
-        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        let ptr = retain(msg_id(self.raw, sel!(b"device\0")));
         if ptr.is_null() {
             Err(MetalError::new("counter sample buffer device is null"))
         } else {
@@ -199,7 +199,7 @@ impl CounterSampleBuffer {
         if self.raw.is_null() {
             return Err(MetalError::new("counter sample buffer is null"));
         }
-        let selector = sel(b"storageMode\0");
+        let selector = sel!(b"storageMode\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "MTLCounterSampleBuffer does not respond to storageMode",
@@ -256,7 +256,7 @@ impl CounterSampleBuffer {
                 "resolveCounterRange: requires MTLStorageModeShared counter sample buffer",
             ));
         }
-        let selector = sel(b"resolveCounterRange:\0");
+        let selector = sel!(b"resolveCounterRange:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "resolveCounterRange: is not supported on this counter sample buffer",
@@ -293,7 +293,7 @@ impl Drop for CounterSampleBuffer {
 impl Device {
     pub fn supports_counter_sampling(&self, sampling_point: CounterSamplingPoint) -> bool {
         unsafe {
-            let selector = sel(b"supportsCounterSampling:\0");
+            let selector = sel!(b"supportsCounterSampling:\0");
             if responds_to_selector(self.raw, selector) {
                 let f: unsafe extern "C" fn(id, SEL, usize) -> BOOL =
                     transmute(objc_msgSend as *const c_void);
@@ -318,7 +318,7 @@ impl Device {
     }
 
     pub fn counter_sets(&self) -> Result<NSArrayIterator<CounterSet>, MetalError> {
-        let selector = sel(b"counterSets\0");
+        let selector = sel!(b"counterSets\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new("MTLDevice does not respond to counterSets"));
         }
@@ -330,7 +330,7 @@ impl Device {
         &self,
         descriptor: &CounterSampleBufferDescriptor,
     ) -> Result<CounterSampleBuffer, MetalError> {
-        let selector = sel(b"newCounterSampleBufferWithDescriptor:error:\0");
+        let selector = sel!(b"newCounterSampleBufferWithDescriptor:error:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "newCounterSampleBufferWithDescriptor:error: is not supported",
@@ -364,7 +364,7 @@ impl RenderCommandEncoder {
             CounterSamplingPoint::AtDrawBoundary,
         )?;
         unsafe {
-            let selector = sel(b"sampleCountersInBuffer:atSampleIndex:withBarrier:\0");
+            let selector = sel!(b"sampleCountersInBuffer:atSampleIndex:withBarrier:\0");
             if !responds_to_selector(self.raw, selector) {
                 return Err(MetalError::new(
                     "sampleCountersInBuffer:atSampleIndex:withBarrier: not supported on this RenderCommandEncoder",
@@ -399,7 +399,7 @@ impl ComputeCommandEncoder {
             CounterSamplingPoint::AtDispatchBoundary,
         )?;
         unsafe {
-            let selector = sel(b"sampleCountersInBuffer:atSampleIndex:withBarrier:\0");
+            let selector = sel!(b"sampleCountersInBuffer:atSampleIndex:withBarrier:\0");
             if !responds_to_selector(self.raw, selector) {
                 return Err(MetalError::new(
                     "sampleCountersInBuffer:atSampleIndex:withBarrier: not supported on this ComputeCommandEncoder",
@@ -439,7 +439,7 @@ impl BlitCommandEncoder {
             CounterSamplingPoint::AtBlitBoundary,
         )?;
         unsafe {
-            let selector = sel(b"sampleCountersInBuffer:atSampleIndex:withBarrier:\0");
+            let selector = sel!(b"sampleCountersInBuffer:atSampleIndex:withBarrier:\0");
             if !responds_to_selector(self.raw, selector) {
                 return Err(MetalError::new(
                     "sampleCountersInBuffer:atSampleIndex:withBarrier: not supported on this BlitCommandEncoder",
@@ -467,7 +467,7 @@ impl BlitCommandEncoder {
     ) -> Result<(), MetalError> {
         sample_buffer.validate_resolve_range(range)?;
         unsafe {
-            let selector = sel(b"resolveCounters:inRange:destinationBuffer:destinationOffset:\0");
+            let selector = sel!(b"resolveCounters:inRange:destinationBuffer:destinationOffset:\0");
             if !responds_to_selector(self.raw, selector) {
                 return Err(MetalError::new(
                     "resolveCounters:inRange:destinationBuffer:destinationOffset: not supported on this BlitCommandEncoder",

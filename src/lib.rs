@@ -4,6 +4,7 @@ mod capture;
 mod counters;
 mod device;
 mod encoder;
+#[macro_use]
 mod ffi;
 mod indirect;
 mod io;
@@ -118,10 +119,10 @@ mod tests {
     #[test]
     fn test_selector_availability_helper() {
         let cls = class(b"NSString\0");
-        assert!(responds_to_selector(cls, sel(b"alloc\0")));
+        assert!(responds_to_selector(cls, sel!(b"alloc\0")));
         assert!(!responds_to_selector(
             cls,
-            sel(b"someFakeSelectorThatDoesNotExist\0")
+            sel!(b"someFakeSelectorThatDoesNotExist\0")
         ));
     }
 

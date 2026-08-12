@@ -16,7 +16,7 @@ impl Type {
         if self.raw.is_null() {
             return DataType::None;
         }
-        let val = msg_usize(self.raw, sel(b"dataType\0"));
+        let val = msg_usize(self.raw, sel!(b"dataType\0"));
         // Safely transmute/map raw usize to DataType if it's in range
         // Since DataType is repr(usize), we can check if it's valid or just cast
         // Let's do a safe fallback
@@ -60,7 +60,7 @@ impl StructMember {
         if self.raw.is_null() {
             return None;
         }
-        let ptr = msg_id(self.raw, sel(b"name\0"));
+        let ptr = msg_id(self.raw, sel!(b"name\0"));
         if ptr.is_null() {
             None
         } else {
@@ -72,14 +72,14 @@ impl StructMember {
         if self.raw.is_null() {
             return 0;
         }
-        msg_usize(self.raw, sel(b"offset\0"))
+        msg_usize(self.raw, sel!(b"offset\0"))
     }
 
     pub fn data_type(&self) -> DataType {
         if self.raw.is_null() {
             return DataType::None;
         }
-        let val = msg_usize(self.raw, sel(b"dataType\0"));
+        let val = msg_usize(self.raw, sel!(b"dataType\0"));
         unsafe { std::mem::transmute(val) }
     }
 
@@ -87,7 +87,7 @@ impl StructMember {
         if self.raw.is_null() {
             return None;
         }
-        let ptr = msg_id(self.raw, sel(b"structType\0"));
+        let ptr = msg_id(self.raw, sel!(b"structType\0"));
         if ptr.is_null() {
             None
         } else {
@@ -101,7 +101,7 @@ impl StructMember {
         if self.raw.is_null() {
             return None;
         }
-        let ptr = msg_id(self.raw, sel(b"arrayType\0"));
+        let ptr = msg_id(self.raw, sel!(b"arrayType\0"));
         if ptr.is_null() {
             None
         } else {
@@ -115,7 +115,7 @@ impl StructMember {
         if self.raw.is_null() {
             return None;
         }
-        let selector = sel(b"textureReferenceType\0");
+        let selector = sel!(b"textureReferenceType\0");
         if responds_to_selector(self.raw, selector) {
             let ptr = msg_id(self.raw, selector);
             if !ptr.is_null() {
@@ -131,7 +131,7 @@ impl StructMember {
         if self.raw.is_null() {
             return None;
         }
-        let selector = sel(b"pointerType\0");
+        let selector = sel!(b"pointerType\0");
         if responds_to_selector(self.raw, selector) {
             let ptr = msg_id(self.raw, selector);
             if !ptr.is_null() {
@@ -147,7 +147,7 @@ impl StructMember {
         if self.raw.is_null() {
             return 0;
         }
-        let selector = sel(b"argumentIndex\0");
+        let selector = sel!(b"argumentIndex\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -188,7 +188,7 @@ impl StructType {
         if self.Type.raw.is_null() {
             return NSArrayIterator::new(NIL);
         }
-        let array = msg_id(self.Type.raw, sel(b"members\0"));
+        let array = msg_id(self.Type.raw, sel!(b"members\0"));
         NSArrayIterator::new(array)
     }
 
@@ -197,7 +197,7 @@ impl StructType {
             return None;
         }
         let ns_name = NSString::new(name);
-        let ptr = msg_id_id(self.Type.raw, sel(b"memberByName:\0"), ns_name.raw());
+        let ptr = msg_id_id(self.Type.raw, sel!(b"memberByName:\0"), ns_name.raw());
         if ptr.is_null() {
             None
         } else {
@@ -224,7 +224,7 @@ impl ArrayType {
         if self.Type.raw.is_null() {
             return DataType::None;
         }
-        let val = msg_usize(self.Type.raw, sel(b"elementType\0"));
+        let val = msg_usize(self.Type.raw, sel!(b"elementType\0"));
         unsafe { std::mem::transmute(val) }
     }
 
@@ -232,21 +232,21 @@ impl ArrayType {
         if self.Type.raw.is_null() {
             return 0;
         }
-        msg_usize(self.Type.raw, sel(b"arrayLength\0"))
+        msg_usize(self.Type.raw, sel!(b"arrayLength\0"))
     }
 
     pub fn stride(&self) -> usize {
         if self.Type.raw.is_null() {
             return 0;
         }
-        msg_usize(self.Type.raw, sel(b"stride\0"))
+        msg_usize(self.Type.raw, sel!(b"stride\0"))
     }
 
     pub fn argument_index_stride(&self) -> usize {
         if self.Type.raw.is_null() {
             return 0;
         }
-        let selector = sel(b"argumentIndexStride\0");
+        let selector = sel!(b"argumentIndexStride\0");
         if responds_to_selector(self.Type.raw, selector) {
             msg_usize(self.Type.raw, selector)
         } else {
@@ -258,7 +258,7 @@ impl ArrayType {
         if self.Type.raw.is_null() {
             return None;
         }
-        let ptr = msg_id(self.Type.raw, sel(b"elementStructType\0"));
+        let ptr = msg_id(self.Type.raw, sel!(b"elementStructType\0"));
         if ptr.is_null() {
             None
         } else {
@@ -272,7 +272,7 @@ impl ArrayType {
         if self.Type.raw.is_null() {
             return None;
         }
-        let ptr = msg_id(self.Type.raw, sel(b"elementArrayType\0"));
+        let ptr = msg_id(self.Type.raw, sel!(b"elementArrayType\0"));
         if ptr.is_null() {
             None
         } else {
@@ -286,7 +286,7 @@ impl ArrayType {
         if self.Type.raw.is_null() {
             return None;
         }
-        let selector = sel(b"elementTextureReferenceType\0");
+        let selector = sel!(b"elementTextureReferenceType\0");
         if responds_to_selector(self.Type.raw, selector) {
             let ptr = msg_id(self.Type.raw, selector);
             if !ptr.is_null() {
@@ -302,7 +302,7 @@ impl ArrayType {
         if self.Type.raw.is_null() {
             return None;
         }
-        let selector = sel(b"elementPointerType\0");
+        let selector = sel!(b"elementPointerType\0");
         if responds_to_selector(self.Type.raw, selector) {
             let ptr = msg_id(self.Type.raw, selector);
             if !ptr.is_null() {
@@ -333,7 +333,7 @@ impl PointerType {
         if self.Type.raw.is_null() {
             return DataType::None;
         }
-        let val = msg_usize(self.Type.raw, sel(b"elementType\0"));
+        let val = msg_usize(self.Type.raw, sel!(b"elementType\0"));
         unsafe { std::mem::transmute(val) }
     }
 
@@ -341,7 +341,7 @@ impl PointerType {
         if self.Type.raw.is_null() {
             return BindingAccess::ReadOnly;
         }
-        let val = msg_usize(self.Type.raw, sel(b"access\0"));
+        let val = msg_usize(self.Type.raw, sel!(b"access\0"));
         unsafe { std::mem::transmute(val) }
     }
 
@@ -349,21 +349,21 @@ impl PointerType {
         if self.Type.raw.is_null() {
             return 0;
         }
-        msg_usize(self.Type.raw, sel(b"alignment\0"))
+        msg_usize(self.Type.raw, sel!(b"alignment\0"))
     }
 
     pub fn data_size(&self) -> usize {
         if self.Type.raw.is_null() {
             return 0;
         }
-        msg_usize(self.Type.raw, sel(b"dataSize\0"))
+        msg_usize(self.Type.raw, sel!(b"dataSize\0"))
     }
 
     pub fn element_is_argument_buffer(&self) -> bool {
         if self.Type.raw.is_null() {
             return false;
         }
-        let selector = sel(b"elementIsArgumentBuffer\0");
+        let selector = sel!(b"elementIsArgumentBuffer\0");
         if responds_to_selector(self.Type.raw, selector) {
             msg_bool(self.Type.raw, selector) != 0
         } else {
@@ -375,7 +375,7 @@ impl PointerType {
         if self.Type.raw.is_null() {
             return None;
         }
-        let selector = sel(b"elementStructType\0");
+        let selector = sel!(b"elementStructType\0");
         if responds_to_selector(self.Type.raw, selector) {
             let ptr = msg_id(self.Type.raw, selector);
             if !ptr.is_null() {
@@ -391,7 +391,7 @@ impl PointerType {
         if self.Type.raw.is_null() {
             return None;
         }
-        let selector = sel(b"elementArrayType\0");
+        let selector = sel!(b"elementArrayType\0");
         if responds_to_selector(self.Type.raw, selector) {
             let ptr = msg_id(self.Type.raw, selector);
             if !ptr.is_null() {
@@ -422,7 +422,7 @@ impl TextureReferenceType {
         if self.Type.raw.is_null() {
             return DataType::None;
         }
-        let val = msg_usize(self.Type.raw, sel(b"textureDataType\0"));
+        let val = msg_usize(self.Type.raw, sel!(b"textureDataType\0"));
         unsafe { std::mem::transmute(val) }
     }
 
@@ -430,7 +430,7 @@ impl TextureReferenceType {
         if self.Type.raw.is_null() {
             return TextureType::D2;
         }
-        let val = msg_usize(self.Type.raw, sel(b"textureType\0"));
+        let val = msg_usize(self.Type.raw, sel!(b"textureType\0"));
         unsafe { std::mem::transmute(val) }
     }
 
@@ -438,7 +438,7 @@ impl TextureReferenceType {
         if self.Type.raw.is_null() {
             return BindingAccess::ReadOnly;
         }
-        let val = msg_usize(self.Type.raw, sel(b"access\0"));
+        let val = msg_usize(self.Type.raw, sel!(b"access\0"));
         unsafe { std::mem::transmute(val) }
     }
 
@@ -446,7 +446,7 @@ impl TextureReferenceType {
         if self.Type.raw.is_null() {
             return false;
         }
-        msg_bool(self.Type.raw, sel(b"isDepthTexture\0")) != 0
+        msg_bool(self.Type.raw, sel!(b"isDepthTexture\0")) != 0
     }
 }
 
@@ -466,7 +466,7 @@ impl Argument {
         if self.raw.is_null() {
             return None;
         }
-        let ptr = msg_id(self.raw, sel(b"name\0"));
+        let ptr = msg_id(self.raw, sel!(b"name\0"));
         if ptr.is_null() {
             None
         } else {
@@ -478,7 +478,7 @@ impl Argument {
         if self.raw.is_null() {
             return ArgumentType::Buffer;
         }
-        let val = msg_usize(self.raw, sel(b"type\0"));
+        let val = msg_usize(self.raw, sel!(b"type\0"));
         unsafe { std::mem::transmute(val) }
     }
 
@@ -486,7 +486,7 @@ impl Argument {
         if self.raw.is_null() {
             return BindingAccess::ReadOnly;
         }
-        let val = msg_usize(self.raw, sel(b"access\0"));
+        let val = msg_usize(self.raw, sel!(b"access\0"));
         unsafe { std::mem::transmute(val) }
     }
 
@@ -494,35 +494,35 @@ impl Argument {
         if self.raw.is_null() {
             return 0;
         }
-        msg_usize(self.raw, sel(b"index\0"))
+        msg_usize(self.raw, sel!(b"index\0"))
     }
 
     pub fn is_active(&self) -> bool {
         if self.raw.is_null() {
             return false;
         }
-        msg_bool(self.raw, sel(b"isActive\0")) != 0
+        msg_bool(self.raw, sel!(b"isActive\0")) != 0
     }
 
     pub fn buffer_alignment(&self) -> usize {
         if self.raw.is_null() {
             return 0;
         }
-        msg_usize(self.raw, sel(b"bufferAlignment\0"))
+        msg_usize(self.raw, sel!(b"bufferAlignment\0"))
     }
 
     pub fn buffer_data_size(&self) -> usize {
         if self.raw.is_null() {
             return 0;
         }
-        msg_usize(self.raw, sel(b"bufferDataSize\0"))
+        msg_usize(self.raw, sel!(b"bufferDataSize\0"))
     }
 
     pub fn buffer_data_type(&self) -> DataType {
         if self.raw.is_null() {
             return DataType::None;
         }
-        let val = msg_usize(self.raw, sel(b"bufferDataType\0"));
+        let val = msg_usize(self.raw, sel!(b"bufferDataType\0"));
         unsafe { std::mem::transmute(val) }
     }
 
@@ -530,7 +530,7 @@ impl Argument {
         if self.raw.is_null() {
             return None;
         }
-        let ptr = msg_id(self.raw, sel(b"bufferStructType\0"));
+        let ptr = msg_id(self.raw, sel!(b"bufferStructType\0"));
         if ptr.is_null() {
             None
         } else {
@@ -544,7 +544,7 @@ impl Argument {
         if self.raw.is_null() {
             return None;
         }
-        let selector = sel(b"bufferPointerType\0");
+        let selector = sel!(b"bufferPointerType\0");
         if responds_to_selector(self.raw, selector) {
             let ptr = msg_id(self.raw, selector);
             if !ptr.is_null() {
@@ -560,21 +560,21 @@ impl Argument {
         if self.raw.is_null() {
             return 0;
         }
-        msg_usize(self.raw, sel(b"threadgroupMemoryAlignment\0"))
+        msg_usize(self.raw, sel!(b"threadgroupMemoryAlignment\0"))
     }
 
     pub fn threadgroup_memory_data_size(&self) -> usize {
         if self.raw.is_null() {
             return 0;
         }
-        msg_usize(self.raw, sel(b"threadgroupMemoryDataSize\0"))
+        msg_usize(self.raw, sel!(b"threadgroupMemoryDataSize\0"))
     }
 
     pub fn texture_type(&self) -> TextureType {
         if self.raw.is_null() {
             return TextureType::D2;
         }
-        let val = msg_usize(self.raw, sel(b"textureType\0"));
+        let val = msg_usize(self.raw, sel!(b"textureType\0"));
         unsafe { std::mem::transmute(val) }
     }
 
@@ -582,7 +582,7 @@ impl Argument {
         if self.raw.is_null() {
             return DataType::None;
         }
-        let val = msg_usize(self.raw, sel(b"textureDataType\0"));
+        let val = msg_usize(self.raw, sel!(b"textureDataType\0"));
         unsafe { std::mem::transmute(val) }
     }
 
@@ -590,7 +590,7 @@ impl Argument {
         if self.raw.is_null() {
             return false;
         }
-        let selector = sel(b"isDepthTexture\0");
+        let selector = sel!(b"isDepthTexture\0");
         if responds_to_selector(self.raw, selector) {
             msg_bool(self.raw, selector) != 0
         } else {
@@ -602,7 +602,7 @@ impl Argument {
         if self.raw.is_null() {
             return 0;
         }
-        let selector = sel(b"arrayLength\0");
+        let selector = sel!(b"arrayLength\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -647,7 +647,7 @@ impl Binding {
         if self.raw.is_null() {
             return None;
         }
-        let ptr = msg_id(self.raw, sel(b"name\0"));
+        let ptr = msg_id(self.raw, sel!(b"name\0"));
         if ptr.is_null() {
             None
         } else {
@@ -659,7 +659,7 @@ impl Binding {
         if self.raw.is_null() {
             return BindingType::Buffer;
         }
-        let val = msg_usize(self.raw, sel(b"type\0"));
+        let val = msg_usize(self.raw, sel!(b"type\0"));
         unsafe { std::mem::transmute(val) }
     }
 
@@ -667,7 +667,7 @@ impl Binding {
         if self.raw.is_null() {
             return BindingAccess::ReadOnly;
         }
-        let val = msg_usize(self.raw, sel(b"access\0"));
+        let val = msg_usize(self.raw, sel!(b"access\0"));
         unsafe { std::mem::transmute(val) }
     }
 
@@ -675,14 +675,14 @@ impl Binding {
         if self.raw.is_null() {
             return 0;
         }
-        msg_usize(self.raw, sel(b"index\0"))
+        msg_usize(self.raw, sel!(b"index\0"))
     }
 
     pub fn is_used(&self) -> bool {
         if self.raw.is_null() {
             return false;
         }
-        let selector = sel(b"isUsed\0");
+        let selector = sel!(b"isUsed\0");
         if responds_to_selector(self.raw, selector) {
             msg_bool(self.raw, selector) != 0
         } else {
@@ -694,7 +694,7 @@ impl Binding {
         if self.raw.is_null() {
             return false;
         }
-        let selector = sel(b"isArgument\0");
+        let selector = sel!(b"isArgument\0");
         if responds_to_selector(self.raw, selector) {
             msg_bool(self.raw, selector) != 0
         } else {
@@ -707,7 +707,7 @@ impl Binding {
         if self.raw.is_null() {
             return 0;
         }
-        let selector = sel(b"bufferAlignment\0");
+        let selector = sel!(b"bufferAlignment\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -719,7 +719,7 @@ impl Binding {
         if self.raw.is_null() {
             return 0;
         }
-        let selector = sel(b"bufferDataSize\0");
+        let selector = sel!(b"bufferDataSize\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -731,7 +731,7 @@ impl Binding {
         if self.raw.is_null() {
             return DataType::None;
         }
-        let selector = sel(b"bufferDataType\0");
+        let selector = sel!(b"bufferDataType\0");
         if responds_to_selector(self.raw, selector) {
             let val = msg_usize(self.raw, selector);
             unsafe { std::mem::transmute(val) }
@@ -744,7 +744,7 @@ impl Binding {
         if self.raw.is_null() {
             return None;
         }
-        let selector = sel(b"bufferStructType\0");
+        let selector = sel!(b"bufferStructType\0");
         if responds_to_selector(self.raw, selector) {
             let ptr = msg_id(self.raw, selector);
             if !ptr.is_null() {
@@ -760,7 +760,7 @@ impl Binding {
         if self.raw.is_null() {
             return None;
         }
-        let selector = sel(b"bufferPointerType\0");
+        let selector = sel!(b"bufferPointerType\0");
         if responds_to_selector(self.raw, selector) {
             let ptr = msg_id(self.raw, selector);
             if !ptr.is_null() {
@@ -777,7 +777,7 @@ impl Binding {
         if self.raw.is_null() {
             return 0;
         }
-        let selector = sel(b"threadgroupMemoryAlignment\0");
+        let selector = sel!(b"threadgroupMemoryAlignment\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -789,7 +789,7 @@ impl Binding {
         if self.raw.is_null() {
             return 0;
         }
-        let selector = sel(b"threadgroupMemoryDataSize\0");
+        let selector = sel!(b"threadgroupMemoryDataSize\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -802,7 +802,7 @@ impl Binding {
         if self.raw.is_null() {
             return TextureType::D2;
         }
-        let selector = sel(b"textureType\0");
+        let selector = sel!(b"textureType\0");
         if responds_to_selector(self.raw, selector) {
             let val = msg_usize(self.raw, selector);
             unsafe { std::mem::transmute(val) }
@@ -815,7 +815,7 @@ impl Binding {
         if self.raw.is_null() {
             return DataType::None;
         }
-        let selector = sel(b"textureDataType\0");
+        let selector = sel!(b"textureDataType\0");
         if responds_to_selector(self.raw, selector) {
             let val = msg_usize(self.raw, selector);
             unsafe { std::mem::transmute(val) }
@@ -828,7 +828,7 @@ impl Binding {
         if self.raw.is_null() {
             return false;
         }
-        let selector = sel(b"isDepthTexture\0");
+        let selector = sel!(b"isDepthTexture\0");
         if responds_to_selector(self.raw, selector) {
             msg_bool(self.raw, selector) != 0
         } else {
@@ -840,7 +840,7 @@ impl Binding {
         if self.raw.is_null() {
             return 0;
         }
-        let selector = sel(b"arrayLength\0");
+        let selector = sel!(b"arrayLength\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -853,7 +853,7 @@ impl Binding {
         if self.raw.is_null() {
             return 0;
         }
-        let selector = sel(b"objectPayloadAlignment\0");
+        let selector = sel!(b"objectPayloadAlignment\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -865,7 +865,7 @@ impl Binding {
         if self.raw.is_null() {
             return 0;
         }
-        let selector = sel(b"objectPayloadDataSize\0");
+        let selector = sel!(b"objectPayloadDataSize\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -908,7 +908,7 @@ impl FunctionReflection {
         if self.raw.is_null() {
             return NSArrayIterator::new(NIL);
         }
-        let selector = sel(b"bindings\0");
+        let selector = sel!(b"bindings\0");
         if responds_to_selector(self.raw, selector) {
             bindings_from_array(msg_id(self.raw, selector))
         } else {
@@ -920,7 +920,7 @@ impl FunctionReflection {
         if self.raw.is_null() {
             return None;
         }
-        let selector = sel(b"userAnnotation\0");
+        let selector = sel!(b"userAnnotation\0");
         if responds_to_selector(self.raw, selector) {
             let ptr = msg_id(self.raw, selector);
             if ptr.is_null() {
@@ -937,7 +937,7 @@ impl FunctionReflection {
         if self.raw.is_null() {
             return None;
         }
-        let selector = sel(b"userAnnotation\0");
+        let selector = sel!(b"userAnnotation\0");
         if !responds_to_selector(self.raw, selector) {
             return None;
         }
@@ -945,7 +945,7 @@ impl FunctionReflection {
         if annotation.is_null() {
             return None;
         }
-        if responds_to_selector(annotation, sel(b"objectForKey:")) {
+        if responds_to_selector(annotation, sel!(b"objectForKey:")) {
             let ns_key = NSString::new(key);
             let value = ns_dictionary_object_for_key(annotation, ns_key.raw());
             if value.is_null() {
@@ -964,12 +964,12 @@ impl FunctionReflection {
         if self.raw.is_null() {
             return NSArrayIterator::new(NIL);
         }
-        let selector = sel(b"userAnnotation\0");
+        let selector = sel!(b"userAnnotation\0");
         if !responds_to_selector(self.raw, selector) {
             return NSArrayIterator::new(NIL);
         }
         let annotation = msg_id(self.raw, selector);
-        if annotation.is_null() || !responds_to_selector(annotation, sel(b"allKeys")) {
+        if annotation.is_null() || !responds_to_selector(annotation, sel!(b"allKeys")) {
             return NSArrayIterator::new(NIL);
         }
         let keys = ns_dictionary_all_keys(annotation);

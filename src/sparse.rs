@@ -11,7 +11,7 @@ pub enum SparseTextureMappingMode {
 
 impl Device {
     pub fn supports_sparse_textures(&self) -> bool {
-        let selector = sel(b"sparseTileSizeWithTextureType:pixelFormat:sampleCount:\0");
+        let selector = sel!(b"sparseTileSizeWithTextureType:pixelFormat:sampleCount:\0");
         responds_to_selector(self.raw, selector)
     }
 
@@ -22,7 +22,7 @@ impl Device {
         sample_count: usize,
     ) -> Size {
         unsafe {
-            let selector = sel(b"sparseTileSizeWithTextureType:pixelFormat:sampleCount:\0");
+            let selector = sel!(b"sparseTileSizeWithTextureType:pixelFormat:sampleCount:\0");
             if !responds_to_selector(self.raw, selector) {
                 return Size::new(0, 0, 0);
             }
@@ -49,7 +49,7 @@ impl ResourceStateCommandEncoder {
         slice: usize,
     ) -> Result<(), MetalError> {
         unsafe {
-            let selector = sel(b"updateTextureMapping:mode:region:mipLevel:slice:\0");
+            let selector = sel!(b"updateTextureMapping:mode:region:mipLevel:slice:\0");
             if !responds_to_selector(self.raw, selector) {
                 return Err(MetalError::new(
                     "updateTextureMapping:mode:region:mipLevel:slice: not supported on this ResourceStateCommandEncoder",
@@ -90,7 +90,7 @@ impl ResourceStateCommandEncoder {
         }
         unsafe {
             let selector =
-                sel(b"updateTextureMappings:mode:regions:mipLevels:slices:numRegions:\0");
+                sel!(b"updateTextureMappings:mode:regions:mipLevels:slices:numRegions:\0");
             if !responds_to_selector(self.raw, selector) {
                 return Err(MetalError::new(
                     "updateTextureMappings:mode:regions:mipLevels:slices:numRegions: not supported on this ResourceStateCommandEncoder",
@@ -128,7 +128,7 @@ impl ResourceStateCommandEncoder {
         indirect_buffer_offset: usize,
     ) -> Result<(), MetalError> {
         unsafe {
-            let selector = sel(b"updateTextureMapping:mode:indirectBuffer:indirectBufferOffset:\0");
+            let selector = sel!(b"updateTextureMapping:mode:indirectBuffer:indirectBufferOffset:\0");
             if !responds_to_selector(self.raw, selector) {
                 return Err(MetalError::new(
                     "updateTextureMapping:mode:indirectBuffer:indirectBufferOffset: not supported on this ResourceStateCommandEncoder",
@@ -161,7 +161,7 @@ impl ResourceStateCommandEncoder {
         destination_origin: Origin,
     ) -> Result<(), MetalError> {
         unsafe {
-            let selector = sel(
+            let selector = sel!(
                 b"moveTextureMappingsFromTexture:sourceSlice:sourceLevel:sourceOrigin:sourceSize:toTexture:destinationSlice:destinationLevel:destinationOrigin:\0",
             );
             if !responds_to_selector(self.raw, selector) {

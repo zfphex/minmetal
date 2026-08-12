@@ -52,23 +52,23 @@ impl IndirectCommandBufferDescriptor {
     pub fn new() -> Self {
         let allocated = msg_id(
             class(b"MTLIndirectCommandBufferDescriptor\0"),
-            sel(b"alloc\0"),
+            sel!(b"alloc\0"),
         );
         Self {
-            raw: msg_id(allocated, sel(b"init\0")),
+            raw: msg_id(allocated, sel!(b"init\0")),
         }
     }
 
     pub fn command_types(&self) -> IndirectCommandType {
-        IndirectCommandType::from_raw(msg_usize(self.raw, sel(b"commandTypes\0")))
+        IndirectCommandType::from_raw(msg_usize(self.raw, sel!(b"commandTypes\0")))
     }
 
     pub fn set_command_types(&self, command_types: IndirectCommandType) {
-        msg_void_usize(self.raw, sel(b"setCommandTypes:\0"), command_types.as_raw());
+        msg_void_usize(self.raw, sel!(b"setCommandTypes:\0"), command_types.as_raw());
     }
 
     pub fn inherit_pipeline_state(&self) -> bool {
-        let selector = sel(b"inheritPipelineState\0");
+        let selector = sel!(b"inheritPipelineState\0");
         if responds_to_selector(self.raw, selector) {
             msg_bool(self.raw, selector) != NO
         } else {
@@ -79,41 +79,41 @@ impl IndirectCommandBufferDescriptor {
     pub fn set_inherit_pipeline_state(&self, inherit: bool) {
         msg_void_bool(
             self.raw,
-            sel(b"setInheritPipelineState:\0"),
+            sel!(b"setInheritPipelineState:\0"),
             if inherit { YES } else { NO },
         );
     }
 
     pub fn inherit_buffers(&self) -> bool {
-        msg_bool(self.raw, sel(b"inheritBuffers\0")) != NO
+        msg_bool(self.raw, sel!(b"inheritBuffers\0")) != NO
     }
 
     pub fn set_inherit_buffers(&self, inherit: bool) {
         msg_void_bool(
             self.raw,
-            sel(b"setInheritBuffers:\0"),
+            sel!(b"setInheritBuffers:\0"),
             if inherit { YES } else { NO },
         );
     }
 
     pub fn max_vertex_buffer_bind_count(&self) -> usize {
-        msg_usize(self.raw, sel(b"maxVertexBufferBindCount\0"))
+        msg_usize(self.raw, sel!(b"maxVertexBufferBindCount\0"))
     }
 
     pub fn set_max_vertex_buffer_bind_count(&self, count: usize) {
-        msg_void_usize(self.raw, sel(b"setMaxVertexBufferBindCount:\0"), count);
+        msg_void_usize(self.raw, sel!(b"setMaxVertexBufferBindCount:\0"), count);
     }
 
     pub fn max_fragment_buffer_bind_count(&self) -> usize {
-        msg_usize(self.raw, sel(b"maxFragmentBufferBindCount\0"))
+        msg_usize(self.raw, sel!(b"maxFragmentBufferBindCount\0"))
     }
 
     pub fn set_max_fragment_buffer_bind_count(&self, count: usize) {
-        msg_void_usize(self.raw, sel(b"setMaxFragmentBufferBindCount:\0"), count);
+        msg_void_usize(self.raw, sel!(b"setMaxFragmentBufferBindCount:\0"), count);
     }
 
     pub fn max_kernel_buffer_bind_count(&self) -> usize {
-        let selector = sel(b"maxKernelBufferBindCount\0");
+        let selector = sel!(b"maxKernelBufferBindCount\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -122,11 +122,11 @@ impl IndirectCommandBufferDescriptor {
     }
 
     pub fn set_max_kernel_buffer_bind_count(&self, count: usize) {
-        msg_void_usize(self.raw, sel(b"setMaxKernelBufferBindCount:\0"), count);
+        msg_void_usize(self.raw, sel!(b"setMaxKernelBufferBindCount:\0"), count);
     }
 
     pub fn inherit_depth_stencil_state(&self) -> bool {
-        let selector = sel(b"inheritDepthStencilState\0");
+        let selector = sel!(b"inheritDepthStencilState\0");
         if responds_to_selector(self.raw, selector) {
             msg_bool(self.raw, selector) != NO
         } else {
@@ -135,14 +135,14 @@ impl IndirectCommandBufferDescriptor {
     }
 
     pub fn set_inherit_depth_stencil_state(&self, inherit: bool) {
-        let selector = sel(b"setInheritDepthStencilState:\0");
+        let selector = sel!(b"setInheritDepthStencilState:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_bool(self.raw, selector, if inherit { YES } else { NO });
         }
     }
 
     pub fn inherit_depth_bias(&self) -> bool {
-        let selector = sel(b"inheritDepthBias\0");
+        let selector = sel!(b"inheritDepthBias\0");
         if responds_to_selector(self.raw, selector) {
             msg_bool(self.raw, selector) != NO
         } else {
@@ -151,14 +151,14 @@ impl IndirectCommandBufferDescriptor {
     }
 
     pub fn set_inherit_depth_bias(&self, inherit: bool) {
-        let selector = sel(b"setInheritDepthBias:\0");
+        let selector = sel!(b"setInheritDepthBias:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_bool(self.raw, selector, if inherit { YES } else { NO });
         }
     }
 
     pub fn inherit_depth_clip_mode(&self) -> bool {
-        let selector = sel(b"inheritDepthClipMode\0");
+        let selector = sel!(b"inheritDepthClipMode\0");
         if responds_to_selector(self.raw, selector) {
             msg_bool(self.raw, selector) != NO
         } else {
@@ -167,14 +167,14 @@ impl IndirectCommandBufferDescriptor {
     }
 
     pub fn set_inherit_depth_clip_mode(&self, inherit: bool) {
-        let selector = sel(b"setInheritDepthClipMode:\0");
+        let selector = sel!(b"setInheritDepthClipMode:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_bool(self.raw, selector, if inherit { YES } else { NO });
         }
     }
 
     pub fn inherit_cull_mode(&self) -> bool {
-        let selector = sel(b"inheritCullMode\0");
+        let selector = sel!(b"inheritCullMode\0");
         if responds_to_selector(self.raw, selector) {
             msg_bool(self.raw, selector) != NO
         } else {
@@ -183,14 +183,14 @@ impl IndirectCommandBufferDescriptor {
     }
 
     pub fn set_inherit_cull_mode(&self, inherit: bool) {
-        let selector = sel(b"setInheritCullMode:\0");
+        let selector = sel!(b"setInheritCullMode:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_bool(self.raw, selector, if inherit { YES } else { NO });
         }
     }
 
     pub fn inherit_front_facing_winding(&self) -> bool {
-        let selector = sel(b"inheritFrontFacingWinding\0");
+        let selector = sel!(b"inheritFrontFacingWinding\0");
         if responds_to_selector(self.raw, selector) {
             msg_bool(self.raw, selector) != NO
         } else {
@@ -199,14 +199,14 @@ impl IndirectCommandBufferDescriptor {
     }
 
     pub fn set_inherit_front_facing_winding(&self, inherit: bool) {
-        let selector = sel(b"setInheritFrontFacingWinding:\0");
+        let selector = sel!(b"setInheritFrontFacingWinding:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_bool(self.raw, selector, if inherit { YES } else { NO });
         }
     }
 
     pub fn inherit_triangle_fill_mode(&self) -> bool {
-        let selector = sel(b"inheritTriangleFillMode\0");
+        let selector = sel!(b"inheritTriangleFillMode\0");
         if responds_to_selector(self.raw, selector) {
             msg_bool(self.raw, selector) != NO
         } else {
@@ -215,14 +215,14 @@ impl IndirectCommandBufferDescriptor {
     }
 
     pub fn set_inherit_triangle_fill_mode(&self, inherit: bool) {
-        let selector = sel(b"setInheritTriangleFillMode:\0");
+        let selector = sel!(b"setInheritTriangleFillMode:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_bool(self.raw, selector, if inherit { YES } else { NO });
         }
     }
 
     pub fn support_ray_tracing(&self) -> bool {
-        let selector = sel(b"supportRayTracing\0");
+        let selector = sel!(b"supportRayTracing\0");
         if responds_to_selector(self.raw, selector) {
             msg_bool(self.raw, selector) != NO
         } else {
@@ -231,14 +231,14 @@ impl IndirectCommandBufferDescriptor {
     }
 
     pub fn set_support_ray_tracing(&self, support: bool) {
-        let selector = sel(b"setSupportRayTracing:\0");
+        let selector = sel!(b"setSupportRayTracing:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_bool(self.raw, selector, if support { YES } else { NO });
         }
     }
 
     pub fn support_dynamic_attribute_stride(&self) -> bool {
-        let selector = sel(b"supportDynamicAttributeStride\0");
+        let selector = sel!(b"supportDynamicAttributeStride\0");
         if responds_to_selector(self.raw, selector) {
             msg_bool(self.raw, selector) != NO
         } else {
@@ -247,14 +247,14 @@ impl IndirectCommandBufferDescriptor {
     }
 
     pub fn set_support_dynamic_attribute_stride(&self, support: bool) {
-        let selector = sel(b"setSupportDynamicAttributeStride:\0");
+        let selector = sel!(b"setSupportDynamicAttributeStride:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_bool(self.raw, selector, if support { YES } else { NO });
         }
     }
 
     pub fn max_object_buffer_bind_count(&self) -> usize {
-        let selector = sel(b"maxObjectBufferBindCount\0");
+        let selector = sel!(b"maxObjectBufferBindCount\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -263,14 +263,14 @@ impl IndirectCommandBufferDescriptor {
     }
 
     pub fn set_max_object_buffer_bind_count(&self, count: usize) {
-        let selector = sel(b"setMaxObjectBufferBindCount:\0");
+        let selector = sel!(b"setMaxObjectBufferBindCount:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_usize(self.raw, selector, count);
         }
     }
 
     pub fn max_mesh_buffer_bind_count(&self) -> usize {
-        let selector = sel(b"maxMeshBufferBindCount\0");
+        let selector = sel!(b"maxMeshBufferBindCount\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -279,7 +279,7 @@ impl IndirectCommandBufferDescriptor {
     }
 
     pub fn set_max_mesh_buffer_bind_count(&self, count: usize) {
-        let selector = sel(b"setMaxMeshBufferBindCount:\0");
+        let selector = sel!(b"setMaxMeshBufferBindCount:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_usize(self.raw, selector, count);
         }
@@ -383,12 +383,12 @@ impl IndirectCommandBuffer {
         if self.raw.is_null() {
             0
         } else {
-            msg_usize(self.raw, sel(b"size\0"))
+            msg_usize(self.raw, sel!(b"size\0"))
         }
     }
 
     pub fn gpu_resource_id(&self) -> Result<ResourceID, MetalError> {
-        let selector = sel(b"gpuResourceID\0");
+        let selector = sel!(b"gpuResourceID\0");
         if responds_to_selector(self.raw, selector) {
             Ok(msg_resource_id(self.raw, selector))
         } else {
@@ -400,7 +400,7 @@ impl IndirectCommandBuffer {
 
     pub fn reset(&self, range: Range) -> Result<(), MetalError> {
         self.validate_reset_range(range)?;
-        msg_void_range(self.raw, sel(b"resetWithRange:\0"), range);
+        msg_void_range(self.raw, sel!(b"resetWithRange:\0"), range);
         Ok(())
     }
 
@@ -411,7 +411,7 @@ impl IndirectCommandBuffer {
                 "indirect command buffer was not created with render command types",
             ));
         }
-        let raw = msg_id_usize(self.raw, sel(b"indirectRenderCommandAtIndex:\0"), index);
+        let raw = msg_id_usize(self.raw, sel!(b"indirectRenderCommandAtIndex:\0"), index);
         if raw.is_null() {
             Err(MetalError::new(
                 "failed to get Metal indirect render command",
@@ -431,7 +431,7 @@ impl IndirectCommandBuffer {
                 "indirect command buffer was not created with compute command types",
             ));
         }
-        let raw = msg_id_usize(self.raw, sel(b"indirectComputeCommandAtIndex:\0"), index);
+        let raw = msg_id_usize(self.raw, sel!(b"indirectComputeCommandAtIndex:\0"), index);
         if raw.is_null() {
             Err(MetalError::new(
                 "failed to get Metal indirect compute command",
@@ -506,7 +506,7 @@ impl IndirectRenderCommand {
                 "cannot set render pipeline state when inheritPipelineState is enabled",
             ));
         }
-        msg_void_id(self.raw, sel(b"setRenderPipelineState:\0"), state.raw);
+        msg_void_id(self.raw, sel!(b"setRenderPipelineState:\0"), state.raw);
         Ok(())
     }
 
@@ -519,7 +519,7 @@ impl IndirectRenderCommand {
         self.validate_buffer_bind(index, self.config.max_vertex_buffer_bind_count, "vertex")?;
         msg_void_id_usize_usize(
             self.raw,
-            sel(b"setVertexBuffer:offset:atIndex:\0"),
+            sel!(b"setVertexBuffer:offset:atIndex:\0"),
             buffer.raw,
             offset,
             index,
@@ -536,7 +536,7 @@ impl IndirectRenderCommand {
     ) -> Result<(), MetalError> {
         self.validate_dynamic_attribute_stride()?;
         self.validate_buffer_bind(index, self.config.max_vertex_buffer_bind_count, "vertex")?;
-        let selector = sel(b"setVertexBuffer:offset:attributeStride:atIndex:\0");
+        let selector = sel!(b"setVertexBuffer:offset:attributeStride:atIndex:\0");
         if responds_to_selector(self.raw, selector) {
             unsafe {
                 let f: unsafe extern "C" fn(id, SEL, id, usize, usize, usize) =
@@ -571,7 +571,7 @@ impl IndirectRenderCommand {
         )?;
         msg_void_id_usize_usize(
             self.raw,
-            sel(b"setFragmentBuffer:offset:atIndex:\0"),
+            sel!(b"setFragmentBuffer:offset:atIndex:\0"),
             buffer.raw,
             offset,
             index,
@@ -593,7 +593,7 @@ impl IndirectRenderCommand {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"drawPrimitives:vertexStart:vertexCount:instanceCount:baseInstance:\0"),
+                sel!(b"drawPrimitives:vertexStart:vertexCount:instanceCount:baseInstance:\0"),
                 primitive_type as usize,
                 vertex_start,
                 vertex_count,
@@ -631,7 +631,7 @@ impl IndirectRenderCommand {
             ) = transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"drawIndexedPrimitives:indexCount:indexType:indexBuffer:indexBufferOffset:instanceCount:baseVertex:baseInstance:\0"),
+                sel!(b"drawIndexedPrimitives:indexCount:indexType:indexBuffer:indexBufferOffset:instanceCount:baseVertex:baseInstance:\0"),
                 primitive_type as usize,
                 index_count,
                 index_type as usize,
@@ -659,7 +659,7 @@ impl IndirectRenderCommand {
         tessellation_factor_buffer_instance_stride: usize,
     ) -> Result<(), MetalError> {
         self.validate_command_type(IndirectCommandType::DRAW_PATCH)?;
-        let selector = sel(
+        let selector = sel!(
             b"drawPatches:patchStart:patchCount:patchIndexBuffer:patchIndexBufferOffset:instanceCount:baseInstance:tessellationFactorBuffer:tessellationFactorBufferOffset:tessellationFactorBufferInstanceStride:\0",
         );
         if responds_to_selector(self.raw, selector) {
@@ -717,7 +717,7 @@ impl IndirectRenderCommand {
         tessellation_factor_buffer_instance_stride: usize,
     ) -> Result<(), MetalError> {
         self.validate_command_type(IndirectCommandType::DRAW_INDEXED_PATCH)?;
-        let selector = sel(
+        let selector = sel!(
             b"drawIndexedPatches:patchStart:patchCount:patchIndexBuffer:patchIndexBufferOffset:controlPointIndexBuffer:controlPointIndexBufferOffset:instanceCount:baseInstance:tessellationFactorBuffer:tessellationFactorBufferOffset:tessellationFactorBufferInstanceStride:\0",
         );
         if responds_to_selector(self.raw, selector) {
@@ -764,7 +764,7 @@ impl IndirectRenderCommand {
     }
 
     pub fn set_barrier(&self) -> Result<(), MetalError> {
-        let selector = sel(b"setBarrier\0");
+        let selector = sel!(b"setBarrier\0");
         if responds_to_selector(self.raw, selector) {
             msg_void(self.raw, selector);
             Ok(())
@@ -776,7 +776,7 @@ impl IndirectRenderCommand {
     }
 
     pub fn clear_barrier(&self) -> Result<(), MetalError> {
-        let selector = sel(b"clearBarrier\0");
+        let selector = sel!(b"clearBarrier\0");
         if responds_to_selector(self.raw, selector) {
             msg_void(self.raw, selector);
             Ok(())
@@ -788,7 +788,7 @@ impl IndirectRenderCommand {
     }
 
     pub fn reset(&self) {
-        msg_void(self.raw, sel(b"reset\0"));
+        msg_void(self.raw, sel!(b"reset\0"));
     }
 }
 
@@ -846,7 +846,7 @@ impl IndirectComputeCommand {
                 "cannot set compute pipeline state when inheritPipelineState is enabled",
             ));
         }
-        msg_void_id(self.raw, sel(b"setComputePipelineState:\0"), state.raw);
+        msg_void_id(self.raw, sel!(b"setComputePipelineState:\0"), state.raw);
         Ok(())
     }
 
@@ -859,7 +859,7 @@ impl IndirectComputeCommand {
         self.validate_kernel_buffer_bind(index)?;
         msg_void_id_usize_usize(
             self.raw,
-            sel(b"setKernelBuffer:offset:atIndex:\0"),
+            sel!(b"setKernelBuffer:offset:atIndex:\0"),
             buffer.raw,
             offset,
             index,
@@ -876,7 +876,7 @@ impl IndirectComputeCommand {
     ) -> Result<(), MetalError> {
         self.validate_dynamic_attribute_stride()?;
         self.validate_kernel_buffer_bind(index)?;
-        let selector = sel(b"setKernelBuffer:offset:attributeStride:atIndex:\0");
+        let selector = sel!(b"setKernelBuffer:offset:attributeStride:atIndex:\0");
         if responds_to_selector(self.raw, selector) {
             unsafe {
                 let f: unsafe extern "C" fn(id, SEL, id, usize, usize, usize) =
@@ -899,7 +899,7 @@ impl IndirectComputeCommand {
     }
 
     pub fn set_barrier(&self) -> Result<(), MetalError> {
-        let selector = sel(b"setBarrier\0");
+        let selector = sel!(b"setBarrier\0");
         if responds_to_selector(self.raw, selector) {
             msg_void(self.raw, selector);
             Ok(())
@@ -911,7 +911,7 @@ impl IndirectComputeCommand {
     }
 
     pub fn clear_barrier(&self) -> Result<(), MetalError> {
-        let selector = sel(b"clearBarrier\0");
+        let selector = sel!(b"clearBarrier\0");
         if responds_to_selector(self.raw, selector) {
             msg_void(self.raw, selector);
             Ok(())
@@ -927,7 +927,7 @@ impl IndirectComputeCommand {
         length: usize,
         index: usize,
     ) -> Result<(), MetalError> {
-        let selector = sel(b"setThreadgroupMemoryLength:atIndex:\0");
+        let selector = sel!(b"setThreadgroupMemoryLength:atIndex:\0");
         if responds_to_selector(self.raw, selector) {
             unsafe {
                 let f: unsafe extern "C" fn(id, SEL, usize, usize) =
@@ -943,7 +943,7 @@ impl IndirectComputeCommand {
     }
 
     pub fn set_stage_in_region(&self, region: Region) -> Result<(), MetalError> {
-        let selector = sel(b"setStageInRegion:\0");
+        let selector = sel!(b"setStageInRegion:\0");
         if responds_to_selector(self.raw, selector) {
             unsafe {
                 let f: unsafe extern "C" fn(id, SEL, Region) =
@@ -966,7 +966,7 @@ impl IndirectComputeCommand {
         self.validate_command_type(IndirectCommandType::CONCURRENT_DISPATCH)?;
         msg_void_size_size(
             self.raw,
-            sel(b"concurrentDispatchThreadgroups:threadsPerThreadgroup:\0"),
+            sel!(b"concurrentDispatchThreadgroups:threadsPerThreadgroup:\0"),
             threadgroups,
             threads_per_threadgroup,
         );
@@ -981,7 +981,7 @@ impl IndirectComputeCommand {
         self.validate_command_type(IndirectCommandType::CONCURRENT_DISPATCH_THREADS)?;
         msg_void_size_size(
             self.raw,
-            sel(b"concurrentDispatchThreads:threadsPerThreadgroup:\0"),
+            sel!(b"concurrentDispatchThreads:threadsPerThreadgroup:\0"),
             threads,
             threads_per_threadgroup,
         );
@@ -989,6 +989,6 @@ impl IndirectComputeCommand {
     }
 
     pub fn reset(&self) {
-        msg_void(self.raw, sel(b"reset\0"));
+        msg_void(self.raw, sel!(b"reset\0"));
     }
 }

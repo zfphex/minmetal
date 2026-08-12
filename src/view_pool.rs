@@ -15,8 +15,8 @@ impl ResourceViewPoolDescriptor {
                 "MTLResourceViewPoolDescriptor is not available",
             ));
         }
-        let allocated = msg_id(class_ptr, sel(b"alloc\0"));
-        let raw = msg_id(allocated, sel(b"init\0"));
+        let allocated = msg_id(class_ptr, sel!(b"alloc\0"));
+        let raw = msg_id(allocated, sel!(b"init\0"));
         if raw.is_null() {
             Err(MetalError::new(
                 "failed to create MTLResourceViewPoolDescriptor",
@@ -27,15 +27,15 @@ impl ResourceViewPoolDescriptor {
     }
 
     pub fn resource_view_count(&self) -> usize {
-        msg_usize(self.raw, sel(b"resourceViewCount\0"))
+        msg_usize(self.raw, sel!(b"resourceViewCount\0"))
     }
 
     pub fn set_resource_view_count(&self, count: usize) {
-        msg_void_usize(self.raw, sel(b"setResourceViewCount:\0"), count);
+        msg_void_usize(self.raw, sel!(b"setResourceViewCount:\0"), count);
     }
 
     pub fn label(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"label\0"));
+        let ptr = msg_id(self.raw, sel!(b"label\0"));
         if ptr.is_null() {
             None
         } else {
@@ -45,7 +45,7 @@ impl ResourceViewPoolDescriptor {
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 }
 
@@ -67,21 +67,21 @@ impl ResourceViewPool {
     }
 
     pub fn base_resource_id(&self) -> ResourceID {
-        msg_resource_id(self.raw, sel(b"baseResourceID\0"))
+        msg_resource_id(self.raw, sel!(b"baseResourceID\0"))
     }
 
     pub fn resource_view_count(&self) -> usize {
-        msg_usize(self.raw, sel(b"resourceViewCount\0"))
+        msg_usize(self.raw, sel!(b"resourceViewCount\0"))
     }
 
     pub fn device(&self) -> Device {
         Device {
-            raw: retain(msg_id(self.raw, sel(b"device\0"))),
+            raw: retain(msg_id(self.raw, sel!(b"device\0"))),
         }
     }
 
     pub fn label(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"label\0"));
+        let ptr = msg_id(self.raw, sel!(b"label\0"));
         if ptr.is_null() {
             None
         } else {
@@ -97,21 +97,21 @@ pub struct TextureViewPool {
 
 impl TextureViewPool {
     pub fn base_resource_id(&self) -> ResourceID {
-        msg_resource_id(self.raw, sel(b"baseResourceID\0"))
+        msg_resource_id(self.raw, sel!(b"baseResourceID\0"))
     }
 
     pub fn resource_view_count(&self) -> usize {
-        msg_usize(self.raw, sel(b"resourceViewCount\0"))
+        msg_usize(self.raw, sel!(b"resourceViewCount\0"))
     }
 
     pub fn device(&self) -> Device {
         Device {
-            raw: retain(msg_id(self.raw, sel(b"device\0"))),
+            raw: retain(msg_id(self.raw, sel!(b"device\0"))),
         }
     }
 
     pub fn label(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"label\0"));
+        let ptr = msg_id(self.raw, sel!(b"label\0"));
         if ptr.is_null() {
             None
         } else {
@@ -121,7 +121,7 @@ impl TextureViewPool {
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 
     pub fn copy_resource_views_from_pool(
@@ -135,7 +135,7 @@ impl TextureViewPool {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"copyResourceViewsFromPool:sourceRange:destinationIndex:\0"),
+                sel!(b"copyResourceViewsFromPool:sourceRange:destinationIndex:\0"),
                 source_pool.raw,
                 source_range,
                 destination_index,
@@ -148,7 +148,7 @@ impl TextureViewPool {
         texture: &Texture,
         index: usize,
     ) -> Result<ResourceID, MetalError> {
-        let selector = sel(b"setTextureView:atIndex:\0");
+        let selector = sel!(b"setTextureView:atIndex:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new("setTextureView:atIndex: is not supported"));
         }
@@ -165,7 +165,7 @@ impl TextureViewPool {
         descriptor: &TextureViewDescriptor,
         index: usize,
     ) -> Result<ResourceID, MetalError> {
-        let selector = sel(b"setTextureView:descriptor:atIndex:\0");
+        let selector = sel!(b"setTextureView:descriptor:atIndex:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "setTextureView:descriptor:atIndex: is not supported",
@@ -186,7 +186,7 @@ impl TextureViewPool {
         bytes_per_row: usize,
         index: usize,
     ) -> Result<ResourceID, MetalError> {
-        let selector = sel(b"setTextureViewFromBuffer:descriptor:offset:bytesPerRow:atIndex:\0");
+        let selector = sel!(b"setTextureViewFromBuffer:descriptor:offset:bytesPerRow:atIndex:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "setTextureViewFromBuffer:descriptor:offset:bytesPerRow:atIndex: is not supported",

@@ -31,7 +31,7 @@ impl Allocation {
     }
 
     pub fn allocated_size(&self) -> usize {
-        let selector = sel(b"allocatedSize\0");
+        let selector = sel!(b"allocatedSize\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -54,8 +54,8 @@ impl ResidencySetDescriptor {
                 "MTLResidencySetDescriptor is not available",
             ));
         }
-        let allocated = msg_id(class_ptr, sel(b"alloc\0"));
-        let raw = msg_id(allocated, sel(b"init\0"));
+        let allocated = msg_id(class_ptr, sel!(b"alloc\0"));
+        let raw = msg_id(allocated, sel!(b"init\0"));
         if raw.is_null() {
             Err(MetalError::new(
                 "failed to create MTLResidencySetDescriptor",
@@ -67,11 +67,11 @@ impl ResidencySetDescriptor {
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 
     pub fn label(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"label\0"));
+        let ptr = msg_id(self.raw, sel!(b"label\0"));
         if ptr.is_null() {
             None
         } else {
@@ -80,11 +80,11 @@ impl ResidencySetDescriptor {
     }
 
     pub fn set_initial_capacity(&self, capacity: usize) {
-        msg_void_usize(self.raw, sel(b"setInitialCapacity:\0"), capacity);
+        msg_void_usize(self.raw, sel!(b"setInitialCapacity:\0"), capacity);
     }
 
     pub fn initial_capacity(&self) -> usize {
-        msg_usize(self.raw, sel(b"initialCapacity\0"))
+        msg_usize(self.raw, sel!(b"initialCapacity\0"))
     }
 }
 
@@ -103,12 +103,12 @@ pub struct ResidencySet {
 impl ResidencySet {
     pub fn device(&self) -> Device {
         Device {
-            raw: retain(msg_id(self.raw, sel(b"device\0"))),
+            raw: retain(msg_id(self.raw, sel!(b"device\0"))),
         }
     }
 
     pub fn label(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"label\0"));
+        let ptr = msg_id(self.raw, sel!(b"label\0"));
         if ptr.is_null() {
             None
         } else {
@@ -118,15 +118,15 @@ impl ResidencySet {
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 
     pub fn allocated_size(&self) -> u64 {
-        msg_u64(self.raw, sel(b"allocatedSize\0"))
+        msg_u64(self.raw, sel!(b"allocatedSize\0"))
     }
 
     pub fn request_residency(&self) -> Result<(), MetalError> {
-        let selector = sel(b"requestResidency\0");
+        let selector = sel!(b"requestResidency\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new("requestResidency is not supported"));
         }
@@ -135,7 +135,7 @@ impl ResidencySet {
     }
 
     pub fn end_residency(&self) -> Result<(), MetalError> {
-        let selector = sel(b"endResidency\0");
+        let selector = sel!(b"endResidency\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new("endResidency is not supported"));
         }
@@ -144,7 +144,7 @@ impl ResidencySet {
     }
 
     pub fn add_allocation(&self, allocation: &Allocation) -> Result<(), MetalError> {
-        let selector = sel(b"addAllocation:\0");
+        let selector = sel!(b"addAllocation:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new("addAllocation: is not supported"));
         }
@@ -153,7 +153,7 @@ impl ResidencySet {
     }
 
     pub fn add_allocations(&self, allocations: &[Allocation]) -> Result<(), MetalError> {
-        let selector = sel(b"addAllocations:count:\0");
+        let selector = sel!(b"addAllocations:count:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new("addAllocations:count: is not supported"));
         }
@@ -171,7 +171,7 @@ impl ResidencySet {
     }
 
     pub fn remove_allocation(&self, allocation: &Allocation) -> Result<(), MetalError> {
-        let selector = sel(b"removeAllocation:\0");
+        let selector = sel!(b"removeAllocation:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new("removeAllocation: is not supported"));
         }
@@ -180,7 +180,7 @@ impl ResidencySet {
     }
 
     pub fn remove_allocations(&self, allocations: &[Allocation]) -> Result<(), MetalError> {
-        let selector = sel(b"removeAllocations:count:\0");
+        let selector = sel!(b"removeAllocations:count:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new("removeAllocations:count: is not supported"));
         }
@@ -198,7 +198,7 @@ impl ResidencySet {
     }
 
     pub fn remove_all_allocations(&self) -> Result<(), MetalError> {
-        let selector = sel(b"removeAllAllocations\0");
+        let selector = sel!(b"removeAllAllocations\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new("removeAllAllocations is not supported"));
         }
@@ -207,7 +207,7 @@ impl ResidencySet {
     }
 
     pub fn contains_allocation(&self, allocation: &Allocation) -> Result<bool, MetalError> {
-        let selector = sel(b"containsAllocation:\0");
+        let selector = sel!(b"containsAllocation:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new("containsAllocation: is not supported"));
         }
@@ -220,7 +220,7 @@ impl ResidencySet {
     }
 
     pub fn allocation_count(&self) -> Result<usize, MetalError> {
-        let selector = sel(b"allocationCount\0");
+        let selector = sel!(b"allocationCount\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new("allocationCount is not supported"));
         }
@@ -228,7 +228,7 @@ impl ResidencySet {
     }
 
     pub fn commit(&self) -> Result<(), MetalError> {
-        let selector = sel(b"commit\0");
+        let selector = sel!(b"commit\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new("commit is not supported on residency set"));
         }
@@ -248,7 +248,7 @@ impl Device {
         &self,
         descriptor: &ResidencySetDescriptor,
     ) -> Result<ResidencySet, MetalError> {
-        let selector = sel(b"newResidencySetWithDescriptor:error:\0");
+        let selector = sel!(b"newResidencySetWithDescriptor:error:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "newResidencySetWithDescriptor:error: is not supported",

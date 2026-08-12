@@ -203,44 +203,44 @@ pub struct IOCommandQueueDescriptor {
 
 impl IOCommandQueueDescriptor {
     pub fn new() -> Self {
-        let allocated = msg_id(class(b"MTLIOCommandQueueDescriptor\0"), sel(b"alloc\0"));
+        let allocated = msg_id(class(b"MTLIOCommandQueueDescriptor\0"), sel!(b"alloc\0"));
         Self {
-            raw: msg_id(allocated, sel(b"init\0")),
+            raw: msg_id(allocated, sel!(b"init\0")),
         }
     }
 
     pub fn set_max_command_buffer_count(&self, count: usize) {
-        msg_void_usize(self.raw, sel(b"setMaxCommandBufferCount:\0"), count);
+        msg_void_usize(self.raw, sel!(b"setMaxCommandBufferCount:\0"), count);
     }
 
     pub fn max_command_buffer_count(&self) -> usize {
-        msg_usize(self.raw, sel(b"maxCommandBufferCount\0"))
+        msg_usize(self.raw, sel!(b"maxCommandBufferCount\0"))
     }
 
     pub fn set_priority(&self, priority: IOPriority) {
-        msg_void_usize(self.raw, sel(b"setPriority:\0"), priority as usize);
+        msg_void_usize(self.raw, sel!(b"setPriority:\0"), priority as usize);
     }
 
     pub fn priority(&self) -> Result<IOPriority, MetalError> {
-        IOPriority::from_raw(msg_usize(self.raw, sel(b"priority\0")))
+        IOPriority::from_raw(msg_usize(self.raw, sel!(b"priority\0")))
             .ok_or_else(|| MetalError::new("invalid IOPriority value from Metal"))
     }
 
     pub fn set_type(&self, queue_type: IOCommandQueueType) {
-        msg_void_usize(self.raw, sel(b"setType:\0"), queue_type as usize);
+        msg_void_usize(self.raw, sel!(b"setType:\0"), queue_type as usize);
     }
 
     pub fn queue_type(&self) -> Result<IOCommandQueueType, MetalError> {
-        IOCommandQueueType::from_raw(msg_usize(self.raw, sel(b"type\0")))
+        IOCommandQueueType::from_raw(msg_usize(self.raw, sel!(b"type\0")))
             .ok_or_else(|| MetalError::new("invalid IOCommandQueueType value from Metal"))
     }
 
     pub fn set_max_commands_in_flight(&self, count: usize) {
-        msg_void_usize(self.raw, sel(b"setMaxCommandsInFlight:\0"), count);
+        msg_void_usize(self.raw, sel!(b"setMaxCommandsInFlight:\0"), count);
     }
 
     pub fn max_commands_in_flight(&self) -> usize {
-        msg_usize(self.raw, sel(b"maxCommandsInFlight\0"))
+        msg_usize(self.raw, sel!(b"maxCommandsInFlight\0"))
     }
 }
 
@@ -294,7 +294,7 @@ pub struct IOFileHandle {
 
 impl IOFileHandle {
     pub fn url(&self) -> Option<id> {
-        let selector = sel(b"URL\0");
+        let selector = sel!(b"URL\0");
         if responds_to_selector(self.raw, selector) {
             let url = msg_id(self.raw, selector);
             if url.is_null() { None } else { Some(url) }
@@ -308,7 +308,7 @@ impl IOFileHandle {
     }
 
     pub fn label(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"label\0"));
+        let ptr = msg_id(self.raw, sel!(b"label\0"));
         if ptr.is_null() {
             None
         } else {
@@ -318,7 +318,7 @@ impl IOFileHandle {
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 }
 
@@ -335,7 +335,7 @@ pub struct IOCommandQueue {
 
 impl IOCommandQueue {
     pub fn command_buffer(&self) -> Result<IOCommandBuffer, MetalError> {
-        let selector = sel(b"commandBuffer\0");
+        let selector = sel!(b"commandBuffer\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new("commandBuffer is not supported"));
         }
@@ -348,7 +348,7 @@ impl IOCommandQueue {
     }
 
     pub fn command_buffer_with_unretained_references(&self) -> Result<IOCommandBuffer, MetalError> {
-        let selector = sel(b"commandBufferWithUnretainedReferences\0");
+        let selector = sel!(b"commandBufferWithUnretainedReferences\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "commandBufferWithUnretainedReferences is not supported",
@@ -365,7 +365,7 @@ impl IOCommandQueue {
     }
 
     pub fn enqueue_barrier(&self) -> Result<(), MetalError> {
-        let selector = sel(b"enqueueBarrier\0");
+        let selector = sel!(b"enqueueBarrier\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new("enqueueBarrier is not supported"));
         }
@@ -374,7 +374,7 @@ impl IOCommandQueue {
     }
 
     pub fn label(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"label\0"));
+        let ptr = msg_id(self.raw, sel!(b"label\0"));
         if ptr.is_null() {
             None
         } else {
@@ -384,11 +384,11 @@ impl IOCommandQueue {
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 
     pub fn device(&self) -> Result<Device, MetalError> {
-        let selector = sel(b"device\0");
+        let selector = sel!(b"device\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "device is not supported on IO command queue",
@@ -403,7 +403,7 @@ impl IOCommandQueue {
     }
 
     pub fn queue_type(&self) -> Result<IOCommandQueueType, MetalError> {
-        let selector = sel(b"type\0");
+        let selector = sel!(b"type\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new("type is not supported on IO command queue"));
         }
@@ -412,7 +412,7 @@ impl IOCommandQueue {
     }
 
     pub fn priority(&self) -> Result<IOPriority, MetalError> {
-        let selector = sel(b"priority\0");
+        let selector = sel!(b"priority\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "priority is not supported on IO command queue",
@@ -448,7 +448,7 @@ impl IOCommandBuffer {
                 "IO load destination pointer must not be null",
             ));
         }
-        let selector = sel(b"loadBytes:size:sourceHandle:sourceHandleOffset:\0");
+        let selector = sel!(b"loadBytes:size:sourceHandle:sourceHandleOffset:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "loadBytes:size:sourceHandle:sourceHandleOffset: is not supported",
@@ -478,7 +478,7 @@ impl IOCommandBuffer {
         source_handle_offset: usize,
     ) -> Result<(), MetalError> {
         validate_io_buffer_load(buffer, offset, size, source_handle_offset)?;
-        let selector = sel(b"loadBuffer:offset:size:sourceHandle:sourceHandleOffset:\0");
+        let selector = sel!(b"loadBuffer:offset:size:sourceHandle:sourceHandleOffset:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "loadBuffer:offset:size:sourceHandle:sourceHandleOffset: is not supported",
@@ -518,7 +518,7 @@ impl IOCommandBuffer {
             ));
         }
         validate_io_load_range(source_handle_offset, source_bytes_per_image)?;
-        let selector = sel(
+        let selector = sel!(
             b"loadTexture:slice:level:size:sourceBytesPerRow:sourceBytesPerImage:destinationOrigin:sourceHandle:sourceHandleOffset:\0",
         );
         if !responds_to_selector(self.raw, selector) {
@@ -558,7 +558,7 @@ impl IOCommandBuffer {
     }
 
     pub fn copy_status_to_buffer(&self, buffer: &Buffer, offset: usize) -> Result<(), MetalError> {
-        let selector = sel(b"copyStatusToBuffer:offset:\0");
+        let selector = sel!(b"copyStatusToBuffer:offset:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "copyStatusToBuffer:offset: is not supported",
@@ -569,7 +569,7 @@ impl IOCommandBuffer {
     }
 
     pub fn commit(&self) -> Result<(), MetalError> {
-        let selector = sel(b"commit\0");
+        let selector = sel!(b"commit\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "commit is not supported on IO command buffer",
@@ -580,7 +580,7 @@ impl IOCommandBuffer {
     }
 
     pub fn wait_until_completed(&self) -> Result<(), MetalError> {
-        let selector = sel(b"waitUntilCompleted\0");
+        let selector = sel!(b"waitUntilCompleted\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "waitUntilCompleted is not supported on IO command buffer",
@@ -591,7 +591,7 @@ impl IOCommandBuffer {
     }
 
     pub fn try_cancel(&self) -> Result<(), MetalError> {
-        let selector = sel(b"tryCancel\0");
+        let selector = sel!(b"tryCancel\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "tryCancel is not supported on IO command buffer",
@@ -602,7 +602,7 @@ impl IOCommandBuffer {
     }
 
     pub fn add_barrier(&self) -> Result<(), MetalError> {
-        let selector = sel(b"addBarrier\0");
+        let selector = sel!(b"addBarrier\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "addBarrier is not supported on IO command buffer",
@@ -613,7 +613,7 @@ impl IOCommandBuffer {
     }
 
     pub fn enqueue(&self) -> Result<(), MetalError> {
-        let selector = sel(b"enqueue\0");
+        let selector = sel!(b"enqueue\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "enqueue is not supported on IO command buffer",
@@ -624,7 +624,7 @@ impl IOCommandBuffer {
     }
 
     pub fn wait_for_event(&self, event: &SharedEvent, value: u64) -> Result<(), MetalError> {
-        let selector = sel(b"waitForEvent:value:\0");
+        let selector = sel!(b"waitForEvent:value:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new("waitForEvent:value: is not supported"));
         }
@@ -633,7 +633,7 @@ impl IOCommandBuffer {
     }
 
     pub fn signal_event(&self, event: &SharedEvent, value: u64) -> Result<(), MetalError> {
-        let selector = sel(b"signalEvent:value:\0");
+        let selector = sel!(b"signalEvent:value:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new("signalEvent:value: is not supported"));
         }
@@ -642,7 +642,7 @@ impl IOCommandBuffer {
     }
 
     pub fn status(&self) -> Result<IOStatus, MetalError> {
-        let selector = sel(b"status\0");
+        let selector = sel!(b"status\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "status is not supported on IO command buffer",
@@ -654,7 +654,7 @@ impl IOCommandBuffer {
     }
 
     pub fn error(&self) -> Option<MetalError> {
-        let selector = sel(b"error\0");
+        let selector = sel!(b"error\0");
         if !responds_to_selector(self.raw, selector) {
             return None;
         }
@@ -670,7 +670,7 @@ impl IOCommandBuffer {
     }
 
     pub fn label(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"label\0"));
+        let ptr = msg_id(self.raw, sel!(b"label\0"));
         if ptr.is_null() {
             None
         } else {
@@ -680,7 +680,7 @@ impl IOCommandBuffer {
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 }
 
@@ -695,7 +695,7 @@ impl Device {
         &self,
         descriptor: &IOCommandQueueDescriptor,
     ) -> Result<IOCommandQueue, MetalError> {
-        let selector = sel(b"newIOCommandQueueWithDescriptor:error:\0");
+        let selector = sel!(b"newIOCommandQueueWithDescriptor:error:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "newIOCommandQueueWithDescriptor:error: is not supported",
@@ -715,8 +715,8 @@ impl Device {
 
     pub fn new_io_file_handle(&self, path: &str) -> Result<IOFileHandle, MetalError> {
         let url = file_url(path);
-        let new_selector = sel(b"newIOFileHandleWithURL:error:\0");
-        let legacy_selector = sel(b"newIOHandleWithURL:error:\0");
+        let new_selector = sel!(b"newIOFileHandleWithURL:error:\0");
+        let legacy_selector = sel!(b"newIOHandleWithURL:error:\0");
         let selector = if responds_to_selector(self.raw, new_selector) {
             new_selector
         } else if responds_to_selector(self.raw, legacy_selector) {
@@ -744,8 +744,8 @@ impl Device {
         compression_method: IOCompressionMethod,
     ) -> Result<IOFileHandle, MetalError> {
         let url = file_url(path);
-        let new_selector = sel(b"newIOFileHandleWithURL:compressionMethod:error:\0");
-        let legacy_selector = sel(b"newIOHandleWithURL:compressionMethod:error:\0");
+        let new_selector = sel!(b"newIOFileHandleWithURL:compressionMethod:error:\0");
+        let legacy_selector = sel!(b"newIOHandleWithURL:compressionMethod:error:\0");
         let selector = if responds_to_selector(self.raw, new_selector) {
             new_selector
         } else if responds_to_selector(self.raw, legacy_selector) {

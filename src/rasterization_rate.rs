@@ -32,14 +32,14 @@ impl RasterizationRateSampleArray {
     }
 
     pub fn object_at_indexed_subscript(&self, index: usize) -> f32 {
-        let number = msg_id_usize(self.raw, sel(b"objectAtIndexedSubscript:\0"), index);
+        let number = msg_id_usize(self.raw, sel!(b"objectAtIndexedSubscript:\0"), index);
         if number.is_null() {
             0.0
         } else {
             unsafe {
                 let f: unsafe extern "C" fn(id, SEL) -> f32 =
                     transmute(objc_msgSend as *const c_void);
-                f(number, sel(b"floatValue\0"))
+                f(number, sel!(b"floatValue\0"))
             }
         }
     }
@@ -48,12 +48,12 @@ impl RasterizationRateSampleArray {
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, f32) -> id =
                 transmute(objc_msgSend as *const c_void);
-            let number = f(class(b"NSNumber\0"), sel(b"numberWithFloat:\0"), value);
+            let number = f(class(b"NSNumber\0"), sel!(b"numberWithFloat:\0"), value);
             let set: unsafe extern "C" fn(id, SEL, id, usize) =
                 transmute(objc_msgSend as *const c_void);
             set(
                 self.raw,
-                sel(b"setObject:atIndexedSubscript:\0"),
+                sel!(b"setObject:atIndexedSubscript:\0"),
                 number,
                 index,
             );
@@ -108,11 +108,11 @@ impl RasterizationRateLayerDescriptor {
         unsafe {
             let allocated = msg_id(
                 class(b"MTLRasterizationRateLayerDescriptor\0"),
-                sel(b"alloc\0"),
+                sel!(b"alloc\0"),
             );
             let f: unsafe extern "C" fn(id, SEL, Size) -> id =
                 transmute(objc_msgSend as *const c_void);
-            let raw = f(allocated, sel(b"initWithSampleCount:\0"), sample_count);
+            let raw = f(allocated, sel!(b"initWithSampleCount:\0"), sample_count);
             Self { raw }
         }
     }
@@ -139,13 +139,13 @@ impl RasterizationRateLayerDescriptor {
         unsafe {
             let allocated = msg_id(
                 class(b"MTLRasterizationRateLayerDescriptor\0"),
-                sel(b"alloc\0"),
+                sel!(b"alloc\0"),
             );
             let f: unsafe extern "C" fn(id, SEL, Size, *const f32, *const f32) -> id =
                 transmute(objc_msgSend as *const c_void);
             let raw = f(
                 allocated,
-                sel(b"initWithSampleCount:horizontal:vertical:\0"),
+                sel!(b"initWithSampleCount:horizontal:vertical:\0"),
                 sample_count,
                 horizontal.as_ptr(),
                 vertical.as_ptr(),
@@ -169,12 +169,12 @@ impl RasterizationRateLayerDescriptor {
     pub fn sample_count(&self) -> Size {
         unsafe {
             let f: unsafe extern "C" fn(id, SEL) -> Size = transmute(objc_msgSend as *const c_void);
-            f(self.raw, sel(b"sampleCount\0"))
+            f(self.raw, sel!(b"sampleCount\0"))
         }
     }
 
     pub fn set_sample_count(&self, sample_count: Size) -> Result<(), MetalError> {
-        let selector = sel(b"setSampleCount:\0");
+        let selector = sel!(b"setSampleCount:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new("setSampleCount: is not supported"));
         }
@@ -183,7 +183,7 @@ impl RasterizationRateLayerDescriptor {
     }
 
     pub fn max_sample_count(&self) -> Result<Size, MetalError> {
-        let selector = sel(b"maxSampleCount\0");
+        let selector = sel!(b"maxSampleCount\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new("maxSampleCount is not supported"));
         }
@@ -197,7 +197,7 @@ impl RasterizationRateLayerDescriptor {
         unsafe {
             let f: unsafe extern "C" fn(id, SEL) -> *mut f32 =
                 transmute(objc_msgSend as *const c_void);
-            f(self.raw, sel(b"horizontalSampleStorage\0"))
+            f(self.raw, sel!(b"horizontalSampleStorage\0"))
         }
     }
 
@@ -205,19 +205,19 @@ impl RasterizationRateLayerDescriptor {
         unsafe {
             let f: unsafe extern "C" fn(id, SEL) -> *mut f32 =
                 transmute(objc_msgSend as *const c_void);
-            f(self.raw, sel(b"verticalSampleStorage\0"))
+            f(self.raw, sel!(b"verticalSampleStorage\0"))
         }
     }
 
     pub fn horizontal(&self) -> RasterizationRateSampleArray {
         RasterizationRateSampleArray {
-            raw: retain(msg_id(self.raw, sel(b"horizontal\0"))),
+            raw: retain(msg_id(self.raw, sel!(b"horizontal\0"))),
         }
     }
 
     pub fn vertical(&self) -> RasterizationRateSampleArray {
         RasterizationRateSampleArray {
-            raw: retain(msg_id(self.raw, sel(b"vertical\0"))),
+            raw: retain(msg_id(self.raw, sel!(b"vertical\0"))),
         }
     }
 
@@ -270,7 +270,7 @@ impl RasterizationRateLayerArray {
         &self,
         index: usize,
     ) -> Option<RasterizationRateLayerDescriptor> {
-        let layer = msg_id_usize(self.raw, sel(b"objectAtIndexedSubscript:\0"), index);
+        let layer = msg_id_usize(self.raw, sel!(b"objectAtIndexedSubscript:\0"), index);
         if layer.is_null() {
             None
         } else {
@@ -285,7 +285,7 @@ impl RasterizationRateLayerArray {
     ) {
         msg_void_id_usize(
             self.raw,
-            sel(b"setObject:atIndexedSubscript:\0"),
+            sel!(b"setObject:atIndexedSubscript:\0"),
             layer.map_or(NIL, |l| l.raw),
             index,
         );
@@ -304,7 +304,7 @@ impl RasterizationRateMapDescriptor {
                 transmute(objc_msgSend as *const c_void);
             let raw = retain(f(
                 class(b"MTLRasterizationRateMapDescriptor\0"),
-                sel(b"rasterizationRateMapDescriptorWithScreenSize:\0"),
+                sel!(b"rasterizationRateMapDescriptorWithScreenSize:\0"),
                 screen_size,
             ));
             Self { raw }
@@ -320,7 +320,7 @@ impl RasterizationRateMapDescriptor {
                 transmute(objc_msgSend as *const c_void);
             let raw = retain(f(
                 class(b"MTLRasterizationRateMapDescriptor\0"),
-                sel(b"rasterizationRateMapDescriptorWithScreenSize:layer:\0"),
+                sel!(b"rasterizationRateMapDescriptorWithScreenSize:layer:\0"),
                 screen_size,
                 layer.raw,
             ));
@@ -337,7 +337,7 @@ impl RasterizationRateMapDescriptor {
                 transmute(objc_msgSend as *const c_void);
             let raw = retain(f(
                 class(b"MTLRasterizationRateMapDescriptor\0"),
-                sel(b"rasterizationRateMapDescriptorWithScreenSize:layerCount:layers:\0"),
+                sel!(b"rasterizationRateMapDescriptorWithScreenSize:layerCount:layers:\0"),
                 screen_size,
                 layers.len(),
                 layers.as_ptr() as *const id,
@@ -347,7 +347,7 @@ impl RasterizationRateMapDescriptor {
     }
 
     pub fn layer_at_index(&self, index: usize) -> Option<RasterizationRateLayerDescriptor> {
-        let layer = msg_id_usize(self.raw, sel(b"layerAtIndex:\0"), index);
+        let layer = msg_id_usize(self.raw, sel!(b"layerAtIndex:\0"), index);
         if layer.is_null() {
             None
         } else {
@@ -365,7 +365,7 @@ impl RasterizationRateMapDescriptor {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setLayer:atIndex:\0"),
+                sel!(b"setLayer:atIndex:\0"),
                 layer.map_or(NIL, |l| l.raw),
                 index,
             );
@@ -374,28 +374,28 @@ impl RasterizationRateMapDescriptor {
 
     pub fn layers(&self) -> RasterizationRateLayerArray {
         RasterizationRateLayerArray {
-            raw: retain(msg_id(self.raw, sel(b"layers\0"))),
+            raw: retain(msg_id(self.raw, sel!(b"layers\0"))),
         }
     }
 
     pub fn screen_size(&self) -> Size {
         unsafe {
             let f: unsafe extern "C" fn(id, SEL) -> Size = transmute(objc_msgSend as *const c_void);
-            f(self.raw, sel(b"screenSize\0"))
+            f(self.raw, sel!(b"screenSize\0"))
         }
     }
 
     pub fn set_screen_size(&self, screen_size: Size) {
-        msg_void_mtlsize(self.raw, sel(b"setScreenSize:\0"), screen_size);
+        msg_void_mtlsize(self.raw, sel!(b"setScreenSize:\0"), screen_size);
     }
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 
     pub fn label(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"label\0"));
+        let ptr = msg_id(self.raw, sel!(b"label\0"));
         if ptr.is_null() {
             None
         } else {
@@ -404,7 +404,7 @@ impl RasterizationRateMapDescriptor {
     }
 
     pub fn layer_count(&self) -> usize {
-        msg_usize(self.raw, sel(b"layerCount\0"))
+        msg_usize(self.raw, sel!(b"layerCount\0"))
     }
 
     pub fn copy(&self) -> Self {
@@ -428,12 +428,12 @@ pub struct RasterizationRateMap {
 impl RasterizationRateMap {
     pub fn device(&self) -> Device {
         Device {
-            raw: retain(msg_id(self.raw, sel(b"device\0"))),
+            raw: retain(msg_id(self.raw, sel!(b"device\0"))),
         }
     }
 
     pub fn label(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"label\0"));
+        let ptr = msg_id(self.raw, sel!(b"label\0"));
         if ptr.is_null() {
             None
         } else {
@@ -444,26 +444,26 @@ impl RasterizationRateMap {
     pub fn screen_size(&self) -> Size {
         unsafe {
             let f: unsafe extern "C" fn(id, SEL) -> Size = transmute(objc_msgSend as *const c_void);
-            f(self.raw, sel(b"screenSize\0"))
+            f(self.raw, sel!(b"screenSize\0"))
         }
     }
 
     pub fn physical_granularity(&self) -> Size {
         unsafe {
             let f: unsafe extern "C" fn(id, SEL) -> Size = transmute(objc_msgSend as *const c_void);
-            f(self.raw, sel(b"physicalGranularity\0"))
+            f(self.raw, sel!(b"physicalGranularity\0"))
         }
     }
 
     pub fn layer_count(&self) -> usize {
-        msg_usize(self.raw, sel(b"layerCount\0"))
+        msg_usize(self.raw, sel!(b"layerCount\0"))
     }
 
     pub fn parameter_buffer_size_and_align(&self) -> SizeAndAlign {
         unsafe {
             let f: unsafe extern "C" fn(id, SEL) -> SizeAndAlign =
                 transmute(objc_msgSend as *const c_void);
-            f(self.raw, sel(b"parameterBufferSizeAndAlign\0"))
+            f(self.raw, sel!(b"parameterBufferSizeAndAlign\0"))
         }
     }
 
@@ -472,7 +472,7 @@ impl RasterizationRateMap {
         buffer: &Buffer,
         offset: usize,
     ) -> Result<(), MetalError> {
-        let selector = sel(b"copyParameterDataToBuffer:offset:\0");
+        let selector = sel!(b"copyParameterDataToBuffer:offset:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "copyParameterDataToBuffer:offset: is not supported",
@@ -508,7 +508,7 @@ impl RasterizationRateMap {
 
     pub fn physical_size_for_layer(&self, layer_index: usize) -> Result<Size, MetalError> {
         self.validate_layer_index(layer_index)?;
-        let selector = sel(b"physicalSizeForLayer:\0");
+        let selector = sel!(b"physicalSizeForLayer:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new("physicalSizeForLayer: is not supported"));
         }
@@ -525,7 +525,7 @@ impl RasterizationRateMap {
         layer_index: usize,
     ) -> Result<Coordinate2D, MetalError> {
         self.validate_layer_index(layer_index)?;
-        let selector = sel(b"mapScreenToPhysicalCoordinates:forLayer:\0");
+        let selector = sel!(b"mapScreenToPhysicalCoordinates:forLayer:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "mapScreenToPhysicalCoordinates:forLayer: is not supported",
@@ -544,7 +544,7 @@ impl RasterizationRateMap {
         layer_index: usize,
     ) -> Result<Coordinate2D, MetalError> {
         self.validate_layer_index(layer_index)?;
-        let selector = sel(b"mapPhysicalToScreenCoordinates:forLayer:\0");
+        let selector = sel!(b"mapPhysicalToScreenCoordinates:forLayer:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "mapPhysicalToScreenCoordinates:forLayer: is not supported",
@@ -569,7 +569,7 @@ impl Device {
         &self,
         layer_count: usize,
     ) -> Result<bool, MetalError> {
-        let selector = sel(b"supportsRasterizationRateMapWithLayerCount:\0");
+        let selector = sel!(b"supportsRasterizationRateMapWithLayerCount:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "supportsRasterizationRateMapWithLayerCount: is not supported",
@@ -586,7 +586,7 @@ impl Device {
         &self,
         descriptor: &RasterizationRateMapDescriptor,
     ) -> Result<RasterizationRateMap, MetalError> {
-        let selector = sel(b"newRasterizationRateMapWithDescriptor:\0");
+        let selector = sel!(b"newRasterizationRateMapWithDescriptor:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "newRasterizationRateMapWithDescriptor: is not supported",

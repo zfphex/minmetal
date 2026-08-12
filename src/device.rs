@@ -218,12 +218,12 @@ impl Device {
     }
 
     pub fn name(&self) -> NSString {
-        let ptr = msg_id(self.raw, sel(b"name\0"));
+        let ptr = msg_id(self.raw, sel!(b"name\0"));
         NSString::from_raw(ptr)
     }
 
     pub fn registry_id(&self) -> u64 {
-        msg_u64(self.raw, sel(b"registryID\0"))
+        msg_u64(self.raw, sel!(b"registryID\0"))
     }
 
     pub fn sample_timestamps(&self) -> (u64, u64) {
@@ -233,7 +233,7 @@ impl Device {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"sampleTimestamps:gpuTimestamp:\0"),
+                sel!(b"sampleTimestamps:gpuTimestamp:\0"),
                 &mut cpu,
                 &mut gpu,
             );
@@ -242,27 +242,27 @@ impl Device {
     }
 
     pub fn is_low_power(&self) -> bool {
-        msg_bool(self.raw, sel(b"isLowPower\0")) != 0
+        msg_bool(self.raw, sel!(b"isLowPower\0")) != 0
     }
 
     pub fn is_headless(&self) -> bool {
-        msg_bool(self.raw, sel(b"isHeadless\0")) != 0
+        msg_bool(self.raw, sel!(b"isHeadless\0")) != 0
     }
 
     pub fn is_removable(&self) -> bool {
-        msg_bool(self.raw, sel(b"isRemovable\0")) != 0
+        msg_bool(self.raw, sel!(b"isRemovable\0")) != 0
     }
 
     pub fn has_unified_memory(&self) -> bool {
-        msg_bool(self.raw, sel(b"hasUnifiedMemory\0")) != 0
+        msg_bool(self.raw, sel!(b"hasUnifiedMemory\0")) != 0
     }
 
     pub fn recommended_max_working_set_size(&self) -> u64 {
-        msg_u64(self.raw, sel(b"recommendedMaxWorkingSetSize\0"))
+        msg_u64(self.raw, sel!(b"recommendedMaxWorkingSetSize\0"))
     }
 
     pub fn location(&self) -> DeviceLocation {
-        let val = msg_usize(self.raw, sel(b"location\0"));
+        let val = msg_usize(self.raw, sel!(b"location\0"));
         match val {
             0 => DeviceLocation::BuiltIn,
             1 => DeviceLocation::Slot,
@@ -272,42 +272,42 @@ impl Device {
     }
 
     pub fn location_number(&self) -> usize {
-        msg_usize(self.raw, sel(b"locationNumber\0"))
+        msg_usize(self.raw, sel!(b"locationNumber\0"))
     }
 
     pub fn max_threads_per_threadgroup(&self) -> Size {
         unsafe {
             let f: unsafe extern "C" fn(id, SEL) -> Size = transmute(objc_msgSend as *const c_void);
-            f(self.raw, sel(b"maxThreadsPerThreadgroup\0"))
+            f(self.raw, sel!(b"maxThreadsPerThreadgroup\0"))
         }
     }
 
     pub fn max_transfer_rate(&self) -> u64 {
-        msg_u64(self.raw, sel(b"maxTransferRate\0"))
+        msg_u64(self.raw, sel!(b"maxTransferRate\0"))
     }
 
     pub fn max_threadgroup_memory_length(&self) -> usize {
-        msg_usize(self.raw, sel(b"maxThreadgroupMemoryLength\0"))
+        msg_usize(self.raw, sel!(b"maxThreadgroupMemoryLength\0"))
     }
 
     pub fn max_argument_buffer_sampler_count(&self) -> usize {
-        msg_usize(self.raw, sel(b"maxArgumentBufferSamplerCount\0"))
+        msg_usize(self.raw, sel!(b"maxArgumentBufferSamplerCount\0"))
     }
 
     pub fn max_buffer_length(&self) -> usize {
-        msg_usize(self.raw, sel(b"maxBufferLength\0"))
+        msg_usize(self.raw, sel!(b"maxBufferLength\0"))
     }
 
     pub fn maximum_concurrent_compilation_task_count(&self) -> usize {
-        msg_usize(self.raw, sel(b"maximumConcurrentCompilationTaskCount\0"))
+        msg_usize(self.raw, sel!(b"maximumConcurrentCompilationTaskCount\0"))
     }
 
     pub fn current_allocated_size(&self) -> usize {
-        msg_usize(self.raw, sel(b"currentAllocatedSize\0"))
+        msg_usize(self.raw, sel!(b"currentAllocatedSize\0"))
     }
 
     pub fn read_write_texture_support(&self) -> ReadWriteTextureTier {
-        let val = msg_usize(self.raw, sel(b"readWriteTextureSupport\0"));
+        let val = msg_usize(self.raw, sel!(b"readWriteTextureSupport\0"));
         match val {
             1 => ReadWriteTextureTier::Tier1,
             2 => ReadWriteTextureTier::Tier2,
@@ -316,7 +316,7 @@ impl Device {
     }
 
     pub fn argument_buffers_support(&self) -> ArgumentBuffersTier {
-        let val = msg_usize(self.raw, sel(b"argumentBuffersSupport\0"));
+        let val = msg_usize(self.raw, sel!(b"argumentBuffersSupport\0"));
         match val {
             1 => ArgumentBuffersTier::Tier2,
             _ => ArgumentBuffersTier::Tier1,
@@ -324,62 +324,62 @@ impl Device {
     }
 
     pub fn depth24_stencil8_pixel_format_supported(&self) -> bool {
-        msg_bool(self.raw, sel(b"isDepth24Stencil8PixelFormatSupported\0")) != 0
+        msg_bool(self.raw, sel!(b"isDepth24Stencil8PixelFormatSupported\0")) != 0
     }
 
     pub fn supports_32bit_float_filtering(&self) -> bool {
-        msg_bool(self.raw, sel(b"supports32BitFloatFiltering\0")) != 0
+        msg_bool(self.raw, sel!(b"supports32BitFloatFiltering\0")) != 0
     }
 
     pub fn supports_32bit_msaa(&self) -> bool {
-        msg_bool(self.raw, sel(b"supports32BitMSAA\0")) != 0
+        msg_bool(self.raw, sel!(b"supports32BitMSAA\0")) != 0
     }
 
     pub fn supports_query_texture_lod(&self) -> bool {
-        msg_bool(self.raw, sel(b"supportsQueryTextureLOD\0")) != 0
+        msg_bool(self.raw, sel!(b"supportsQueryTextureLOD\0")) != 0
     }
 
     pub fn supports_bc_texture_compression(&self) -> bool {
-        msg_bool(self.raw, sel(b"supportsBCTextureCompression\0")) != 0
+        msg_bool(self.raw, sel!(b"supportsBCTextureCompression\0")) != 0
     }
 
     pub fn supports_pull_model_interpolation(&self) -> bool {
-        msg_bool(self.raw, sel(b"supportsPullModelInterpolation\0")) != 0
+        msg_bool(self.raw, sel!(b"supportsPullModelInterpolation\0")) != 0
     }
 
     pub fn supports_shader_barycentric_coordinates(&self) -> bool {
-        msg_bool(self.raw, sel(b"supportsShaderBarycentricCoordinates\0")) != 0
+        msg_bool(self.raw, sel!(b"supportsShaderBarycentricCoordinates\0")) != 0
     }
 
     pub fn supports_dynamic_libraries(&self) -> bool {
-        msg_bool(self.raw, sel(b"supportsDynamicLibraries\0")) != 0
+        msg_bool(self.raw, sel!(b"supportsDynamicLibraries\0")) != 0
     }
 
     pub fn supports_render_dynamic_libraries(&self) -> bool {
-        msg_bool(self.raw, sel(b"supportsRenderDynamicLibraries\0")) != 0
+        msg_bool(self.raw, sel!(b"supportsRenderDynamicLibraries\0")) != 0
     }
 
     pub fn supports_function_pointers(&self) -> bool {
-        msg_bool(self.raw, sel(b"supportsFunctionPointers\0")) != 0
+        msg_bool(self.raw, sel!(b"supportsFunctionPointers\0")) != 0
     }
 
     pub fn supports_function_pointers_from_render(&self) -> bool {
-        msg_bool(self.raw, sel(b"supportsFunctionPointersFromRender\0")) != 0
+        msg_bool(self.raw, sel!(b"supportsFunctionPointersFromRender\0")) != 0
     }
 
     pub fn supports_raytracing_from_render(&self) -> bool {
-        msg_bool(self.raw, sel(b"supportsRaytracingFromRender\0")) != 0
+        msg_bool(self.raw, sel!(b"supportsRaytracingFromRender\0")) != 0
     }
 
     pub fn supports_primitive_motion_blur(&self) -> bool {
-        msg_bool(self.raw, sel(b"supportsPrimitiveMotionBlur\0")) != 0
+        msg_bool(self.raw, sel!(b"supportsPrimitiveMotionBlur\0")) != 0
     }
 
     pub fn supports_family(&self, family: GPUFamily) -> bool {
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, isize) -> BOOL =
                 transmute(objc_msgSend as *const c_void);
-            f(self.raw, sel(b"supportsFamily:\0"), family as isize) != 0
+            f(self.raw, sel!(b"supportsFamily:\0"), family as isize) != 0
         }
     }
 
@@ -389,7 +389,7 @@ impl Device {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"supportsFeatureSet:\0"),
+                sel!(b"supportsFeatureSet:\0"),
                 feature_set as usize,
             ) != 0
         }
@@ -401,7 +401,7 @@ impl Device {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"supportsTextureSampleCount:\0"),
+                sel!(b"supportsTextureSampleCount:\0"),
                 sample_count,
             ) != 0
         }
@@ -411,20 +411,20 @@ impl Device {
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, usize) -> BOOL =
                 transmute(objc_msgSend as *const c_void);
-            f(self.raw, sel(b"supportsVertexAmplificationCount:\0"), count) != 0
+            f(self.raw, sel!(b"supportsVertexAmplificationCount:\0"), count) != 0
         }
     }
 
     pub fn peer_group_id(&self) -> u64 {
-        msg_u64(self.raw, sel(b"peerGroupID\0"))
+        msg_u64(self.raw, sel!(b"peerGroupID\0"))
     }
 
     pub fn peer_index(&self) -> u32 {
-        msg_u32(self.raw, sel(b"peerIndex\0"))
+        msg_u32(self.raw, sel!(b"peerIndex\0"))
     }
 
     pub fn peer_count(&self) -> u32 {
-        msg_u32(self.raw, sel(b"peerCount\0"))
+        msg_u32(self.raw, sel!(b"peerCount\0"))
     }
 
     pub fn new_buffer_with_bytes_no_copy(
@@ -438,7 +438,7 @@ impl Device {
                 transmute(objc_msgSend as *const c_void);
             let raw = retain(f(
                 self.raw,
-                sel(b"newBufferWithBytesNoCopy:length:options:deallocator:\0"),
+                sel!(b"newBufferWithBytesNoCopy:length:options:deallocator:\0"),
                 pointer,
                 length,
                 options.as_raw(),
@@ -460,7 +460,7 @@ impl Device {
     ) -> Result<Texture, MetalError> {
         let raw = retain(msg_id_id(
             self.raw,
-            sel(b"newSharedTextureWithDescriptor:\0"),
+            sel!(b"newSharedTextureWithDescriptor:\0"),
             descriptor.raw,
         ));
         if raw.is_null() {
@@ -476,7 +476,7 @@ impl Device {
     ) -> Result<Texture, MetalError> {
         let raw = retain(msg_id_id(
             self.raw,
-            sel(b"newSharedTextureWithHandle:\0"),
+            sel!(b"newSharedTextureWithHandle:\0"),
             shared_handle.raw,
         ));
         if raw.is_null() {
@@ -499,7 +499,7 @@ impl Device {
                 transmute(objc_msgSend as *const c_void);
             let raw = retain(f(
                 self.raw,
-                sel(b"newTextureWithDescriptor:iosurface:plane:\0"),
+                sel!(b"newTextureWithDescriptor:iosurface:plane:\0"),
                 descriptor.raw,
                 iosurface,
                 plane,
@@ -519,7 +519,7 @@ impl Device {
                 transmute(objc_msgSend as *const c_void);
             let raw = retain(f(
                 self.raw,
-                sel(b"newDynamicLibrary:error:\0"),
+                sel!(b"newDynamicLibrary:error:\0"),
                 library.raw,
                 &mut error,
             ));
@@ -545,7 +545,7 @@ impl Device {
                 transmute(objc_msgSend as *const c_void);
             let raw = retain(f(
                 self.raw,
-                sel(b"newDynamicLibraryWithURL:error:\0"),
+                sel!(b"newDynamicLibraryWithURL:error:\0"),
                 url,
                 &mut error,
             ));
@@ -561,7 +561,7 @@ impl Device {
     }
 
     pub fn new_command_queue(&self) -> Result<CommandQueue, MetalError> {
-        let raw = msg_id(self.raw, sel(b"newCommandQueue\0"));
+        let raw = msg_id(self.raw, sel!(b"newCommandQueue\0"));
         if raw.is_null() {
             Err(MetalError::new("failed to create Metal command queue"))
         } else {
@@ -573,7 +573,7 @@ impl Device {
         &self,
         max_command_buffer_count: usize,
     ) -> Result<CommandQueue, MetalError> {
-        let selector = sel(b"newCommandQueueWithMaxCommandBufferCount:\0");
+        let selector = sel!(b"newCommandQueueWithMaxCommandBufferCount:\0");
         let raw = msg_id_usize(self.raw, selector, max_command_buffer_count);
         if raw.is_null() {
             Err(MetalError::new(
@@ -588,7 +588,7 @@ impl Device {
         &self,
         descriptor: &CommandQueueDescriptor,
     ) -> Result<CommandQueue, MetalError> {
-        let selector = sel(b"newCommandQueueWithDescriptor:\0");
+        let selector = sel!(b"newCommandQueueWithDescriptor:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "newCommandQueueWithDescriptor: is not supported on this macOS version",
@@ -612,7 +612,7 @@ impl Device {
                 transmute(objc_msgSend as *const c_void);
             let raw = f(
                 self.raw,
-                sel(b"newLibraryWithSource:options:error:\0"),
+                sel!(b"newLibraryWithSource:options:error:\0"),
                 source.raw(),
                 NIL,
                 &mut error,
@@ -640,7 +640,7 @@ impl Device {
                 transmute(objc_msgSend as *const c_void);
             let raw = f(
                 self.raw,
-                sel(b"newLibraryWithSource:options:error:\0"),
+                sel!(b"newLibraryWithSource:options:error:\0"),
                 source.raw(),
                 options.raw,
                 &mut error,
@@ -660,7 +660,7 @@ impl Device {
         &self,
         descriptor: &StitchedLibraryDescriptor,
     ) -> Result<Library, MetalError> {
-        let selector = sel(b"newLibraryWithStitchedDescriptor:error:\0");
+        let selector = sel!(b"newLibraryWithStitchedDescriptor:error:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "newLibraryWithStitchedDescriptor:error: is not supported on this macOS version",
@@ -679,7 +679,7 @@ impl Device {
     }
 
     pub fn new_library_with_url_path(&self, path: &str) -> Result<Library, MetalError> {
-        let selector = sel(b"newLibraryWithURL:error:\0");
+        let selector = sel!(b"newLibraryWithURL:error:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "newLibraryWithURL:error: is not supported on this macOS version",
@@ -699,13 +699,13 @@ impl Device {
     }
 
     pub fn new_library_with_file(&self, path: &str) -> Result<Library, MetalError> {
-        let selector_url = sel(b"newLibraryWithURL:error:\0");
+        let selector_url = sel!(b"newLibraryWithURL:error:\0");
         if responds_to_selector(self.raw, selector_url) {
             self.new_library_with_url_path(path)
         } else {
             let ns_path = NSString::new(path);
             let mut error = NIL;
-            let selector_file = sel(b"newLibraryWithFile:error:\0");
+            let selector_file = sel!(b"newLibraryWithFile:error:\0");
             let raw = msg_id_id_err(self.raw, selector_file, ns_path.raw(), &mut error);
             if raw.is_null() {
                 Err(MetalError::new(error_message(
@@ -726,7 +726,7 @@ impl Device {
         let mut error = NIL;
         let raw = msg_id_id_err(
             self.raw,
-            sel(b"newLibraryWithData:error:\0"),
+            sel!(b"newLibraryWithData:error:\0"),
             ns_data,
             &mut error,
         );
@@ -741,7 +741,7 @@ impl Device {
     }
 
     pub fn new_default_library(&self) -> Result<Library, MetalError> {
-        let raw = msg_id(self.raw, sel(b"newDefaultLibrary\0"));
+        let raw = msg_id(self.raw, sel!(b"newDefaultLibrary\0"));
         if raw.is_null() {
             Err(MetalError::new("failed to create default Metal library"))
         } else {
@@ -754,7 +754,7 @@ impl Device {
     }
 
     pub fn new_default_library_with_bundle(&self, raw_bundle: id) -> Result<Library, MetalError> {
-        let selector = sel(b"newDefaultLibraryWithBundle:error:\0");
+        let selector = sel!(b"newDefaultLibraryWithBundle:error:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "newDefaultLibraryWithBundle:error: is not supported on this macOS version",
@@ -779,7 +779,7 @@ impl Device {
         let mut error = NIL;
         let raw = msg_id_id_err(
             self.raw,
-            sel(b"newRenderPipelineStateWithDescriptor:error:\0"),
+            sel!(b"newRenderPipelineStateWithDescriptor:error:\0"),
             descriptor.raw,
             &mut error,
         );
@@ -810,7 +810,7 @@ impl Device {
                 transmute(objc_msgSend as *const c_void);
             let raw = f(
                 self.raw,
-                sel(b"newRenderPipelineStateWithDescriptor:options:reflection:error:\0"),
+                sel!(b"newRenderPipelineStateWithDescriptor:options:reflection:error:\0"),
                 descriptor.raw,
                 options.0,
                 &mut reflection_out,
@@ -836,7 +836,7 @@ impl Device {
         &self,
         descriptor: &MeshRenderPipelineDescriptor,
     ) -> Result<RenderPipelineState, MetalError> {
-        let selector = sel(b"newRenderPipelineStateWithMeshDescriptor:options:reflection:error:\0");
+        let selector = sel!(b"newRenderPipelineStateWithMeshDescriptor:options:reflection:error:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "newRenderPipelineStateWithMeshDescriptor: is not supported on this device",
@@ -873,7 +873,7 @@ impl Device {
         let mut error = NIL;
         let raw = msg_id_id_err(
             self.raw,
-            sel(b"newComputePipelineStateWithFunction:error:\0"),
+            sel!(b"newComputePipelineStateWithFunction:error:\0"),
             function.raw,
             &mut error,
         );
@@ -900,7 +900,7 @@ impl Device {
                 transmute(objc_msgSend as *const c_void);
             let raw = f(
                 self.raw,
-                sel(b"newComputePipelineStateWithFunction:options:reflection:error:\0"),
+                sel!(b"newComputePipelineStateWithFunction:options:reflection:error:\0"),
                 function.raw,
                 options.0,
                 &mut reflection_out,
@@ -932,7 +932,7 @@ impl Device {
                 transmute(objc_msgSend as *const c_void);
             let raw = f(
                 self.raw,
-                sel(b"newComputePipelineStateWithDescriptor:options:reflection:error:\0"),
+                sel!(b"newComputePipelineStateWithDescriptor:options:reflection:error:\0"),
                 descriptor.raw,
                 0,
                 ptr::null_mut(),
@@ -962,7 +962,7 @@ impl Device {
                 transmute(objc_msgSend as *const c_void);
             let raw = f(
                 self.raw,
-                sel(b"newComputePipelineStateWithDescriptor:options:reflection:error:\0"),
+                sel!(b"newComputePipelineStateWithDescriptor:options:reflection:error:\0"),
                 descriptor.raw,
                 options.0,
                 &mut reflection_out,
@@ -990,7 +990,7 @@ impl Device {
     ) -> Result<DepthStencilState, MetalError> {
         let raw = msg_id_id(
             self.raw,
-            sel(b"newDepthStencilStateWithDescriptor:\0"),
+            sel!(b"newDepthStencilStateWithDescriptor:\0"),
             descriptor.raw,
         );
         if raw.is_null() {
@@ -1008,7 +1008,7 @@ impl Device {
     ) -> Result<SamplerState, MetalError> {
         let raw = msg_id_id(
             self.raw,
-            sel(b"newSamplerStateWithDescriptor:\0"),
+            sel!(b"newSamplerStateWithDescriptor:\0"),
             descriptor.raw,
         );
         if raw.is_null() {
@@ -1019,7 +1019,7 @@ impl Device {
     }
 
     pub fn new_fence(&self) -> Result<Fence, MetalError> {
-        let raw = msg_id(self.raw, sel(b"newFence\0"));
+        let raw = msg_id(self.raw, sel!(b"newFence\0"));
         if raw.is_null() {
             Err(MetalError::new("failed to create Metal fence"))
         } else {
@@ -1028,7 +1028,7 @@ impl Device {
     }
 
     pub fn new_shared_event(&self) -> Result<SharedEvent, MetalError> {
-        let raw = msg_id(self.raw, sel(b"newSharedEvent\0"));
+        let raw = msg_id(self.raw, sel!(b"newSharedEvent\0"));
         if raw.is_null() {
             Err(MetalError::new("failed to create Metal shared event"))
         } else {
@@ -1042,7 +1042,7 @@ impl Device {
     ) -> Result<SharedEvent, MetalError> {
         let raw = retain(msg_id_id(
             self.raw,
-            sel(b"newSharedEventWithHandle:\0"),
+            sel!(b"newSharedEventWithHandle:\0"),
             handle.raw,
         ));
         if raw.is_null() {
@@ -1053,7 +1053,7 @@ impl Device {
     }
 
     pub fn new_event(&self) -> Result<Event, MetalError> {
-        let raw = retain(msg_id(self.raw, sel(b"newEvent\0")));
+        let raw = retain(msg_id(self.raw, sel!(b"newEvent\0")));
         if raw.is_null() {
             Err(MetalError::new("failed to create Metal event"))
         } else {
@@ -1073,7 +1073,7 @@ impl Device {
                 transmute(objc_msgSend as *const c_void);
             let raw = f(
                 self.raw,
-                sel(b"newIndirectCommandBufferWithDescriptor:maxCommandCount:options:\0"),
+                sel!(b"newIndirectCommandBufferWithDescriptor:maxCommandCount:options:\0"),
                 descriptor.raw,
                 max_command_count,
                 options.as_raw(),
@@ -1098,7 +1098,7 @@ impl Device {
         let mut error = NIL;
         let raw = msg_id_id_err(
             self.raw,
-            sel(b"newBinaryArchiveWithDescriptor:error:\0"),
+            sel!(b"newBinaryArchiveWithDescriptor:error:\0"),
             descriptor.raw,
             &mut error,
         );
@@ -1119,7 +1119,7 @@ impl Device {
     ) -> Result<Buffer, MetalError> {
         let raw = msg_id_usize_usize(
             self.raw,
-            sel(b"newBufferWithLength:options:\0"),
+            sel!(b"newBufferWithLength:options:\0"),
             length,
             options.as_raw(),
         );
@@ -1131,7 +1131,7 @@ impl Device {
     }
 
     pub fn new_heap(&self, descriptor: &HeapDescriptor) -> Result<Heap, MetalError> {
-        let raw = msg_id_id(self.raw, sel(b"newHeapWithDescriptor:\0"), descriptor.raw);
+        let raw = msg_id_id(self.raw, sel!(b"newHeapWithDescriptor:\0"), descriptor.raw);
         if raw.is_null() {
             Err(MetalError::new("failed to create Metal heap"))
         } else {
@@ -1149,7 +1149,7 @@ impl Device {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"heapBufferSizeAndAlignWithLength:options:\0"),
+                sel!(b"heapBufferSizeAndAlignWithLength:options:\0"),
                 length,
                 options.as_raw(),
             )
@@ -1162,7 +1162,7 @@ impl Device {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"heapTextureSizeAndAlignWithDescriptor:\0"),
+                sel!(b"heapTextureSizeAndAlignWithDescriptor:\0"),
                 descriptor.raw,
             )
         }
@@ -1176,7 +1176,7 @@ impl Device {
             std::slice::from_raw_parts(descriptors.as_ptr() as *const id, descriptors.len())
         };
         let array = ns_array_from_ids(raw_ptrs);
-        let raw = msg_id_id(self.raw, sel(b"newArgumentEncoderWithArguments:\0"), array);
+        let raw = msg_id_id(self.raw, sel!(b"newArgumentEncoderWithArguments:\0"), array);
         if raw.is_null() {
             Err(MetalError::new("failed to create Metal argument encoder"))
         } else {
@@ -1192,7 +1192,7 @@ impl Device {
         let length = std::mem::size_of_val(data);
         let raw = msg_id_ptr_usize_usize(
             self.raw,
-            sel(b"newBufferWithBytes:length:options:\0"),
+            sel!(b"newBufferWithBytes:length:options:\0"),
             data.as_ptr() as *const c_void,
             length,
             options.as_raw(),
@@ -1207,7 +1207,7 @@ impl Device {
     pub fn new_texture(&self, descriptor: &TextureDescriptor) -> Result<Texture, MetalError> {
         let raw = msg_id_id(
             self.raw,
-            sel(b"newTextureWithDescriptor:\0"),
+            sel!(b"newTextureWithDescriptor:\0"),
             descriptor.raw,
         );
         if raw.is_null() {
@@ -1278,7 +1278,7 @@ impl Device {
         &self,
         descriptor: &TensorDescriptor,
     ) -> Result<Tensor, MetalError> {
-        let selector = sel(b"newTensorWithDescriptor:error:\0");
+        let selector = sel!(b"newTensorWithDescriptor:error:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "newTensorWithDescriptor:error: is not supported on this macOS version",
@@ -1300,7 +1300,7 @@ impl Device {
         &self,
         descriptor: &ResourceViewPoolDescriptor,
     ) -> Result<TextureViewPool, MetalError> {
-        let selector = sel(b"newTextureViewPoolWithDescriptor:error:\0");
+        let selector = sel!(b"newTextureViewPoolWithDescriptor:error:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "newTextureViewPoolWithDescriptor:error: is not supported on this macOS version",
@@ -1332,7 +1332,7 @@ pub struct CommandQueue {
 
 impl CommandQueue {
     pub fn command_buffer(&self) -> Result<CommandBuffer, MetalError> {
-        let raw = retain(msg_id(self.raw, sel(b"commandBuffer\0")));
+        let raw = retain(msg_id(self.raw, sel!(b"commandBuffer\0")));
         if raw.is_null() {
             Err(MetalError::new("failed to create Metal command buffer"))
         } else {
@@ -1343,7 +1343,7 @@ impl CommandQueue {
     pub fn command_buffer_with_unretained_references(&self) -> Result<CommandBuffer, MetalError> {
         let raw = retain(msg_id(
             self.raw,
-            sel(b"commandBufferWithUnretainedReferences\0"),
+            sel!(b"commandBufferWithUnretainedReferences\0"),
         ));
         if raw.is_null() {
             Err(MetalError::new(
@@ -1358,7 +1358,7 @@ impl CommandQueue {
         &self,
         descriptor: &CommandBufferDescriptor,
     ) -> Result<CommandBuffer, MetalError> {
-        let selector = sel(b"commandBufferWithDescriptor:\0");
+        let selector = sel!(b"commandBufferWithDescriptor:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "commandBufferWithDescriptor: is not supported on this macOS version",
@@ -1375,12 +1375,12 @@ impl CommandQueue {
     }
 
     pub fn device(&self) -> Device {
-        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        let ptr = retain(msg_id(self.raw, sel!(b"device\0")));
         Device { raw: ptr }
     }
 
     pub fn label(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"label\0"));
+        let ptr = msg_id(self.raw, sel!(b"label\0"));
         if ptr.is_null() {
             None
         } else {
@@ -1390,18 +1390,18 @@ impl CommandQueue {
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 
     pub fn add_residency_set(&self, residency_set: &ResidencySet) {
-        let selector = sel(b"addResidencySet:\0");
+        let selector = sel!(b"addResidencySet:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_id(self.raw, selector, residency_set.raw);
         }
     }
 
     pub fn add_residency_sets(&self, residency_sets: &[ResidencySet]) {
-        let selector = sel(b"addResidencySets:count:\0");
+        let selector = sel!(b"addResidencySets:count:\0");
         if responds_to_selector(self.raw, selector) {
             unsafe {
                 let f: unsafe extern "C" fn(id, SEL, *const id, usize) =
@@ -1417,14 +1417,14 @@ impl CommandQueue {
     }
 
     pub fn remove_residency_set(&self, residency_set: &ResidencySet) {
-        let selector = sel(b"removeResidencySet:\0");
+        let selector = sel!(b"removeResidencySet:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_id(self.raw, selector, residency_set.raw);
         }
     }
 
     pub fn remove_residency_sets(&self, residency_sets: &[ResidencySet]) {
-        let selector = sel(b"removeResidencySets:count:\0");
+        let selector = sel!(b"removeResidencySets:count:\0");
         if responds_to_selector(self.raw, selector) {
             unsafe {
                 let f: unsafe extern "C" fn(id, SEL, *const id, usize) =
@@ -1458,7 +1458,7 @@ impl CommandBuffer {
     ) -> Result<RenderCommandEncoder, MetalError> {
         let raw = retain(msg_id_id(
             self.raw,
-            sel(b"renderCommandEncoderWithDescriptor:\0"),
+            sel!(b"renderCommandEncoderWithDescriptor:\0"),
             descriptor.raw,
         ));
         if raw.is_null() {
@@ -1476,7 +1476,7 @@ impl CommandBuffer {
     ) -> Result<ParallelRenderCommandEncoder, MetalError> {
         let raw = retain(msg_id_id(
             self.raw,
-            sel(b"parallelRenderCommandEncoderWithDescriptor:\0"),
+            sel!(b"parallelRenderCommandEncoderWithDescriptor:\0"),
             descriptor.raw,
         ));
         if raw.is_null() {
@@ -1489,7 +1489,7 @@ impl CommandBuffer {
     }
 
     pub fn blit_command_encoder(&self) -> Result<BlitCommandEncoder, MetalError> {
-        let raw = retain(msg_id(self.raw, sel(b"blitCommandEncoder\0")));
+        let raw = retain(msg_id(self.raw, sel!(b"blitCommandEncoder\0")));
         if raw.is_null() {
             Err(MetalError::new(
                 "failed to create Metal blit command encoder",
@@ -1500,7 +1500,7 @@ impl CommandBuffer {
     }
 
     pub fn compute_command_encoder(&self) -> Result<ComputeCommandEncoder, MetalError> {
-        let raw = retain(msg_id(self.raw, sel(b"computeCommandEncoder\0")));
+        let raw = retain(msg_id(self.raw, sel!(b"computeCommandEncoder\0")));
         if raw.is_null() {
             Err(MetalError::new(
                 "failed to create Metal compute command encoder",
@@ -1514,7 +1514,7 @@ impl CommandBuffer {
         &self,
         descriptor: &ComputePassDescriptor,
     ) -> Result<ComputeCommandEncoder, MetalError> {
-        let selector = sel(b"computeCommandEncoderWithDescriptor:\0");
+        let selector = sel!(b"computeCommandEncoderWithDescriptor:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "computeCommandEncoderWithDescriptor: is not supported on this macOS version",
@@ -1534,7 +1534,7 @@ impl CommandBuffer {
         &self,
         dispatch_type: DispatchType,
     ) -> Result<ComputeCommandEncoder, MetalError> {
-        let selector = sel(b"computeCommandEncoderWithDispatchType:\0");
+        let selector = sel!(b"computeCommandEncoderWithDispatchType:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "computeCommandEncoderWithDispatchType: is not supported on this macOS version",
@@ -1553,7 +1553,7 @@ impl CommandBuffer {
     pub fn resource_state_command_encoder(
         &self,
     ) -> Result<ResourceStateCommandEncoder, MetalError> {
-        let raw = retain(msg_id(self.raw, sel(b"resourceStateCommandEncoder\0")));
+        let raw = retain(msg_id(self.raw, sel!(b"resourceStateCommandEncoder\0")));
         if raw.is_null() {
             Err(MetalError::new(
                 "failed to create Metal resource state command encoder",
@@ -1567,7 +1567,7 @@ impl CommandBuffer {
         &self,
         descriptor: &ResourceStatePassDescriptor,
     ) -> Result<ResourceStateCommandEncoder, MetalError> {
-        let selector = sel(b"resourceStateCommandEncoderWithDescriptor:\0");
+        let selector = sel!(b"resourceStateCommandEncoderWithDescriptor:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "resourceStateCommandEncoderWithDescriptor: is not supported on this macOS version",
@@ -1587,7 +1587,7 @@ impl CommandBuffer {
         &self,
         descriptor: &BlitPassDescriptor,
     ) -> Result<BlitCommandEncoder, MetalError> {
-        let selector = sel(b"blitCommandEncoderWithDescriptor:\0");
+        let selector = sel!(b"blitCommandEncoderWithDescriptor:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "blitCommandEncoderWithDescriptor: is not supported on this macOS version",
@@ -1609,7 +1609,7 @@ impl CommandBuffer {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"encodeSignalEvent:value:\0"),
+                sel!(b"encodeSignalEvent:value:\0"),
                 event.raw,
                 value,
             );
@@ -1622,7 +1622,7 @@ impl CommandBuffer {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"encodeWaitForEvent:value:\0"),
+                sel!(b"encodeWaitForEvent:value:\0"),
                 event.raw,
                 value,
             );
@@ -1630,11 +1630,11 @@ impl CommandBuffer {
     }
 
     pub fn present_drawable(&self, drawable: &Drawable) {
-        msg_void_id(self.raw, sel(b"presentDrawable:\0"), drawable.raw);
+        msg_void_id(self.raw, sel!(b"presentDrawable:\0"), drawable.raw);
     }
 
     pub fn present_drawable_at_time(&self, drawable: &Drawable, time: f64) {
-        let selector = sel(b"presentDrawable:atTime:\0");
+        let selector = sel!(b"presentDrawable:atTime:\0");
         if responds_to_selector(self.raw, selector) {
             unsafe {
                 let f: unsafe extern "C" fn(id, SEL, id, f64) =
@@ -1645,7 +1645,7 @@ impl CommandBuffer {
     }
 
     pub fn present_drawable_after_minimum_duration(&self, drawable: &Drawable, duration: f64) {
-        let selector = sel(b"presentDrawable:afterMinimumDuration:\0");
+        let selector = sel!(b"presentDrawable:afterMinimumDuration:\0");
         if responds_to_selector(self.raw, selector) {
             unsafe {
                 let f: unsafe extern "C" fn(id, SEL, id, f64) =
@@ -1656,19 +1656,19 @@ impl CommandBuffer {
     }
 
     pub fn commit(&self) {
-        msg_void(self.raw, sel(b"commit\0"));
+        msg_void(self.raw, sel!(b"commit\0"));
     }
 
     pub fn enqueue(&self) {
-        msg_void(self.raw, sel(b"enqueue\0"));
+        msg_void(self.raw, sel!(b"enqueue\0"));
     }
 
     pub fn wait_until_scheduled(&self) {
-        msg_void(self.raw, sel(b"waitUntilScheduled\0"));
+        msg_void(self.raw, sel!(b"waitUntilScheduled\0"));
     }
 
     pub fn wait_until_completed(&self) {
-        msg_void(self.raw, sel(b"waitUntilCompleted\0"));
+        msg_void(self.raw, sel!(b"waitUntilCompleted\0"));
     }
 
     pub fn add_completed_handler<F>(&self, f: F)
@@ -1685,7 +1685,7 @@ impl CommandBuffer {
             descriptor: &COMPLETED_HANDLER_BLOCK_DESCRIPTOR,
             closure: closure_ptr,
         };
-        let selector = sel(b"addCompletedHandler:\0");
+        let selector = sel!(b"addCompletedHandler:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_id(self.raw, selector, id(&mut block as *mut _ as *mut c_void));
         } else {
@@ -1697,7 +1697,7 @@ impl CommandBuffer {
     }
 
     pub fn status(&self) -> CommandBufferStatus {
-        let status = msg_usize(self.raw, sel(b"status\0"));
+        let status = msg_usize(self.raw, sel!(b"status\0"));
         match status {
             0 => CommandBufferStatus::NotEnqueued,
             1 => CommandBufferStatus::Enqueued,
@@ -1710,7 +1710,7 @@ impl CommandBuffer {
     }
 
     pub fn error(&self) -> Option<MetalError> {
-        let error = msg_id(self.raw, sel(b"error\0"));
+        let error = msg_id(self.raw, sel!(b"error\0"));
         if error.is_null() {
             None
         } else {
@@ -1722,17 +1722,17 @@ impl CommandBuffer {
     }
 
     pub fn device(&self) -> Device {
-        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        let ptr = retain(msg_id(self.raw, sel!(b"device\0")));
         Device { raw: ptr }
     }
 
     pub fn command_queue(&self) -> CommandQueue {
-        let ptr = retain(msg_id(self.raw, sel(b"commandQueue\0")));
+        let ptr = retain(msg_id(self.raw, sel!(b"commandQueue\0")));
         CommandQueue { raw: ptr }
     }
 
     pub fn label(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"label\0"));
+        let ptr = msg_id(self.raw, sel!(b"label\0"));
         if ptr.is_null() {
             None
         } else {
@@ -1742,15 +1742,15 @@ impl CommandBuffer {
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 
     pub fn retained_references(&self) -> bool {
-        msg_bool(self.raw, sel(b"retainedReferences\0")) != 0
+        msg_bool(self.raw, sel!(b"retainedReferences\0")) != 0
     }
 
     pub fn error_options(&self) -> CommandBufferErrorOption {
-        let selector = sel(b"errorOptions\0");
+        let selector = sel!(b"errorOptions\0");
         if responds_to_selector(self.raw, selector) {
             let val = msg_usize(self.raw, selector);
             match val {
@@ -1763,7 +1763,7 @@ impl CommandBuffer {
     }
 
     pub fn kernel_start_time(&self) -> f64 {
-        let selector = sel(b"kernelStartTime\0");
+        let selector = sel!(b"kernelStartTime\0");
         if responds_to_selector(self.raw, selector) {
             msg_f64(self.raw, selector)
         } else {
@@ -1772,7 +1772,7 @@ impl CommandBuffer {
     }
 
     pub fn kernel_end_time(&self) -> f64 {
-        let selector = sel(b"kernelEndTime\0");
+        let selector = sel!(b"kernelEndTime\0");
         if responds_to_selector(self.raw, selector) {
             msg_f64(self.raw, selector)
         } else {
@@ -1781,7 +1781,7 @@ impl CommandBuffer {
     }
 
     pub fn gpu_start_time(&self) -> f64 {
-        let selector = sel(b"GPUStartTime\0");
+        let selector = sel!(b"GPUStartTime\0");
         if responds_to_selector(self.raw, selector) {
             msg_f64(self.raw, selector)
         } else {
@@ -1790,7 +1790,7 @@ impl CommandBuffer {
     }
 
     pub fn gpu_end_time(&self) -> f64 {
-        let selector = sel(b"GPUEndTime\0");
+        let selector = sel!(b"GPUEndTime\0");
         if responds_to_selector(self.raw, selector) {
             msg_f64(self.raw, selector)
         } else {
@@ -1799,7 +1799,7 @@ impl CommandBuffer {
     }
 
     pub fn logs(&self) -> Option<LogContainer> {
-        let selector = sel(b"logs\0");
+        let selector = sel!(b"logs\0");
         if responds_to_selector(self.raw, selector) {
             let ptr = msg_id(self.raw, selector);
             if ptr.is_null() {
@@ -1813,14 +1813,14 @@ impl CommandBuffer {
     }
 
     pub fn use_residency_set(&self, residency_set: &ResidencySet) {
-        let selector = sel(b"useResidencySet:\0");
+        let selector = sel!(b"useResidencySet:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_id(self.raw, selector, residency_set.raw);
         }
     }
 
     pub fn use_residency_sets(&self, residency_sets: &[ResidencySet]) {
-        let selector = sel(b"useResidencySets:count:\0");
+        let selector = sel!(b"useResidencySets:count:\0");
         if responds_to_selector(self.raw, selector) {
             unsafe {
                 let f: unsafe extern "C" fn(id, SEL, *const id, usize) =
@@ -1850,7 +1850,7 @@ pub struct Library {
 impl Library {
     pub fn function(&self, name: &str) -> Result<Function, MetalError> {
         let ns_name = NSString::new(name);
-        let raw = msg_id_id(self.raw, sel(b"newFunctionWithName:\0"), ns_name.raw());
+        let raw = msg_id_id(self.raw, sel!(b"newFunctionWithName:\0"), ns_name.raw());
         if raw.is_null() {
             Err(MetalError::new(format!(
                 "failed to load Metal function '{}': not found in library",
@@ -1873,7 +1873,7 @@ impl Library {
                 transmute(objc_msgSend as *const c_void);
             let raw = f(
                 self.raw,
-                sel(b"newFunctionWithName:constantValues:error:\0"),
+                sel!(b"newFunctionWithName:constantValues:error:\0"),
                 ns_name.raw(),
                 constants.raw,
                 &mut error,
@@ -1890,7 +1890,7 @@ impl Library {
     }
 
     pub fn label(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"label\0"));
+        let ptr = msg_id(self.raw, sel!(b"label\0"));
         if ptr.is_null() {
             None
         } else {
@@ -1900,11 +1900,11 @@ impl Library {
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 
     pub fn library_type(&self) -> Result<LibraryType, MetalError> {
-        let selector = sel(b"type\0");
+        let selector = sel!(b"type\0");
         if responds_to_selector(self.raw, selector) {
             let raw_type = msg_usize(self.raw, selector);
             LibraryType::from_raw(raw_type)
@@ -1917,7 +1917,7 @@ impl Library {
     }
 
     pub fn install_name(&self) -> Result<Option<NSString>, MetalError> {
-        let selector = sel(b"installName\0");
+        let selector = sel!(b"installName\0");
         if responds_to_selector(self.raw, selector) {
             let ptr = msg_id(self.raw, selector);
             if ptr.is_null() {
@@ -1933,19 +1933,19 @@ impl Library {
     }
 
     pub fn device(&self) -> Device {
-        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        let ptr = retain(msg_id(self.raw, sel!(b"device\0")));
         Device { raw: ptr }
     }
 
     pub fn function_names(&self) -> NSArrayIterator<NSString> {
-        NSArrayIterator::new(msg_id(self.raw, sel(b"functionNames\0")))
+        NSArrayIterator::new(msg_id(self.raw, sel!(b"functionNames\0")))
     }
 
     pub fn new_function_with_descriptor(
         &self,
         descriptor: &FunctionDescriptor,
     ) -> Result<Function, MetalError> {
-        let selector = sel(b"newFunctionWithDescriptor:error:\0");
+        let selector = sel!(b"newFunctionWithDescriptor:error:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "newFunctionWithDescriptor:error: is not supported on this macOS version",
@@ -1970,7 +1970,7 @@ impl Library {
         &self,
         descriptor: &IntersectionFunctionDescriptor,
     ) -> Result<Function, MetalError> {
-        let selector = sel(b"newIntersectionFunctionWithDescriptor:error:\0");
+        let selector = sel!(b"newIntersectionFunctionWithDescriptor:error:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "newIntersectionFunctionWithDescriptor:error: is not supported on this macOS version",
@@ -1992,7 +1992,7 @@ impl Library {
         &self,
         name: &str,
     ) -> Result<FunctionReflection, MetalError> {
-        let selector = sel(b"reflectionForFunctionWithName:\0");
+        let selector = sel!(b"reflectionForFunctionWithName:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "reflectionForFunctionWithName: is not supported on this macOS version",
@@ -2039,12 +2039,12 @@ impl FromRawId for Function {
 
 impl Function {
     pub fn name(&self) -> NSString {
-        let ptr = msg_id(self.raw, sel(b"name\0"));
+        let ptr = msg_id(self.raw, sel!(b"name\0"));
         NSString::from_raw(ptr)
     }
 
     pub fn label(&self) -> Option<NSString> {
-        let selector = sel(b"label\0");
+        let selector = sel!(b"label\0");
         if responds_to_selector(self.raw, selector) {
             let ptr = msg_id(self.raw, selector);
             if ptr.is_null() {
@@ -2058,7 +2058,7 @@ impl Function {
     }
 
     pub fn set_label(&self, label: &str) {
-        let selector = sel(b"setLabel:\0");
+        let selector = sel!(b"setLabel:\0");
         if responds_to_selector(self.raw, selector) {
             let ns_label = NSString::new(label);
             msg_void_id(self.raw, selector, ns_label.raw());
@@ -2066,12 +2066,12 @@ impl Function {
     }
 
     pub fn device(&self) -> Device {
-        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        let ptr = retain(msg_id(self.raw, sel!(b"device\0")));
         Device { raw: ptr }
     }
 
     pub fn function_type(&self) -> FunctionType {
-        let val = msg_usize(self.raw, sel(b"functionType\0"));
+        let val = msg_usize(self.raw, sel!(b"functionType\0"));
         match val {
             1 => FunctionType::Vertex,
             2 => FunctionType::Fragment,
@@ -2085,7 +2085,7 @@ impl Function {
     }
 
     pub fn patch_type(&self) -> Result<PatchType, MetalError> {
-        let selector = sel(b"patchType\0");
+        let selector = sel!(b"patchType\0");
         if responds_to_selector(self.raw, selector) {
             Ok(PatchType::from_raw(msg_usize(self.raw, selector)))
         } else {
@@ -2096,7 +2096,7 @@ impl Function {
     }
 
     pub fn patch_control_point_count(&self) -> Result<isize, MetalError> {
-        let selector = sel(b"patchControlPointCount\0");
+        let selector = sel!(b"patchControlPointCount\0");
         if responds_to_selector(self.raw, selector) {
             unsafe {
                 let f: unsafe extern "C" fn(id, SEL) -> isize =
@@ -2111,7 +2111,7 @@ impl Function {
     }
 
     pub fn options(&self) -> Result<FunctionOptions, MetalError> {
-        let selector = sel(b"options\0");
+        let selector = sel!(b"options\0");
         if responds_to_selector(self.raw, selector) {
             Ok(FunctionOptions(msg_usize(self.raw, selector)))
         } else {
@@ -2122,7 +2122,7 @@ impl Function {
     }
 
     pub fn vertex_attributes(&self) -> NSArrayIterator<VertexAttribute> {
-        let array = msg_id(self.raw, sel(b"vertexAttributes\0"));
+        let array = msg_id(self.raw, sel!(b"vertexAttributes\0"));
         NSArrayIterator::new(array)
     }
 }
@@ -2154,7 +2154,7 @@ impl FromRawId for VertexAttribute {
 
 impl VertexAttribute {
     pub fn name(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"name\0"));
+        let ptr = msg_id(self.raw, sel!(b"name\0"));
         if ptr.is_null() {
             None
         } else {
@@ -2163,11 +2163,11 @@ impl VertexAttribute {
     }
 
     pub fn attribute_index(&self) -> usize {
-        msg_usize(self.raw, sel(b"attributeIndex\0"))
+        msg_usize(self.raw, sel!(b"attributeIndex\0"))
     }
 
     pub fn attribute_type(&self) -> DataType {
-        let selector = sel(b"attributeType\0");
+        let selector = sel!(b"attributeType\0");
         if responds_to_selector(self.raw, selector) {
             let val = msg_usize(self.raw, selector);
             unsafe { transmute(val) }
@@ -2177,7 +2177,7 @@ impl VertexAttribute {
     }
 
     pub fn is_active(&self) -> bool {
-        let selector = sel(b"isActive\0");
+        let selector = sel!(b"isActive\0");
         if responds_to_selector(self.raw, selector) {
             msg_bool(self.raw, selector) != 0
         } else {
@@ -2199,7 +2199,7 @@ pub struct RenderPipelineReflection {
 
 impl RenderPipelineReflection {
     pub fn vertex_bindings(&self) -> NSArrayIterator<Binding> {
-        let selector = sel(b"vertexBindings\0");
+        let selector = sel!(b"vertexBindings\0");
         if responds_to_selector(self.raw, selector) {
             crate::reflection::bindings_from_array(msg_id(self.raw, selector))
         } else {
@@ -2208,7 +2208,7 @@ impl RenderPipelineReflection {
     }
 
     pub fn fragment_bindings(&self) -> NSArrayIterator<Binding> {
-        let selector = sel(b"fragmentBindings\0");
+        let selector = sel!(b"fragmentBindings\0");
         if responds_to_selector(self.raw, selector) {
             crate::reflection::bindings_from_array(msg_id(self.raw, selector))
         } else {
@@ -2262,28 +2262,28 @@ pub struct CompileOptions {
 
 impl CompileOptions {
     pub fn new() -> Self {
-        let allocated = msg_id(class(b"MTLCompileOptions\0"), sel(b"alloc\0"));
+        let allocated = msg_id(class(b"MTLCompileOptions\0"), sel!(b"alloc\0"));
         Self {
-            raw: msg_id(allocated, sel(b"init\0")),
+            raw: msg_id(allocated, sel!(b"init\0")),
         }
     }
 
     pub fn set_library_type(&self, library_type: LibraryType) {
-        let selector = sel(b"setLibraryType:\0");
+        let selector = sel!(b"setLibraryType:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_usize(self.raw, selector, library_type as usize);
         }
     }
 
     pub fn set_library_type_raw(&self, library_type: usize) {
-        let selector = sel(b"setLibraryType:\0");
+        let selector = sel!(b"setLibraryType:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_usize(self.raw, selector, library_type);
         }
     }
 
     pub fn library_type(&self) -> Option<LibraryType> {
-        let selector = sel(b"libraryType\0");
+        let selector = sel!(b"libraryType\0");
         if responds_to_selector(self.raw, selector) {
             let raw_type = msg_usize(self.raw, selector);
             LibraryType::from_raw(raw_type)
@@ -2293,7 +2293,7 @@ impl CompileOptions {
     }
 
     pub fn install_name(&self) -> Option<NSString> {
-        let selector = sel(b"installName\0");
+        let selector = sel!(b"installName\0");
         if responds_to_selector(self.raw, selector) {
             let ptr = msg_id(self.raw, selector);
             if ptr.is_null() {
@@ -2307,7 +2307,7 @@ impl CompileOptions {
     }
 
     pub fn set_install_name(&self, name: &str) {
-        let selector = sel(b"setInstallName:\0");
+        let selector = sel!(b"setInstallName:\0");
         if responds_to_selector(self.raw, selector) {
             let ns_name = NSString::new(name);
             msg_void_id(self.raw, selector, ns_name.raw());
@@ -2315,7 +2315,7 @@ impl CompileOptions {
     }
 
     pub fn optimization_level(&self) -> Option<LibraryOptimizationLevel> {
-        let selector = sel(b"optimizationLevel\0");
+        let selector = sel!(b"optimizationLevel\0");
         if responds_to_selector(self.raw, selector) {
             let raw_val = msg_usize(self.raw, selector);
             LibraryOptimizationLevel::from_raw(raw_val as isize)
@@ -2325,7 +2325,7 @@ impl CompileOptions {
     }
 
     pub fn set_optimization_level(&self, level: LibraryOptimizationLevel) {
-        let selector = sel(b"setOptimizationLevel:\0");
+        let selector = sel!(b"setOptimizationLevel:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_usize(self.raw, selector, level as usize);
         }
@@ -2357,8 +2357,8 @@ impl CommandQueueDescriptor {
                 "MTLCommandQueueDescriptor is not available",
             ));
         }
-        let allocated = msg_id(class_ptr, sel(b"alloc\0"));
-        let raw = msg_id(allocated, sel(b"init\0"));
+        let allocated = msg_id(class_ptr, sel!(b"alloc\0"));
+        let raw = msg_id(allocated, sel!(b"init\0"));
         if raw.is_null() {
             Err(MetalError::new(
                 "failed to initialize MTLCommandQueueDescriptor",
@@ -2369,15 +2369,15 @@ impl CommandQueueDescriptor {
     }
 
     pub fn max_command_buffer_count(&self) -> usize {
-        msg_usize(self.raw, sel(b"maxCommandBufferCount\0"))
+        msg_usize(self.raw, sel!(b"maxCommandBufferCount\0"))
     }
 
     pub fn set_max_command_buffer_count(&self, count: usize) {
-        msg_void_usize(self.raw, sel(b"setMaxCommandBufferCount:\0"), count);
+        msg_void_usize(self.raw, sel!(b"setMaxCommandBufferCount:\0"), count);
     }
 
     pub fn log_state(&self) -> Option<LogState> {
-        let selector = sel(b"logState\0");
+        let selector = sel!(b"logState\0");
         if responds_to_selector(self.raw, selector) {
             let ptr = msg_id(self.raw, selector);
             if ptr.is_null() {
@@ -2391,7 +2391,7 @@ impl CommandQueueDescriptor {
     }
 
     pub fn set_log_state(&self, state: &LogState) {
-        let selector = sel(b"setLogState:\0");
+        let selector = sel!(b"setLogState:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_id(self.raw, selector, state.raw);
         }
@@ -2425,8 +2425,8 @@ impl CommandBufferDescriptor {
                 "MTLCommandBufferDescriptor is not available",
             ));
         }
-        let allocated = msg_id(class_ptr, sel(b"alloc\0"));
-        let raw = msg_id(allocated, sel(b"init\0"));
+        let allocated = msg_id(class_ptr, sel!(b"alloc\0"));
+        let raw = msg_id(allocated, sel!(b"init\0"));
         if raw.is_null() {
             Err(MetalError::new(
                 "failed to initialize MTLCommandBufferDescriptor",
@@ -2437,15 +2437,15 @@ impl CommandBufferDescriptor {
     }
 
     pub fn retained_references(&self) -> bool {
-        msg_bool(self.raw, sel(b"retainedReferences\0")) != 0
+        msg_bool(self.raw, sel!(b"retainedReferences\0")) != 0
     }
 
     pub fn set_retained_references(&self, retained: bool) {
-        msg_void_bool(self.raw, sel(b"setRetainedReferences:\0"), retained as BOOL);
+        msg_void_bool(self.raw, sel!(b"setRetainedReferences:\0"), retained as BOOL);
     }
 
     pub fn error_options(&self) -> CommandBufferErrorOption {
-        let selector = sel(b"errorOptions\0");
+        let selector = sel!(b"errorOptions\0");
         if responds_to_selector(self.raw, selector) {
             let val = msg_usize(self.raw, selector);
             match val {
@@ -2458,14 +2458,14 @@ impl CommandBufferDescriptor {
     }
 
     pub fn set_error_options(&self, options: CommandBufferErrorOption) {
-        let selector = sel(b"setErrorOptions:\0");
+        let selector = sel!(b"setErrorOptions:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_usize(self.raw, selector, options as usize);
         }
     }
 
     pub fn log_state(&self) -> Option<LogState> {
-        let selector = sel(b"logState\0");
+        let selector = sel!(b"logState\0");
         if responds_to_selector(self.raw, selector) {
             let ptr = msg_id(self.raw, selector);
             if ptr.is_null() {
@@ -2479,7 +2479,7 @@ impl CommandBufferDescriptor {
     }
 
     pub fn set_log_state(&self, state: &LogState) {
-        let selector = sel(b"setLogState:\0");
+        let selector = sel!(b"setLogState:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_id(self.raw, selector, state.raw);
         }
@@ -2510,7 +2510,7 @@ impl LogContainer {
         if self.raw.is_null() {
             0
         } else {
-            msg_usize(self.raw, sel(b"count\0"))
+            msg_usize(self.raw, sel!(b"count\0"))
         }
     }
 

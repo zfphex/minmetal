@@ -46,15 +46,15 @@ pub struct M4TimestampHeapEntry {
 // ---------------------------------------------------------------------------
 
 fn m4_alloc_init(class_name: &[u8]) -> id {
-    let allocated = msg_id(class(class_name), sel(b"alloc\0"));
-    msg_id(allocated, sel(b"init\0"))
+    let allocated = msg_id(class(class_name), sel!(b"alloc\0"));
+    msg_id(allocated, sel!(b"init\0"))
 }
 
 fn m4_label(raw: id) -> Option<NSString> {
     if raw.is_null() {
         return None;
     }
-    let ptr = msg_id(raw, sel(b"label\0"));
+    let ptr = msg_id(raw, sel!(b"label\0"));
     if ptr.is_null() {
         None
     } else {
@@ -64,7 +64,7 @@ fn m4_label(raw: id) -> Option<NSString> {
 
 fn m4_set_label(raw: id, label: &str) {
     let ns = NSString::new(label);
-    msg_void_id(raw, sel(b"setLabel:\0"), ns.raw());
+    msg_void_id(raw, sel!(b"setLabel:\0"), ns.raw());
 }
 
 fn m4_optional_id(raw: id, getter: SEL) -> Option<id> {
@@ -108,34 +108,34 @@ fn m4_geometry_base_get(raw: id) -> M4AccelerationStructureGeometryDescriptorBas
     M4AccelerationStructureGeometryDescriptorBase {
         intersection_function_table_offset: msg_usize(
             raw,
-            sel(b"intersectionFunctionTableOffset\0"),
+            sel!(b"intersectionFunctionTableOffset\0"),
         ),
-        opaque: msg_bool(raw, sel(b"isOpaque\0")) != NO,
+        opaque: msg_bool(raw, sel!(b"isOpaque\0")) != NO,
         allow_duplicate_intersection_function_invocation: msg_bool(
             raw,
-            sel(b"allowDuplicateIntersectionFunctionInvocation\0"),
+            sel!(b"allowDuplicateIntersectionFunctionInvocation\0"),
         ) != NO,
         label: m4_label(raw),
-        primitive_data_buffer: m4_buffer_range(raw, sel(b"primitiveDataBuffer\0")),
-        primitive_data_stride: msg_usize(raw, sel(b"primitiveDataStride\0")),
-        primitive_data_element_size: msg_usize(raw, sel(b"primitiveDataElementSize\0")),
+        primitive_data_buffer: m4_buffer_range(raw, sel!(b"primitiveDataBuffer\0")),
+        primitive_data_stride: msg_usize(raw, sel!(b"primitiveDataStride\0")),
+        primitive_data_element_size: msg_usize(raw, sel!(b"primitiveDataElementSize\0")),
     }
 }
 
 fn m4_geometry_base_set(raw: id, base: &M4AccelerationStructureGeometryDescriptorBase) {
     msg_void_usize(
         raw,
-        sel(b"setIntersectionFunctionTableOffset:\0"),
+        sel!(b"setIntersectionFunctionTableOffset:\0"),
         base.intersection_function_table_offset,
     );
     msg_void_bool(
         raw,
-        sel(b"setOpaque:\0"),
+        sel!(b"setOpaque:\0"),
         if base.opaque { YES } else { NO },
     );
     msg_void_bool(
         raw,
-        sel(b"setAllowDuplicateIntersectionFunctionInvocation:\0"),
+        sel!(b"setAllowDuplicateIntersectionFunctionInvocation:\0"),
         if base.allow_duplicate_intersection_function_invocation {
             YES
         } else {
@@ -143,21 +143,21 @@ fn m4_geometry_base_set(raw: id, base: &M4AccelerationStructureGeometryDescripto
         },
     );
     if let Some(label) = &base.label {
-        msg_void_id(raw, sel(b"setLabel:\0"), label.raw());
+        msg_void_id(raw, sel!(b"setLabel:\0"), label.raw());
     }
     m4_set_buffer_range(
         raw,
-        sel(b"setPrimitiveDataBuffer:\0"),
+        sel!(b"setPrimitiveDataBuffer:\0"),
         base.primitive_data_buffer,
     );
     msg_void_usize(
         raw,
-        sel(b"setPrimitiveDataStride:\0"),
+        sel!(b"setPrimitiveDataStride:\0"),
         base.primitive_data_stride,
     );
     msg_void_usize(
         raw,
-        sel(b"setPrimitiveDataElementSize:\0"),
+        sel!(b"setPrimitiveDataElementSize:\0"),
         base.primitive_data_element_size,
     );
 }
@@ -228,7 +228,7 @@ impl M4PipelineOptions {
     }
 
     pub fn shader_validation(&self) -> ShaderValidation {
-        match msg_usize(self.raw, sel(b"shaderValidation\0")) as isize {
+        match msg_usize(self.raw, sel!(b"shaderValidation\0")) as isize {
             1 => ShaderValidation::Enabled,
             2 => ShaderValidation::Disabled,
             _ => ShaderValidation::Default,
@@ -238,17 +238,17 @@ impl M4PipelineOptions {
     pub fn set_shader_validation(&self, validation: ShaderValidation) {
         msg_void_usize(
             self.raw,
-            sel(b"setShaderValidation:\0"),
+            sel!(b"setShaderValidation:\0"),
             validation as usize,
         );
     }
 
     pub fn shader_reflection(&self) -> M4ShaderReflection {
-        M4ShaderReflection(msg_usize(self.raw, sel(b"shaderReflection\0")))
+        M4ShaderReflection(msg_usize(self.raw, sel!(b"shaderReflection\0")))
     }
 
     pub fn set_shader_reflection(&self, reflection: M4ShaderReflection) {
-        msg_void_usize(self.raw, sel(b"setShaderReflection:\0"), reflection.0);
+        msg_void_usize(self.raw, sel!(b"setShaderReflection:\0"), reflection.0);
     }
 }
 
@@ -285,11 +285,11 @@ impl M4PipelineDescriptor {
     }
 
     pub fn options(&self) -> Option<M4PipelineOptions> {
-        m4_optional_id(self.raw, sel(b"options\0")).map(|raw| M4PipelineOptions { raw })
+        m4_optional_id(self.raw, sel!(b"options\0")).map(|raw| M4PipelineOptions { raw })
     }
 
     pub fn set_options(&self, options: Option<&M4PipelineOptions>) {
-        m4_set_optional_id(self.raw, sel(b"setOptions:\0"), options.map(|o| o.raw));
+        m4_set_optional_id(self.raw, sel!(b"setOptions:\0"), options.map(|o| o.raw));
     }
 }
 
@@ -356,7 +356,7 @@ impl M4LibraryDescriptor {
     }
 
     pub fn source(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"source\0"));
+        let ptr = msg_id(self.raw, sel!(b"source\0"));
         if ptr.is_null() {
             None
         } else {
@@ -366,19 +366,19 @@ impl M4LibraryDescriptor {
 
     pub fn set_source(&self, source: &str) {
         let ns = NSString::new(source);
-        msg_void_id(self.raw, sel(b"setSource:\0"), ns.raw());
+        msg_void_id(self.raw, sel!(b"setSource:\0"), ns.raw());
     }
 
     pub fn options(&self) -> Option<CompileOptions> {
-        m4_optional_id(self.raw, sel(b"options\0")).map(|raw| CompileOptions { raw })
+        m4_optional_id(self.raw, sel!(b"options\0")).map(|raw| CompileOptions { raw })
     }
 
     pub fn set_options(&self, options: Option<&CompileOptions>) {
-        m4_set_optional_id(self.raw, sel(b"setOptions:\0"), options.map(|o| o.raw));
+        m4_set_optional_id(self.raw, sel!(b"setOptions:\0"), options.map(|o| o.raw));
     }
 
     pub fn name(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"name\0"));
+        let ptr = msg_id(self.raw, sel!(b"name\0"));
         if ptr.is_null() {
             None
         } else {
@@ -388,7 +388,7 @@ impl M4LibraryDescriptor {
 
     pub fn set_name(&self, name: &str) {
         let ns = NSString::new(name);
-        msg_void_id(self.raw, sel(b"setName:\0"), ns.raw());
+        msg_void_id(self.raw, sel!(b"setName:\0"), ns.raw());
     }
 }
 
@@ -417,7 +417,7 @@ impl M4LibraryFunctionDescriptor {
     }
 
     pub fn name(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"name\0"));
+        let ptr = msg_id(self.raw, sel!(b"name\0"));
         if ptr.is_null() {
             None
         } else {
@@ -427,11 +427,11 @@ impl M4LibraryFunctionDescriptor {
 
     pub fn set_name(&self, name: &str) {
         let ns = NSString::new(name);
-        msg_void_id(self.raw, sel(b"setName:\0"), ns.raw());
+        msg_void_id(self.raw, sel!(b"setName:\0"), ns.raw());
     }
 
     pub fn library(&self) -> Option<Library> {
-        m4_optional_id(self.raw, sel(b"library\0")).map(|raw| Library { raw })
+        m4_optional_id(self.raw, sel!(b"library\0")).map(|raw| Library { raw })
     }
 
     pub fn as_function_descriptor(&self) -> M4FunctionDescriptor {
@@ -441,7 +441,7 @@ impl M4LibraryFunctionDescriptor {
     }
 
     pub fn set_library(&self, library: Option<&Library>) {
-        m4_set_optional_id(self.raw, sel(b"setLibrary:\0"), library.map(|l| l.raw));
+        m4_set_optional_id(self.raw, sel!(b"setLibrary:\0"), library.map(|l| l.raw));
     }
 }
 
@@ -478,7 +478,7 @@ impl M4BinaryFunctionDescriptor {
     }
 
     pub fn name(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"name\0"));
+        let ptr = msg_id(self.raw, sel!(b"name\0"));
         if ptr.is_null() {
             None
         } else {
@@ -488,28 +488,28 @@ impl M4BinaryFunctionDescriptor {
 
     pub fn set_name(&self, name: &str) {
         let ns = NSString::new(name);
-        msg_void_id(self.raw, sel(b"setName:\0"), ns.raw());
+        msg_void_id(self.raw, sel!(b"setName:\0"), ns.raw());
     }
 
     pub fn function_descriptor(&self) -> Option<M4FunctionDescriptor> {
-        m4_optional_id(self.raw, sel(b"functionDescriptor\0"))
+        m4_optional_id(self.raw, sel!(b"functionDescriptor\0"))
             .map(|raw| M4FunctionDescriptor { raw })
     }
 
     pub fn set_function_descriptor(&self, descriptor: Option<&M4FunctionDescriptor>) {
         m4_set_optional_id(
             self.raw,
-            sel(b"setFunctionDescriptor:\0"),
+            sel!(b"setFunctionDescriptor:\0"),
             descriptor.map(|d| d.raw),
         );
     }
 
     pub fn options(&self) -> M4BinaryFunctionOptions {
-        M4BinaryFunctionOptions(msg_usize(self.raw, sel(b"options\0")))
+        M4BinaryFunctionOptions(msg_usize(self.raw, sel!(b"options\0")))
     }
 
     pub fn set_options(&self, options: M4BinaryFunctionOptions) {
-        msg_void_usize(self.raw, sel(b"setOptions:\0"), options.0);
+        msg_void_usize(self.raw, sel!(b"setOptions:\0"), options.0);
     }
 }
 
@@ -538,20 +538,20 @@ impl M4SpecializedFunctionDescriptor {
     }
 
     pub fn function_descriptor(&self) -> Option<M4FunctionDescriptor> {
-        m4_optional_id(self.raw, sel(b"functionDescriptor\0"))
+        m4_optional_id(self.raw, sel!(b"functionDescriptor\0"))
             .map(|raw| M4FunctionDescriptor { raw })
     }
 
     pub fn set_function_descriptor(&self, descriptor: Option<&M4FunctionDescriptor>) {
         m4_set_optional_id(
             self.raw,
-            sel(b"setFunctionDescriptor:\0"),
+            sel!(b"setFunctionDescriptor:\0"),
             descriptor.map(|d| d.raw),
         );
     }
 
     pub fn specialized_name(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"specializedName\0"));
+        let ptr = msg_id(self.raw, sel!(b"specializedName\0"));
         if ptr.is_null() {
             None
         } else {
@@ -561,17 +561,17 @@ impl M4SpecializedFunctionDescriptor {
 
     pub fn set_specialized_name(&self, name: &str) {
         let ns = NSString::new(name);
-        msg_void_id(self.raw, sel(b"setSpecializedName:\0"), ns.raw());
+        msg_void_id(self.raw, sel!(b"setSpecializedName:\0"), ns.raw());
     }
 
     pub fn constant_values(&self) -> Option<FunctionConstantValues> {
-        m4_optional_id(self.raw, sel(b"constantValues\0")).map(|raw| FunctionConstantValues { raw })
+        m4_optional_id(self.raw, sel!(b"constantValues\0")).map(|raw| FunctionConstantValues { raw })
     }
 
     pub fn set_constant_values(&self, values: Option<&FunctionConstantValues>) {
         m4_set_optional_id(
             self.raw,
-            sel(b"setConstantValues:\0"),
+            sel!(b"setConstantValues:\0"),
             values.map(|v| v.raw),
         );
     }
@@ -602,15 +602,15 @@ impl M4StitchedFunctionDescriptor {
     }
 
     pub fn function_graph(&self) -> Option<FunctionStitchingGraph> {
-        m4_optional_id(self.raw, sel(b"functionGraph\0")).map(|raw| FunctionStitchingGraph { raw })
+        m4_optional_id(self.raw, sel!(b"functionGraph\0")).map(|raw| FunctionStitchingGraph { raw })
     }
 
     pub fn set_function_graph(&self, graph: Option<&FunctionStitchingGraph>) {
-        m4_set_optional_id(self.raw, sel(b"setFunctionGraph:\0"), graph.map(|g| g.raw));
+        m4_set_optional_id(self.raw, sel!(b"setFunctionGraph:\0"), graph.map(|g| g.raw));
     }
 
     pub fn function_descriptors(&self) -> NSArrayIterator<M4FunctionDescriptor> {
-        m4_function_descriptors_from_array(msg_id(self.raw, sel(b"functionDescriptors\0")))
+        m4_function_descriptors_from_array(msg_id(self.raw, sel!(b"functionDescriptors\0")))
     }
 
     pub fn set_function_descriptors(&self, descriptors: &[M4FunctionDescriptor]) {
@@ -619,7 +619,7 @@ impl M4StitchedFunctionDescriptor {
         };
         msg_void_id(
             self.raw,
-            sel(b"setFunctionDescriptors:\0"),
+            sel!(b"setFunctionDescriptors:\0"),
             ns_array_from_ids(raw_ptrs),
         );
     }
@@ -661,7 +661,7 @@ impl M4BinaryFunction {
     }
 
     pub fn name(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"name\0"));
+        let ptr = msg_id(self.raw, sel!(b"name\0"));
         if ptr.is_null() {
             None
         } else {
@@ -670,7 +670,7 @@ impl M4BinaryFunction {
     }
 
     pub fn function_type(&self) -> FunctionType {
-        match msg_usize(self.raw, sel(b"functionType\0")) {
+        match msg_usize(self.raw, sel!(b"functionType\0")) {
             2 => FunctionType::Fragment,
             3 => FunctionType::Kernel,
             5 => FunctionType::Visible,
@@ -705,7 +705,7 @@ impl M4StaticLinkingDescriptor {
     }
 
     pub fn function_descriptors(&self) -> NSArrayIterator<M4FunctionDescriptor> {
-        m4_function_descriptors_from_array(msg_id(self.raw, sel(b"functionDescriptors\0")))
+        m4_function_descriptors_from_array(msg_id(self.raw, sel!(b"functionDescriptors\0")))
     }
 
     pub fn set_function_descriptors(&self, descriptors: &[M4FunctionDescriptor]) {
@@ -714,13 +714,13 @@ impl M4StaticLinkingDescriptor {
         };
         msg_void_id(
             self.raw,
-            sel(b"setFunctionDescriptors:\0"),
+            sel!(b"setFunctionDescriptors:\0"),
             ns_array_from_ids(raw_ptrs),
         );
     }
 
     pub fn private_function_descriptors(&self) -> NSArrayIterator<M4FunctionDescriptor> {
-        m4_function_descriptors_from_array(msg_id(self.raw, sel(b"privateFunctionDescriptors\0")))
+        m4_function_descriptors_from_array(msg_id(self.raw, sel!(b"privateFunctionDescriptors\0")))
     }
 
     pub fn set_private_function_descriptors(&self, descriptors: &[M4FunctionDescriptor]) {
@@ -729,7 +729,7 @@ impl M4StaticLinkingDescriptor {
         };
         msg_void_id(
             self.raw,
-            sel(b"setPrivateFunctionDescriptors:\0"),
+            sel!(b"setPrivateFunctionDescriptors:\0"),
             ns_array_from_ids(raw_ptrs),
         );
     }
@@ -760,15 +760,15 @@ impl M4PipelineStageDynamicLinkingDescriptor {
     }
 
     pub fn max_call_stack_depth(&self) -> usize {
-        msg_usize(self.raw, sel(b"maxCallStackDepth\0"))
+        msg_usize(self.raw, sel!(b"maxCallStackDepth\0"))
     }
 
     pub fn set_max_call_stack_depth(&self, depth: usize) {
-        msg_void_usize(self.raw, sel(b"setMaxCallStackDepth:\0"), depth);
+        msg_void_usize(self.raw, sel!(b"setMaxCallStackDepth:\0"), depth);
     }
 
     pub fn binary_linked_functions(&self) -> NSArrayIterator<M4BinaryFunction> {
-        m4_binary_functions_from_array(msg_id(self.raw, sel(b"binaryLinkedFunctions\0")))
+        m4_binary_functions_from_array(msg_id(self.raw, sel!(b"binaryLinkedFunctions\0")))
     }
 
     pub fn set_binary_linked_functions(&self, functions: &[M4BinaryFunction]) {
@@ -776,13 +776,13 @@ impl M4PipelineStageDynamicLinkingDescriptor {
             unsafe { std::slice::from_raw_parts(functions.as_ptr() as *const id, functions.len()) };
         msg_void_id(
             self.raw,
-            sel(b"setBinaryLinkedFunctions:\0"),
+            sel!(b"setBinaryLinkedFunctions:\0"),
             ns_array_from_ids(raw_ptrs),
         );
     }
 
     pub fn preloaded_libraries(&self) -> NSArrayIterator<DynamicLibrary> {
-        NSArrayIterator::new(msg_id(self.raw, sel(b"preloadedLibraries\0")))
+        NSArrayIterator::new(msg_id(self.raw, sel!(b"preloadedLibraries\0")))
     }
 
     pub fn set_preloaded_libraries(&self, libraries: &[DynamicLibrary]) {
@@ -790,7 +790,7 @@ impl M4PipelineStageDynamicLinkingDescriptor {
             unsafe { std::slice::from_raw_parts(libraries.as_ptr() as *const id, libraries.len()) };
         msg_void_id(
             self.raw,
-            sel(b"setPreloadedLibraries:\0"),
+            sel!(b"setPreloadedLibraries:\0"),
             ns_array_from_ids(raw_ptrs),
         );
     }
@@ -822,31 +822,31 @@ impl M4RenderPipelineDynamicLinkingDescriptor {
 
     pub fn vertex_linking_descriptor(&self) -> M4PipelineStageDynamicLinkingDescriptor {
         M4PipelineStageDynamicLinkingDescriptor {
-            raw: retain(msg_id(self.raw, sel(b"vertexLinkingDescriptor\0"))),
+            raw: retain(msg_id(self.raw, sel!(b"vertexLinkingDescriptor\0"))),
         }
     }
 
     pub fn fragment_linking_descriptor(&self) -> M4PipelineStageDynamicLinkingDescriptor {
         M4PipelineStageDynamicLinkingDescriptor {
-            raw: retain(msg_id(self.raw, sel(b"fragmentLinkingDescriptor\0"))),
+            raw: retain(msg_id(self.raw, sel!(b"fragmentLinkingDescriptor\0"))),
         }
     }
 
     pub fn tile_linking_descriptor(&self) -> M4PipelineStageDynamicLinkingDescriptor {
         M4PipelineStageDynamicLinkingDescriptor {
-            raw: retain(msg_id(self.raw, sel(b"tileLinkingDescriptor\0"))),
+            raw: retain(msg_id(self.raw, sel!(b"tileLinkingDescriptor\0"))),
         }
     }
 
     pub fn object_linking_descriptor(&self) -> M4PipelineStageDynamicLinkingDescriptor {
         M4PipelineStageDynamicLinkingDescriptor {
-            raw: retain(msg_id(self.raw, sel(b"objectLinkingDescriptor\0"))),
+            raw: retain(msg_id(self.raw, sel!(b"objectLinkingDescriptor\0"))),
         }
     }
 
     pub fn mesh_linking_descriptor(&self) -> M4PipelineStageDynamicLinkingDescriptor {
         M4PipelineStageDynamicLinkingDescriptor {
-            raw: retain(msg_id(self.raw, sel(b"meshLinkingDescriptor\0"))),
+            raw: retain(msg_id(self.raw, sel!(b"meshLinkingDescriptor\0"))),
         }
     }
 }
@@ -887,15 +887,15 @@ impl M4RenderPipelineColorAttachmentDescriptor {
     }
 
     pub fn pixel_format(&self) -> PixelFormat {
-        PixelFormat::from_raw(msg_usize(self.raw, sel(b"pixelFormat\0")))
+        PixelFormat::from_raw(msg_usize(self.raw, sel!(b"pixelFormat\0")))
     }
 
     pub fn set_pixel_format(&self, format: PixelFormat) {
-        msg_void_usize(self.raw, sel(b"setPixelFormat:\0"), format.as_raw());
+        msg_void_usize(self.raw, sel!(b"setPixelFormat:\0"), format.as_raw());
     }
 
     pub fn blending_state(&self) -> M4BlendState {
-        match msg_usize(self.raw, sel(b"blendingState\0")) {
+        match msg_usize(self.raw, sel!(b"blendingState\0")) {
             1 => M4BlendState::Enabled,
             2 => M4BlendState::Unspecialized,
             _ => M4BlendState::Disabled,
@@ -903,7 +903,7 @@ impl M4RenderPipelineColorAttachmentDescriptor {
     }
 
     pub fn set_blending_state(&self, state: M4BlendState) {
-        msg_void_usize(self.raw, sel(b"setBlendingState:\0"), state as usize);
+        msg_void_usize(self.raw, sel!(b"setBlendingState:\0"), state as usize);
     }
 
     pub fn set_blend_factors(
@@ -917,47 +917,47 @@ impl M4RenderPipelineColorAttachmentDescriptor {
     ) {
         msg_void_usize(
             self.raw,
-            sel(b"setSourceRGBBlendFactor:\0"),
+            sel!(b"setSourceRGBBlendFactor:\0"),
             source_rgb as usize,
         );
         msg_void_usize(
             self.raw,
-            sel(b"setDestinationRGBBlendFactor:\0"),
+            sel!(b"setDestinationRGBBlendFactor:\0"),
             destination_rgb as usize,
         );
         msg_void_usize(
             self.raw,
-            sel(b"setRgbBlendOperation:\0"),
+            sel!(b"setRgbBlendOperation:\0"),
             rgb_operation as usize,
         );
         msg_void_usize(
             self.raw,
-            sel(b"setSourceAlphaBlendFactor:\0"),
+            sel!(b"setSourceAlphaBlendFactor:\0"),
             source_alpha as usize,
         );
         msg_void_usize(
             self.raw,
-            sel(b"setDestinationAlphaBlendFactor:\0"),
+            sel!(b"setDestinationAlphaBlendFactor:\0"),
             destination_alpha as usize,
         );
         msg_void_usize(
             self.raw,
-            sel(b"setAlphaBlendOperation:\0"),
+            sel!(b"setAlphaBlendOperation:\0"),
             alpha_operation as usize,
         );
     }
 
     pub fn write_mask(&self) -> ColorWriteMask {
-        let raw = msg_usize(self.raw, sel(b"writeMask\0"));
+        let raw = msg_usize(self.raw, sel!(b"writeMask\0"));
         unsafe { std::mem::transmute(raw) }
     }
 
     pub fn set_write_mask(&self, mask: ColorWriteMask) {
-        msg_void_usize(self.raw, sel(b"setWriteMask:\0"), mask.as_raw());
+        msg_void_usize(self.raw, sel!(b"setWriteMask:\0"), mask.as_raw());
     }
 
     pub fn reset(&self) {
-        msg_void(self.raw, sel(b"reset\0"));
+        msg_void(self.raw, sel!(b"reset\0"));
     }
 }
 
@@ -983,7 +983,7 @@ impl M4RenderPipelineColorAttachmentDescriptorArray {
         M4RenderPipelineColorAttachmentDescriptor {
             raw: retain(msg_id_usize(
                 self.raw,
-                sel(b"objectAtIndexedSubscript:\0"),
+                sel!(b"objectAtIndexedSubscript:\0"),
                 index,
             )),
         }
@@ -999,7 +999,7 @@ impl M4RenderPipelineColorAttachmentDescriptorArray {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setObject:atIndexedSubscript:\0"),
+                sel!(b"setObject:atIndexedSubscript:\0"),
                 attachment.map_or(NIL, |a| a.raw),
                 index,
             );
@@ -1007,7 +1007,7 @@ impl M4RenderPipelineColorAttachmentDescriptorArray {
     }
 
     pub fn reset(&self) {
-        msg_void(self.raw, sel(b"reset\0"));
+        msg_void(self.raw, sel!(b"reset\0"));
     }
 }
 
@@ -1030,7 +1030,7 @@ impl M4RenderPipelineBinaryFunctionsDescriptor {
     }
 
     pub fn reset(&self) {
-        msg_void(self.raw, sel(b"reset\0"));
+        msg_void(self.raw, sel!(b"reset\0"));
     }
 }
 
@@ -1073,64 +1073,64 @@ impl M4RenderPipelineDescriptor {
     }
 
     pub fn vertex_function_descriptor(&self) -> Option<M4FunctionDescriptor> {
-        m4_optional_id(self.raw, sel(b"vertexFunctionDescriptor\0"))
+        m4_optional_id(self.raw, sel!(b"vertexFunctionDescriptor\0"))
             .map(|raw| M4FunctionDescriptor { raw })
     }
 
     pub fn set_vertex_function_descriptor(&self, descriptor: Option<&M4FunctionDescriptor>) {
         m4_set_optional_id(
             self.raw,
-            sel(b"setVertexFunctionDescriptor:\0"),
+            sel!(b"setVertexFunctionDescriptor:\0"),
             descriptor.map(|d| d.raw),
         );
     }
 
     pub fn fragment_function_descriptor(&self) -> Option<M4FunctionDescriptor> {
-        m4_optional_id(self.raw, sel(b"fragmentFunctionDescriptor\0"))
+        m4_optional_id(self.raw, sel!(b"fragmentFunctionDescriptor\0"))
             .map(|raw| M4FunctionDescriptor { raw })
     }
 
     pub fn set_fragment_function_descriptor(&self, descriptor: Option<&M4FunctionDescriptor>) {
         m4_set_optional_id(
             self.raw,
-            sel(b"setFragmentFunctionDescriptor:\0"),
+            sel!(b"setFragmentFunctionDescriptor:\0"),
             descriptor.map(|d| d.raw),
         );
     }
 
     pub fn vertex_descriptor(&self) -> Option<VertexDescriptor> {
-        m4_optional_id(self.raw, sel(b"vertexDescriptor\0")).map(|raw| VertexDescriptor { raw })
+        m4_optional_id(self.raw, sel!(b"vertexDescriptor\0")).map(|raw| VertexDescriptor { raw })
     }
 
     pub fn set_vertex_descriptor(&self, descriptor: Option<&VertexDescriptor>) {
         m4_set_optional_id(
             self.raw,
-            sel(b"setVertexDescriptor:\0"),
+            sel!(b"setVertexDescriptor:\0"),
             descriptor.map(|d| d.raw),
         );
     }
 
     pub fn raster_sample_count(&self) -> usize {
-        msg_usize(self.raw, sel(b"rasterSampleCount\0"))
+        msg_usize(self.raw, sel!(b"rasterSampleCount\0"))
     }
 
     pub fn set_raster_sample_count(&self, count: usize) {
-        msg_void_usize(self.raw, sel(b"setRasterSampleCount:\0"), count);
+        msg_void_usize(self.raw, sel!(b"setRasterSampleCount:\0"), count);
     }
 
     pub fn alpha_to_coverage_state(&self) -> M4AlphaToCoverageState {
-        match msg_usize(self.raw, sel(b"alphaToCoverageState\0")) {
+        match msg_usize(self.raw, sel!(b"alphaToCoverageState\0")) {
             1 => M4AlphaToCoverageState::Enabled,
             _ => M4AlphaToCoverageState::Disabled,
         }
     }
 
     pub fn set_alpha_to_coverage_state(&self, state: M4AlphaToCoverageState) {
-        msg_void_usize(self.raw, sel(b"setAlphaToCoverageState:\0"), state as usize);
+        msg_void_usize(self.raw, sel!(b"setAlphaToCoverageState:\0"), state as usize);
     }
 
     pub fn input_primitive_topology(&self) -> PrimitiveTopologyClass {
-        match msg_usize(self.raw, sel(b"inputPrimitiveTopology\0")) {
+        match msg_usize(self.raw, sel!(b"inputPrimitiveTopology\0")) {
             1 => PrimitiveTopologyClass::Point,
             2 => PrimitiveTopologyClass::Line,
             3 => PrimitiveTopologyClass::Triangle,
@@ -1141,42 +1141,42 @@ impl M4RenderPipelineDescriptor {
     pub fn set_input_primitive_topology(&self, topology: PrimitiveTopologyClass) {
         msg_void_usize(
             self.raw,
-            sel(b"setInputPrimitiveTopology:\0"),
+            sel!(b"setInputPrimitiveTopology:\0"),
             topology as usize,
         );
     }
 
     pub fn alpha_to_one_state(&self) -> M4AlphaToOneState {
-        match msg_usize(self.raw, sel(b"alphaToOneState\0")) {
+        match msg_usize(self.raw, sel!(b"alphaToOneState\0")) {
             1 => M4AlphaToOneState::Enabled,
             _ => M4AlphaToOneState::Disabled,
         }
     }
 
     pub fn set_alpha_to_one_state(&self, state: M4AlphaToOneState) {
-        msg_void_usize(self.raw, sel(b"setAlphaToOneState:\0"), state as usize);
+        msg_void_usize(self.raw, sel!(b"setAlphaToOneState:\0"), state as usize);
     }
 
     pub fn is_rasterization_enabled(&self) -> bool {
-        msg_bool(self.raw, sel(b"isRasterizationEnabled\0")) != NO
+        msg_bool(self.raw, sel!(b"isRasterizationEnabled\0")) != NO
     }
 
     pub fn set_rasterization_enabled(&self, enabled: bool) {
         msg_void_bool(
             self.raw,
-            sel(b"setRasterizationEnabled:\0"),
+            sel!(b"setRasterizationEnabled:\0"),
             if enabled { YES } else { NO },
         );
     }
 
     pub fn color_attachments(&self) -> M4RenderPipelineColorAttachmentDescriptorArray {
         M4RenderPipelineColorAttachmentDescriptorArray {
-            raw: retain(msg_id(self.raw, sel(b"colorAttachments\0"))),
+            raw: retain(msg_id(self.raw, sel!(b"colorAttachments\0"))),
         }
     }
 
     pub fn support_indirect_command_buffers(&self) -> M4IndirectCommandBufferSupportState {
-        match msg_usize(self.raw, sel(b"supportIndirectCommandBuffers\0")) {
+        match msg_usize(self.raw, sel!(b"supportIndirectCommandBuffers\0")) {
             1 => M4IndirectCommandBufferSupportState::Enabled,
             _ => M4IndirectCommandBufferSupportState::Disabled,
         }
@@ -1185,13 +1185,13 @@ impl M4RenderPipelineDescriptor {
     pub fn set_support_indirect_command_buffers(&self, state: M4IndirectCommandBufferSupportState) {
         msg_void_usize(
             self.raw,
-            sel(b"setSupportIndirectCommandBuffers:\0"),
+            sel!(b"setSupportIndirectCommandBuffers:\0"),
             state as usize,
         );
     }
 
     pub fn reset(&self) {
-        msg_void(self.raw, sel(b"reset\0"));
+        msg_void(self.raw, sel!(b"reset\0"));
     }
 }
 
@@ -1232,14 +1232,14 @@ impl M4ComputePipelineDescriptor {
     }
 
     pub fn compute_function_descriptor(&self) -> Option<M4FunctionDescriptor> {
-        m4_optional_id(self.raw, sel(b"computeFunctionDescriptor\0"))
+        m4_optional_id(self.raw, sel!(b"computeFunctionDescriptor\0"))
             .map(|raw| M4FunctionDescriptor { raw })
     }
 
     pub fn set_compute_function_descriptor(&self, descriptor: Option<&M4FunctionDescriptor>) {
         m4_set_optional_id(
             self.raw,
-            sel(b"setComputeFunctionDescriptor:\0"),
+            sel!(b"setComputeFunctionDescriptor:\0"),
             descriptor.map(|d| d.raw),
         );
     }
@@ -1247,64 +1247,64 @@ impl M4ComputePipelineDescriptor {
     pub fn thread_group_size_is_multiple_of_thread_execution_width(&self) -> bool {
         msg_bool(
             self.raw,
-            sel(b"isThreadGroupSizeIsMultipleOfThreadExecutionWidth\0"),
+            sel!(b"isThreadGroupSizeIsMultipleOfThreadExecutionWidth\0"),
         ) != NO
     }
 
     pub fn set_thread_group_size_is_multiple_of_thread_execution_width(&self, value: bool) {
         msg_void_bool(
             self.raw,
-            sel(b"setThreadGroupSizeIsMultipleOfThreadExecutionWidth:\0"),
+            sel!(b"setThreadGroupSizeIsMultipleOfThreadExecutionWidth:\0"),
             if value { YES } else { NO },
         );
     }
 
     pub fn max_total_threads_per_threadgroup(&self) -> usize {
-        msg_usize(self.raw, sel(b"maxTotalThreadsPerThreadgroup\0"))
+        msg_usize(self.raw, sel!(b"maxTotalThreadsPerThreadgroup\0"))
     }
 
     pub fn set_max_total_threads_per_threadgroup(&self, count: usize) {
-        msg_void_usize(self.raw, sel(b"setMaxTotalThreadsPerThreadgroup:\0"), count);
+        msg_void_usize(self.raw, sel!(b"setMaxTotalThreadsPerThreadgroup:\0"), count);
     }
 
     pub fn required_threads_per_threadgroup(&self) -> Size {
         unsafe {
             let f: unsafe extern "C" fn(id, SEL) -> Size = transmute(objc_msgSend as *const c_void);
-            f(self.raw, sel(b"requiredThreadsPerThreadgroup\0"))
+            f(self.raw, sel!(b"requiredThreadsPerThreadgroup\0"))
         }
     }
 
     pub fn set_required_threads_per_threadgroup(&self, size: Size) {
-        msg_void_mtlsize(self.raw, sel(b"setRequiredThreadsPerThreadgroup:\0"), size);
+        msg_void_mtlsize(self.raw, sel!(b"setRequiredThreadsPerThreadgroup:\0"), size);
     }
 
     pub fn support_binary_linking(&self) -> bool {
-        msg_bool(self.raw, sel(b"supportBinaryLinking\0")) != NO
+        msg_bool(self.raw, sel!(b"supportBinaryLinking\0")) != NO
     }
 
     pub fn set_support_binary_linking(&self, value: bool) {
         msg_void_bool(
             self.raw,
-            sel(b"setSupportBinaryLinking:\0"),
+            sel!(b"setSupportBinaryLinking:\0"),
             if value { YES } else { NO },
         );
     }
 
     pub fn static_linking_descriptor(&self) -> Option<M4StaticLinkingDescriptor> {
-        m4_optional_id(self.raw, sel(b"staticLinkingDescriptor\0"))
+        m4_optional_id(self.raw, sel!(b"staticLinkingDescriptor\0"))
             .map(|raw| M4StaticLinkingDescriptor { raw })
     }
 
     pub fn set_static_linking_descriptor(&self, descriptor: Option<&M4StaticLinkingDescriptor>) {
         m4_set_optional_id(
             self.raw,
-            sel(b"setStaticLinkingDescriptor:\0"),
+            sel!(b"setStaticLinkingDescriptor:\0"),
             descriptor.map(|d| d.raw),
         );
     }
 
     pub fn support_indirect_command_buffers(&self) -> M4IndirectCommandBufferSupportState {
-        match msg_usize(self.raw, sel(b"supportIndirectCommandBuffers\0")) {
+        match msg_usize(self.raw, sel!(b"supportIndirectCommandBuffers\0")) {
             1 => M4IndirectCommandBufferSupportState::Enabled,
             _ => M4IndirectCommandBufferSupportState::Disabled,
         }
@@ -1313,13 +1313,13 @@ impl M4ComputePipelineDescriptor {
     pub fn set_support_indirect_command_buffers(&self, state: M4IndirectCommandBufferSupportState) {
         msg_void_usize(
             self.raw,
-            sel(b"setSupportIndirectCommandBuffers:\0"),
+            sel!(b"setSupportIndirectCommandBuffers:\0"),
             state as usize,
         );
     }
 
     pub fn reset(&self) {
-        msg_void(self.raw, sel(b"reset\0"));
+        msg_void(self.raw, sel!(b"reset\0"));
     }
 }
 
@@ -1342,11 +1342,11 @@ pub struct TileRenderPipelineColorAttachmentDescriptor {
 
 impl TileRenderPipelineColorAttachmentDescriptor {
     pub fn pixel_format(&self) -> PixelFormat {
-        PixelFormat::from_raw(msg_usize(self.raw, sel(b"pixelFormat\0")))
+        PixelFormat::from_raw(msg_usize(self.raw, sel!(b"pixelFormat\0")))
     }
 
     pub fn set_pixel_format(&self, pixel_format: PixelFormat) {
-        msg_void_usize(self.raw, sel(b"setPixelFormat:\0"), pixel_format as usize);
+        msg_void_usize(self.raw, sel!(b"setPixelFormat:\0"), pixel_format as usize);
     }
 }
 
@@ -1358,7 +1358,7 @@ pub struct TileRenderPipelineColorAttachmentDescriptorArray {
 impl TileRenderPipelineColorAttachmentDescriptorArray {
     pub fn object_at(&self, index: usize) -> TileRenderPipelineColorAttachmentDescriptor {
         TileRenderPipelineColorAttachmentDescriptor {
-            raw: msg_id_usize(self.raw, sel(b"objectAtIndexedSubscript:\0"), index),
+            raw: msg_id_usize(self.raw, sel!(b"objectAtIndexedSubscript:\0"), index),
         }
     }
 }
@@ -1396,34 +1396,34 @@ impl M4TileRenderPipelineDescriptor {
     }
 
     pub fn tile_function_descriptor(&self) -> Option<M4FunctionDescriptor> {
-        m4_optional_id(self.raw, sel(b"tileFunctionDescriptor\0"))
+        m4_optional_id(self.raw, sel!(b"tileFunctionDescriptor\0"))
             .map(|raw| M4FunctionDescriptor { raw })
     }
 
     pub fn set_tile_function_descriptor(&self, descriptor: Option<&M4FunctionDescriptor>) {
         m4_set_optional_id(
             self.raw,
-            sel(b"setTileFunctionDescriptor:\0"),
+            sel!(b"setTileFunctionDescriptor:\0"),
             descriptor.map(|d| d.raw),
         );
     }
 
     pub fn raster_sample_count(&self) -> usize {
-        msg_usize(self.raw, sel(b"rasterSampleCount\0"))
+        msg_usize(self.raw, sel!(b"rasterSampleCount\0"))
     }
 
     pub fn set_raster_sample_count(&self, count: usize) {
-        msg_void_usize(self.raw, sel(b"setRasterSampleCount:\0"), count);
+        msg_void_usize(self.raw, sel!(b"setRasterSampleCount:\0"), count);
     }
 
     pub fn color_attachments(&self) -> TileRenderPipelineColorAttachmentDescriptorArray {
         TileRenderPipelineColorAttachmentDescriptorArray {
-            raw: retain(msg_id(self.raw, sel(b"colorAttachments\0"))),
+            raw: retain(msg_id(self.raw, sel!(b"colorAttachments\0"))),
         }
     }
 
     pub fn reset(&self) {
-        msg_void(self.raw, sel(b"reset\0"));
+        msg_void(self.raw, sel!(b"reset\0"));
     }
 }
 
@@ -1466,98 +1466,98 @@ impl M4MeshRenderPipelineDescriptor {
     }
 
     pub fn object_function_descriptor(&self) -> Option<M4FunctionDescriptor> {
-        m4_optional_id(self.raw, sel(b"objectFunctionDescriptor\0"))
+        m4_optional_id(self.raw, sel!(b"objectFunctionDescriptor\0"))
             .map(|raw| M4FunctionDescriptor { raw })
     }
 
     pub fn set_object_function_descriptor(&self, descriptor: Option<&M4FunctionDescriptor>) {
         m4_set_optional_id(
             self.raw,
-            sel(b"setObjectFunctionDescriptor:\0"),
+            sel!(b"setObjectFunctionDescriptor:\0"),
             descriptor.map(|d| d.raw),
         );
     }
 
     pub fn mesh_function_descriptor(&self) -> Option<M4FunctionDescriptor> {
-        m4_optional_id(self.raw, sel(b"meshFunctionDescriptor\0"))
+        m4_optional_id(self.raw, sel!(b"meshFunctionDescriptor\0"))
             .map(|raw| M4FunctionDescriptor { raw })
     }
 
     pub fn set_mesh_function_descriptor(&self, descriptor: Option<&M4FunctionDescriptor>) {
         m4_set_optional_id(
             self.raw,
-            sel(b"setMeshFunctionDescriptor:\0"),
+            sel!(b"setMeshFunctionDescriptor:\0"),
             descriptor.map(|d| d.raw),
         );
     }
 
     pub fn fragment_function_descriptor(&self) -> Option<M4FunctionDescriptor> {
-        m4_optional_id(self.raw, sel(b"fragmentFunctionDescriptor\0"))
+        m4_optional_id(self.raw, sel!(b"fragmentFunctionDescriptor\0"))
             .map(|raw| M4FunctionDescriptor { raw })
     }
 
     pub fn set_fragment_function_descriptor(&self, descriptor: Option<&M4FunctionDescriptor>) {
         m4_set_optional_id(
             self.raw,
-            sel(b"setFragmentFunctionDescriptor:\0"),
+            sel!(b"setFragmentFunctionDescriptor:\0"),
             descriptor.map(|d| d.raw),
         );
     }
 
     pub fn max_total_threads_per_object_threadgroup(&self) -> usize {
-        msg_usize(self.raw, sel(b"maxTotalThreadsPerObjectThreadgroup\0"))
+        msg_usize(self.raw, sel!(b"maxTotalThreadsPerObjectThreadgroup\0"))
     }
 
     pub fn set_max_total_threads_per_object_threadgroup(&self, count: usize) {
         msg_void_usize(
             self.raw,
-            sel(b"setMaxTotalThreadsPerObjectThreadgroup:\0"),
+            sel!(b"setMaxTotalThreadsPerObjectThreadgroup:\0"),
             count,
         );
     }
 
     pub fn max_total_threads_per_mesh_threadgroup(&self) -> usize {
-        msg_usize(self.raw, sel(b"maxTotalThreadsPerMeshThreadgroup\0"))
+        msg_usize(self.raw, sel!(b"maxTotalThreadsPerMeshThreadgroup\0"))
     }
 
     pub fn set_max_total_threads_per_mesh_threadgroup(&self, count: usize) {
         msg_void_usize(
             self.raw,
-            sel(b"setMaxTotalThreadsPerMeshThreadgroup:\0"),
+            sel!(b"setMaxTotalThreadsPerMeshThreadgroup:\0"),
             count,
         );
     }
 
     pub fn payload_memory_length(&self) -> usize {
-        msg_usize(self.raw, sel(b"payloadMemoryLength\0"))
+        msg_usize(self.raw, sel!(b"payloadMemoryLength\0"))
     }
 
     pub fn set_payload_memory_length(&self, length: usize) {
-        msg_void_usize(self.raw, sel(b"setPayloadMemoryLength:\0"), length);
+        msg_void_usize(self.raw, sel!(b"setPayloadMemoryLength:\0"), length);
     }
 
     pub fn max_total_threadgroups_per_mesh_grid(&self) -> usize {
-        msg_usize(self.raw, sel(b"maxTotalThreadgroupsPerMeshGrid\0"))
+        msg_usize(self.raw, sel!(b"maxTotalThreadgroupsPerMeshGrid\0"))
     }
 
     pub fn set_max_total_threadgroups_per_mesh_grid(&self, count: usize) {
         msg_void_usize(
             self.raw,
-            sel(b"setMaxTotalThreadgroupsPerMeshGrid:\0"),
+            sel!(b"setMaxTotalThreadgroupsPerMeshGrid:\0"),
             count,
         );
     }
 
     pub fn raster_sample_count(&self) -> usize {
-        msg_usize(self.raw, sel(b"rasterSampleCount\0"))
+        msg_usize(self.raw, sel!(b"rasterSampleCount\0"))
     }
 
     pub fn set_raster_sample_count(&self, count: usize) {
-        msg_void_usize(self.raw, sel(b"setRasterSampleCount:\0"), count);
+        msg_void_usize(self.raw, sel!(b"setRasterSampleCount:\0"), count);
     }
 
     pub fn alpha_to_coverage_state(&self) -> M4AlphaToCoverageState {
-        match msg_usize(self.raw, sel(b"alphaToCoverageState\0")) {
+        match msg_usize(self.raw, sel!(b"alphaToCoverageState\0")) {
             1 => M4AlphaToCoverageState::Enabled,
             _ => M4AlphaToCoverageState::Disabled,
         }
@@ -1566,25 +1566,25 @@ impl M4MeshRenderPipelineDescriptor {
     pub fn set_alpha_to_coverage_state(&self, state: M4AlphaToCoverageState) {
         msg_void_usize(
             self.raw,
-            sel(b"setAlphaToCoverageState:\0"),
+            sel!(b"setAlphaToCoverageState:\0"),
             state as usize,
         );
     }
 
     pub fn is_rasterization_enabled(&self) -> bool {
-        msg_bool(self.raw, sel(b"isRasterizationEnabled\0")) != NO
+        msg_bool(self.raw, sel!(b"isRasterizationEnabled\0")) != NO
     }
 
     pub fn set_rasterization_enabled(&self, enabled: bool) {
         msg_void_bool(
             self.raw,
-            sel(b"setRasterizationEnabled:\0"),
+            sel!(b"setRasterizationEnabled:\0"),
             if enabled { YES } else { NO },
         );
     }
 
     pub fn support_indirect_command_buffers(&self) -> M4IndirectCommandBufferSupportState {
-        match msg_usize(self.raw, sel(b"supportIndirectCommandBuffers\0")) {
+        match msg_usize(self.raw, sel!(b"supportIndirectCommandBuffers\0")) {
             1 => M4IndirectCommandBufferSupportState::Enabled,
             _ => M4IndirectCommandBufferSupportState::Disabled,
         }
@@ -1593,19 +1593,19 @@ impl M4MeshRenderPipelineDescriptor {
     pub fn set_support_indirect_command_buffers(&self, state: M4IndirectCommandBufferSupportState) {
         msg_void_usize(
             self.raw,
-            sel(b"setSupportIndirectCommandBuffers:\0"),
+            sel!(b"setSupportIndirectCommandBuffers:\0"),
             state as usize,
         );
     }
 
     pub fn color_attachments(&self) -> M4RenderPipelineColorAttachmentDescriptorArray {
         M4RenderPipelineColorAttachmentDescriptorArray {
-            raw: retain(msg_id(self.raw, sel(b"colorAttachments\0"))),
+            raw: retain(msg_id(self.raw, sel!(b"colorAttachments\0"))),
         }
     }
 
     pub fn reset(&self) {
-        msg_void(self.raw, sel(b"reset\0"));
+        msg_void(self.raw, sel!(b"reset\0"));
     }
 }
 
@@ -1646,7 +1646,7 @@ impl M4MachineLearningPipelineDescriptor {
     }
 
     pub fn machine_learning_function_descriptor(&self) -> Option<M4FunctionDescriptor> {
-        m4_optional_id(self.raw, sel(b"machineLearningFunctionDescriptor\0"))
+        m4_optional_id(self.raw, sel!(b"machineLearningFunctionDescriptor\0"))
             .map(|raw| M4FunctionDescriptor { raw })
     }
 
@@ -1656,7 +1656,7 @@ impl M4MachineLearningPipelineDescriptor {
     ) {
         m4_set_optional_id(
             self.raw,
-            sel(b"setMachineLearningFunctionDescriptor:\0"),
+            sel!(b"setMachineLearningFunctionDescriptor:\0"),
             descriptor.map(|d| d.raw),
         );
     }
@@ -1667,7 +1667,7 @@ impl M4MachineLearningPipelineDescriptor {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setInputDimensions:atBufferIndex:\0"),
+                sel!(b"setInputDimensions:atBufferIndex:\0"),
                 dimensions,
                 buffer_index,
             );
@@ -1680,14 +1680,14 @@ impl M4MachineLearningPipelineDescriptor {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"inputDimensionsAtBufferIndex:\0"),
+                sel!(b"inputDimensionsAtBufferIndex:\0"),
                 buffer_index,
             )
         }
     }
 
     pub fn reset(&self) {
-        msg_void(self.raw, sel(b"reset\0"));
+        msg_void(self.raw, sel!(b"reset\0"));
     }
 }
 
@@ -1710,7 +1710,7 @@ pub struct M4MachineLearningPipelineReflection {
 
 impl M4MachineLearningPipelineReflection {
     pub fn bindings(&self) -> NSArrayIterator<Binding> {
-        NSArrayIterator::new(msg_id(self.raw, sel(b"bindings\0")))
+        NSArrayIterator::new(msg_id(self.raw, sel!(b"bindings\0")))
     }
 }
 
@@ -1736,17 +1736,17 @@ impl M4MachineLearningPipelineState {
 
     pub fn device(&self) -> Device {
         Device {
-            raw: retain(msg_id(self.raw, sel(b"device\0"))),
+            raw: retain(msg_id(self.raw, sel!(b"device\0"))),
         }
     }
 
     pub fn reflection(&self) -> Option<M4MachineLearningPipelineReflection> {
-        m4_optional_id(self.raw, sel(b"reflection\0"))
+        m4_optional_id(self.raw, sel!(b"reflection\0"))
             .map(|raw| M4MachineLearningPipelineReflection { raw })
     }
 
     pub fn intermediates_heap_size(&self) -> usize {
-        msg_usize(self.raw, sel(b"intermediatesHeapSize\0"))
+        msg_usize(self.raw, sel!(b"intermediatesHeapSize\0"))
     }
 }
 
@@ -1787,22 +1787,22 @@ impl M4CounterHeapDescriptor {
     }
 
     pub fn heap_type(&self) -> M4CounterHeapType {
-        match msg_usize(self.raw, sel(b"type\0")) {
+        match msg_usize(self.raw, sel!(b"type\0")) {
             1 => M4CounterHeapType::Timestamp,
             _ => M4CounterHeapType::Invalid,
         }
     }
 
     pub fn set_type(&self, heap_type: M4CounterHeapType) {
-        msg_void_usize(self.raw, sel(b"setType:\0"), heap_type as usize);
+        msg_void_usize(self.raw, sel!(b"setType:\0"), heap_type as usize);
     }
 
     pub fn count(&self) -> usize {
-        msg_usize(self.raw, sel(b"count\0"))
+        msg_usize(self.raw, sel!(b"count\0"))
     }
 
     pub fn set_count(&self, count: usize) {
-        msg_void_usize(self.raw, sel(b"setCount:\0"), count);
+        msg_void_usize(self.raw, sel!(b"setCount:\0"), count);
     }
 }
 
@@ -1837,11 +1837,11 @@ impl M4CounterHeap {
     }
 
     pub fn count(&self) -> usize {
-        msg_usize(self.raw, sel(b"count\0"))
+        msg_usize(self.raw, sel!(b"count\0"))
     }
 
     pub fn heap_type(&self) -> M4CounterHeapType {
-        match msg_usize(self.raw, sel(b"type\0")) {
+        match msg_usize(self.raw, sel!(b"type\0")) {
             1 => M4CounterHeapType::Timestamp,
             _ => M4CounterHeapType::Invalid,
         }
@@ -1851,7 +1851,7 @@ impl M4CounterHeap {
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, Range) -> id =
                 transmute(objc_msgSend as *const c_void);
-            let data = f(self.raw, sel(b"resolveCounterRange:\0"), range);
+            let data = f(self.raw, sel!(b"resolveCounterRange:\0"), range);
             if data.is_null() {
                 return None;
             }
@@ -1860,7 +1860,7 @@ impl M4CounterHeap {
     }
 
     pub fn invalidate_counter_range(&self, range: Range) {
-        msg_void_range(self.raw, sel(b"invalidateCounterRange:\0"), range);
+        msg_void_range(self.raw, sel!(b"invalidateCounterRange:\0"), range);
     }
 }
 
@@ -1887,49 +1887,49 @@ impl M4ArgumentTableDescriptor {
     }
 
     pub fn max_buffer_bind_count(&self) -> usize {
-        msg_usize(self.raw, sel(b"maxBufferBindCount\0"))
+        msg_usize(self.raw, sel!(b"maxBufferBindCount\0"))
     }
 
     pub fn set_max_buffer_bind_count(&self, count: usize) {
-        msg_void_usize(self.raw, sel(b"setMaxBufferBindCount:\0"), count);
+        msg_void_usize(self.raw, sel!(b"setMaxBufferBindCount:\0"), count);
     }
 
     pub fn max_texture_bind_count(&self) -> usize {
-        msg_usize(self.raw, sel(b"maxTextureBindCount\0"))
+        msg_usize(self.raw, sel!(b"maxTextureBindCount\0"))
     }
 
     pub fn set_max_texture_bind_count(&self, count: usize) {
-        msg_void_usize(self.raw, sel(b"setMaxTextureBindCount:\0"), count);
+        msg_void_usize(self.raw, sel!(b"setMaxTextureBindCount:\0"), count);
     }
 
     pub fn max_sampler_state_bind_count(&self) -> usize {
-        msg_usize(self.raw, sel(b"maxSamplerStateBindCount\0"))
+        msg_usize(self.raw, sel!(b"maxSamplerStateBindCount\0"))
     }
 
     pub fn set_max_sampler_state_bind_count(&self, count: usize) {
-        msg_void_usize(self.raw, sel(b"setMaxSamplerStateBindCount:\0"), count);
+        msg_void_usize(self.raw, sel!(b"setMaxSamplerStateBindCount:\0"), count);
     }
 
     pub fn initialize_bindings(&self) -> bool {
-        msg_bool(self.raw, sel(b"initializeBindings\0")) != NO
+        msg_bool(self.raw, sel!(b"initializeBindings\0")) != NO
     }
 
     pub fn set_initialize_bindings(&self, value: bool) {
         msg_void_bool(
             self.raw,
-            sel(b"setInitializeBindings:\0"),
+            sel!(b"setInitializeBindings:\0"),
             if value { YES } else { NO },
         );
     }
 
     pub fn support_attribute_strides(&self) -> bool {
-        msg_bool(self.raw, sel(b"supportAttributeStrides\0")) != NO
+        msg_bool(self.raw, sel!(b"supportAttributeStrides\0")) != NO
     }
 
     pub fn set_support_attribute_strides(&self, value: bool) {
         msg_void_bool(
             self.raw,
-            sel(b"setSupportAttributeStrides:\0"),
+            sel!(b"setSupportAttributeStrides:\0"),
             if value { YES } else { NO },
         );
     }
@@ -1971,7 +1971,7 @@ impl M4ArgumentTable {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setAddress:atIndex:\0"),
+                sel!(b"setAddress:atIndex:\0"),
                 gpu_address,
                 binding_index,
             );
@@ -1989,7 +1989,7 @@ impl M4ArgumentTable {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setAddress:attributeStride:atIndex:\0"),
+                sel!(b"setAddress:attributeStride:atIndex:\0"),
                 gpu_address,
                 stride,
                 binding_index,
@@ -2003,7 +2003,7 @@ impl M4ArgumentTable {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setResource:atBufferIndex:\0"),
+                sel!(b"setResource:atBufferIndex:\0"),
                 resource_id,
                 buffer_index,
             );
@@ -2016,7 +2016,7 @@ impl M4ArgumentTable {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setTexture:atIndex:\0"),
+                sel!(b"setTexture:atIndex:\0"),
                 resource_id,
                 binding_index,
             );
@@ -2029,7 +2029,7 @@ impl M4ArgumentTable {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setSamplerState:atIndex:\0"),
+                sel!(b"setSamplerState:atIndex:\0"),
                 resource_id,
                 binding_index,
             );
@@ -2038,7 +2038,7 @@ impl M4ArgumentTable {
 
     pub fn device(&self) -> Device {
         Device {
-            raw: retain(msg_id(self.raw, sel(b"device\0"))),
+            raw: retain(msg_id(self.raw, sel!(b"device\0"))),
         }
     }
 
@@ -2091,7 +2091,7 @@ impl M4Archive {
         let mut error = NIL;
         let raw = retain(msg_id_id_err(
             self.raw,
-            sel(b"newComputePipelineStateWithDescriptor:error:\0"),
+            sel!(b"newComputePipelineStateWithDescriptor:error:\0"),
             descriptor.raw,
             &mut error,
         ));
@@ -2112,7 +2112,7 @@ impl M4Archive {
         let mut error = NIL;
         let raw = retain(msg_id_id_err(
             self.raw,
-            sel(b"newRenderPipelineStateWithDescriptor:error:\0"),
+            sel!(b"newRenderPipelineStateWithDescriptor:error:\0"),
             descriptor.raw,
             &mut error,
         ));
@@ -2133,7 +2133,7 @@ impl M4Archive {
         let mut error = NIL;
         let raw = retain(msg_id_id_err(
             self.raw,
-            sel(b"newBinaryFunctionWithDescriptor:error:\0"),
+            sel!(b"newBinaryFunctionWithDescriptor:error:\0"),
             descriptor.raw,
             &mut error,
         ));
@@ -2203,7 +2203,7 @@ impl M4CommandAllocator {
 
     pub fn device(&self) -> Device {
         Device {
-            raw: retain(msg_id(self.raw, sel(b"device\0"))),
+            raw: retain(msg_id(self.raw, sel!(b"device\0"))),
         }
     }
 
@@ -2212,11 +2212,11 @@ impl M4CommandAllocator {
     }
 
     pub fn allocated_size(&self) -> u64 {
-        msg_u64(self.raw, sel(b"allocatedSize\0"))
+        msg_u64(self.raw, sel!(b"allocatedSize\0"))
     }
 
     pub fn reset(&self) {
-        msg_void(self.raw, sel(b"reset\0"));
+        msg_void(self.raw, sel!(b"reset\0"));
     }
 }
 
@@ -2243,11 +2243,11 @@ impl M4CommandBufferOptions {
     }
 
     pub fn log_state(&self) -> Option<LogState> {
-        m4_optional_id(self.raw, sel(b"logState\0")).map(|raw| LogState { raw })
+        m4_optional_id(self.raw, sel!(b"logState\0")).map(|raw| LogState { raw })
     }
 
     pub fn set_log_state(&self, log_state: Option<&LogState>) {
-        m4_set_optional_id(self.raw, sel(b"setLogState:\0"), log_state.map(|s| s.raw));
+        m4_set_optional_id(self.raw, sel!(b"setLogState:\0"), log_state.map(|s| s.raw));
     }
 }
 
@@ -2284,7 +2284,7 @@ impl M4CommandBuffer {
 
     pub fn device(&self) -> Device {
         Device {
-            raw: retain(msg_id(self.raw, sel(b"device\0"))),
+            raw: retain(msg_id(self.raw, sel!(b"device\0"))),
         }
     }
 
@@ -2299,7 +2299,7 @@ impl M4CommandBuffer {
     pub fn begin_command_buffer_with_allocator(&self, allocator: &M4CommandAllocator) {
         msg_void_id(
             self.raw,
-            sel(b"beginCommandBufferWithAllocator:\0"),
+            sel!(b"beginCommandBufferWithAllocator:\0"),
             allocator.raw,
         );
     }
@@ -2313,7 +2313,7 @@ impl M4CommandBuffer {
             let f: unsafe extern "C" fn(id, SEL, id, id) = transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"beginCommandBufferWithAllocator:options:\0"),
+                sel!(b"beginCommandBufferWithAllocator:options:\0"),
                 allocator.raw,
                 options.raw,
             );
@@ -2321,7 +2321,7 @@ impl M4CommandBuffer {
     }
 
     pub fn end_command_buffer(&self) {
-        msg_void(self.raw, sel(b"endCommandBuffer\0"));
+        msg_void(self.raw, sel!(b"endCommandBuffer\0"));
     }
 
     pub fn render_command_encoder_with_descriptor(
@@ -2330,30 +2330,30 @@ impl M4CommandBuffer {
     ) -> Option<M4RenderCommandEncoder> {
         let raw = msg_id_id(
             self.raw,
-            sel(b"renderCommandEncoderWithDescriptor:\0"),
+            sel!(b"renderCommandEncoderWithDescriptor:\0"),
             descriptor.raw,
         );
         (!raw.is_null()).then(|| M4RenderCommandEncoder { raw: retain(raw) })
     }
 
     pub fn compute_command_encoder(&self) -> Option<M4ComputeCommandEncoder> {
-        let raw = msg_id(self.raw, sel(b"computeCommandEncoder\0"));
+        let raw = msg_id(self.raw, sel!(b"computeCommandEncoder\0"));
         (!raw.is_null()).then(|| M4ComputeCommandEncoder { raw: retain(raw) })
     }
 
     pub fn machine_learning_command_encoder(&self) -> Option<M4MachineLearningCommandEncoder> {
-        let raw = msg_id(self.raw, sel(b"machineLearningCommandEncoder\0"));
+        let raw = msg_id(self.raw, sel!(b"machineLearningCommandEncoder\0"));
         (!raw.is_null()).then(|| M4MachineLearningCommandEncoder { raw: retain(raw) })
     }
 
     pub fn use_residency_set(&self, residency_set: &ResidencySet) {
-        msg_void_id(self.raw, sel(b"useResidencySet:\0"), residency_set.raw);
+        msg_void_id(self.raw, sel!(b"useResidencySet:\0"), residency_set.raw);
     }
 
     pub fn write_timestamp_into_heap(&self, counter_heap: &M4CounterHeap, index: usize) {
         msg_void_id_usize(
             self.raw,
-            sel(b"writeTimestampIntoHeap:atIndex:\0"),
+            sel!(b"writeTimestampIntoHeap:atIndex:\0"),
             counter_heap.raw,
             index,
         );
@@ -2372,7 +2372,7 @@ impl M4CommandBuffer {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"resolveCounterHeap:withRange:intoBuffer:waitFence:updateFence:\0"),
+                sel!(b"resolveCounterHeap:withRange:intoBuffer:waitFence:updateFence:\0"),
                 counter_heap.raw,
                 range,
                 buffer_range,
@@ -2458,25 +2458,25 @@ impl M4CommandEncoder {
     }
 
     pub fn command_buffer(&self) -> Option<M4CommandBuffer> {
-        m4_optional_id(self.raw, sel(b"commandBuffer\0")).map(|raw| M4CommandBuffer { raw })
+        m4_optional_id(self.raw, sel!(b"commandBuffer\0")).map(|raw| M4CommandBuffer { raw })
     }
 
     pub fn end_encoding(&self) {
-        msg_void(self.raw, sel(b"endEncoding\0"));
+        msg_void(self.raw, sel!(b"endEncoding\0"));
     }
 
     pub fn insert_debug_signpost(&self, string: &str) {
         let ns = NSString::new(string);
-        msg_void_id(self.raw, sel(b"insertDebugSignpost:\0"), ns.raw());
+        msg_void_id(self.raw, sel!(b"insertDebugSignpost:\0"), ns.raw());
     }
 
     pub fn push_debug_group(&self, string: &str) {
         let ns = NSString::new(string);
-        msg_void_id(self.raw, sel(b"pushDebugGroup:\0"), ns.raw());
+        msg_void_id(self.raw, sel!(b"pushDebugGroup:\0"), ns.raw());
     }
 
     pub fn pop_debug_group(&self) {
-        msg_void(self.raw, sel(b"popDebugGroup\0"));
+        msg_void(self.raw, sel!(b"popDebugGroup\0"));
     }
 
     pub fn barrier_after_queue_stages(
@@ -2490,7 +2490,7 @@ impl M4CommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"barrierAfterQueueStages:beforeStages:visibilityOptions:\0"),
+                sel!(b"barrierAfterQueueStages:beforeStages:visibilityOptions:\0"),
                 after_queue_stages.0,
                 before_stages.0,
                 visibility.0,
@@ -2509,7 +2509,7 @@ impl M4CommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"barrierAfterStages:beforeQueueStages:visibilityOptions:\0"),
+                sel!(b"barrierAfterStages:beforeQueueStages:visibilityOptions:\0"),
                 after_stages.0,
                 before_queue_stages.0,
                 visibility.0,
@@ -2528,7 +2528,7 @@ impl M4CommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"barrierAfterEncoderStages:beforeEncoderStages:visibilityOptions:\0"),
+                sel!(b"barrierAfterEncoderStages:beforeEncoderStages:visibilityOptions:\0"),
                 after_encoder_stages.0,
                 before_encoder_stages.0,
                 visibility.0,
@@ -2542,7 +2542,7 @@ impl M4CommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"updateFence:afterEncoderStages:\0"),
+                sel!(b"updateFence:afterEncoderStages:\0"),
                 fence.raw,
                 after_encoder_stages.0,
             );
@@ -2555,7 +2555,7 @@ impl M4CommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"waitForFence:beforeEncoderStages:\0"),
+                sel!(b"waitForFence:beforeEncoderStages:\0"),
                 fence.raw,
                 before_encoder_stages.0,
             );
@@ -2691,7 +2691,7 @@ impl M4CommandQueue {
 
     pub fn device(&self) -> Device {
         Device {
-            raw: retain(msg_id(self.raw, sel(b"device\0"))),
+            raw: retain(msg_id(self.raw, sel!(b"device\0"))),
         }
     }
 
@@ -2708,7 +2708,7 @@ impl M4CommandQueue {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"commit:count:\0"),
+                sel!(b"commit:count:\0"),
                 command_buffers.as_ptr() as *const id,
                 command_buffers.len(),
             );
@@ -2728,7 +2728,7 @@ impl M4CommandQueue {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"commit:count:options:\0"),
+                sel!(b"commit:count:options:\0"),
                 command_buffers.as_ptr() as *const id,
                 command_buffers.len(),
                 options.raw,
@@ -2737,27 +2737,27 @@ impl M4CommandQueue {
     }
 
     pub fn signal_event(&self, event: &Event, value: u64) {
-        msg_void_id_u64(self.raw, sel(b"signalEvent:value:\0"), event.raw, value);
+        msg_void_id_u64(self.raw, sel!(b"signalEvent:value:\0"), event.raw, value);
     }
 
     pub fn wait_for_event(&self, event: &Event, value: u64) {
-        msg_void_id_u64(self.raw, sel(b"waitForEvent:value:\0"), event.raw, value);
+        msg_void_id_u64(self.raw, sel!(b"waitForEvent:value:\0"), event.raw, value);
     }
 
     pub fn signal_drawable(&self, drawable: &Drawable) {
-        msg_void_id(self.raw, sel(b"signalDrawable:\0"), drawable.raw);
+        msg_void_id(self.raw, sel!(b"signalDrawable:\0"), drawable.raw);
     }
 
     pub fn wait_for_drawable(&self, drawable: &Drawable) {
-        msg_void_id(self.raw, sel(b"waitForDrawable:\0"), drawable.raw);
+        msg_void_id(self.raw, sel!(b"waitForDrawable:\0"), drawable.raw);
     }
 
     pub fn add_residency_set(&self, residency_set: &ResidencySet) {
-        msg_void_id(self.raw, sel(b"addResidencySet:\0"), residency_set.raw);
+        msg_void_id(self.raw, sel!(b"addResidencySet:\0"), residency_set.raw);
     }
 
     pub fn remove_residency_set(&self, residency_set: &ResidencySet) {
-        msg_void_id(self.raw, sel(b"removeResidencySet:\0"), residency_set.raw);
+        msg_void_id(self.raw, sel!(b"removeResidencySet:\0"), residency_set.raw);
     }
 }
 
@@ -2782,11 +2782,11 @@ impl M4CommitFeedback {
     }
 
     pub fn error_description(&self) -> Option<NSString> {
-        let error = msg_id(self.raw, sel(b"error\0"));
+        let error = msg_id(self.raw, sel!(b"error\0"));
         if error.is_null() {
             None
         } else {
-            let description = msg_id(error, sel(b"localizedDescription\0"));
+            let description = msg_id(error, sel!(b"localizedDescription\0"));
             if description.is_null() {
                 None
             } else {
@@ -2796,11 +2796,11 @@ impl M4CommitFeedback {
     }
 
     pub fn gpu_start_time(&self) -> f64 {
-        msg_f64(self.raw, sel(b"GPUStartTime\0"))
+        msg_f64(self.raw, sel!(b"GPUStartTime\0"))
     }
 
     pub fn gpu_end_time(&self) -> f64 {
-        msg_f64(self.raw, sel(b"GPUEndTime\0"))
+        msg_f64(self.raw, sel!(b"GPUEndTime\0"))
     }
 }
 
@@ -2835,7 +2835,7 @@ impl M4CompilerDescriptor {
     }
 
     pub fn pipeline_data_set_serializer(&self) -> Option<M4PipelineDataSetSerializer> {
-        m4_optional_id(self.raw, sel(b"pipelineDataSetSerializer\0"))
+        m4_optional_id(self.raw, sel!(b"pipelineDataSetSerializer\0"))
             .map(|raw| M4PipelineDataSetSerializer { raw })
     }
 
@@ -2845,7 +2845,7 @@ impl M4CompilerDescriptor {
     ) {
         m4_set_optional_id(
             self.raw,
-            sel(b"setPipelineDataSetSerializer:\0"),
+            sel!(b"setPipelineDataSetSerializer:\0"),
             serializer.map(|s| s.raw),
         );
     }
@@ -2876,7 +2876,7 @@ impl M4CompilerTaskOptions {
     }
 
     pub fn lookup_archives(&self) -> NSArrayIterator<M4Archive> {
-        m4_archives_from_array(msg_id(self.raw, sel(b"lookupArchives\0")))
+        m4_archives_from_array(msg_id(self.raw, sel!(b"lookupArchives\0")))
     }
 
     pub fn set_lookup_archives(&self, archives: &[M4Archive]) {
@@ -2884,7 +2884,7 @@ impl M4CompilerTaskOptions {
             unsafe { std::slice::from_raw_parts(archives.as_ptr() as *const id, archives.len()) };
         msg_void_id(
             self.raw,
-            sel(b"setLookupArchives:\0"),
+            sel!(b"setLookupArchives:\0"),
             ns_array_from_ids(raw_ptrs),
         );
     }
@@ -2923,12 +2923,12 @@ impl M4CompilerTask {
 
     pub fn compiler(&self) -> M4Compiler {
         M4Compiler {
-            raw: retain(msg_id(self.raw, sel(b"compiler\0"))),
+            raw: retain(msg_id(self.raw, sel!(b"compiler\0"))),
         }
     }
 
     pub fn status(&self) -> M4CompilerTaskStatus {
-        match msg_usize(self.raw, sel(b"status\0")) {
+        match msg_usize(self.raw, sel!(b"status\0")) {
             1 => M4CompilerTaskStatus::Scheduled,
             2 => M4CompilerTaskStatus::Compiling,
             3 => M4CompilerTaskStatus::Finished,
@@ -2937,7 +2937,7 @@ impl M4CompilerTask {
     }
 
     pub fn wait_until_completed(&self) {
-        msg_void(self.raw, sel(b"waitUntilCompleted\0"));
+        msg_void(self.raw, sel!(b"waitUntilCompleted\0"));
     }
 }
 
@@ -2959,7 +2959,7 @@ impl M4Compiler {
 
     pub fn device(&self) -> Device {
         Device {
-            raw: retain(msg_id(self.raw, sel(b"device\0"))),
+            raw: retain(msg_id(self.raw, sel!(b"device\0"))),
         }
     }
 
@@ -2968,7 +2968,7 @@ impl M4Compiler {
     }
 
     pub fn pipeline_data_set_serializer(&self) -> Option<M4PipelineDataSetSerializer> {
-        m4_optional_id(self.raw, sel(b"pipelineDataSetSerializer\0"))
+        m4_optional_id(self.raw, sel!(b"pipelineDataSetSerializer\0"))
             .map(|raw| M4PipelineDataSetSerializer { raw })
     }
 
@@ -2979,7 +2979,7 @@ impl M4Compiler {
         let mut error = NIL;
         let raw = retain(msg_id_id_err(
             self.raw,
-            sel(b"newLibraryWithDescriptor:error:\0"),
+            sel!(b"newLibraryWithDescriptor:error:\0"),
             descriptor.raw,
             &mut error,
         ));
@@ -3004,7 +3004,7 @@ impl M4Compiler {
                 transmute(objc_msgSend as *const c_void);
             let raw = retain(f(
                 self.raw,
-                sel(b"newComputePipelineStateWithDescriptor:compilerTaskOptions:error:\0"),
+                sel!(b"newComputePipelineStateWithDescriptor:compilerTaskOptions:error:\0"),
                 descriptor.raw,
                 task_options.map_or(NIL, |o| o.raw),
                 &mut error,
@@ -3031,7 +3031,7 @@ impl M4Compiler {
                 transmute(objc_msgSend as *const c_void);
             let raw = retain(f(
                 self.raw,
-                sel(b"newRenderPipelineStateWithDescriptor:compilerTaskOptions:error:\0"),
+                sel!(b"newRenderPipelineStateWithDescriptor:compilerTaskOptions:error:\0"),
                 descriptor.raw,
                 task_options.map_or(NIL, |o| o.raw),
                 &mut error,
@@ -3058,7 +3058,7 @@ impl M4Compiler {
                 transmute(objc_msgSend as *const c_void);
             let raw = retain(f(
                 self.raw,
-                sel(b"newBinaryFunctionWithDescriptor:compilerTaskOptions:error:\0"),
+                sel!(b"newBinaryFunctionWithDescriptor:compilerTaskOptions:error:\0"),
                 descriptor.raw,
                 task_options.map_or(NIL, |o| o.raw),
                 &mut error,
@@ -3081,7 +3081,7 @@ impl M4Compiler {
         let mut error = NIL;
         let raw = retain(msg_id_id_err(
             self.raw,
-            sel(b"newMachineLearningPipelineStateWithDescriptor:error:\0"),
+            sel!(b"newMachineLearningPipelineStateWithDescriptor:error:\0"),
             descriptor.raw,
             &mut error,
         ));
@@ -3127,11 +3127,11 @@ impl M4PipelineDataSetSerializerDescriptor {
     }
 
     pub fn configuration(&self) -> M4PipelineDataSetSerializerConfiguration {
-        M4PipelineDataSetSerializerConfiguration(msg_usize(self.raw, sel(b"configuration\0")))
+        M4PipelineDataSetSerializerConfiguration(msg_usize(self.raw, sel!(b"configuration\0")))
     }
 
     pub fn set_configuration(&self, configuration: M4PipelineDataSetSerializerConfiguration) {
-        msg_void_usize(self.raw, sel(b"setConfiguration:\0"), configuration.0);
+        msg_void_usize(self.raw, sel!(b"setConfiguration:\0"), configuration.0);
     }
 }
 
@@ -3162,7 +3162,7 @@ impl M4PipelineDataSetSerializer {
         let url = ns_url_from_path(url_path);
         let ok = msg_bool_id_err(
             self.raw,
-            sel(b"serializeAsArchiveAndFlushToURL:error:\0"),
+            sel!(b"serializeAsArchiveAndFlushToURL:error:\0"),
             url,
             &mut error,
         );
@@ -3183,7 +3183,7 @@ impl M4PipelineDataSetSerializer {
                 transmute(objc_msgSend as *const c_void);
             let data = f(
                 self.raw,
-                sel(b"serializeAsPipelinesScriptWithError:\0"),
+                sel!(b"serializeAsPipelinesScriptWithError:\0"),
                 &mut error,
             );
             if data.is_null() {
@@ -3221,117 +3221,117 @@ impl M4RenderPassDescriptor {
 
     pub fn color_attachments(&self) -> RenderPassColorAttachmentDescriptorArray {
         RenderPassColorAttachmentDescriptorArray {
-            raw: retain(msg_id(self.raw, sel(b"colorAttachments\0"))),
+            raw: retain(msg_id(self.raw, sel!(b"colorAttachments\0"))),
         }
     }
 
     pub fn depth_attachment(&self) -> RenderPassDepthAttachmentDescriptor {
         RenderPassDepthAttachmentDescriptor {
-            raw: retain(msg_id(self.raw, sel(b"depthAttachment\0"))),
+            raw: retain(msg_id(self.raw, sel!(b"depthAttachment\0"))),
         }
     }
 
     pub fn stencil_attachment(&self) -> RenderPassStencilAttachmentDescriptor {
         RenderPassStencilAttachmentDescriptor {
-            raw: retain(msg_id(self.raw, sel(b"stencilAttachment\0"))),
+            raw: retain(msg_id(self.raw, sel!(b"stencilAttachment\0"))),
         }
     }
 
     pub fn render_target_array_length(&self) -> usize {
-        msg_usize(self.raw, sel(b"renderTargetArrayLength\0"))
+        msg_usize(self.raw, sel!(b"renderTargetArrayLength\0"))
     }
 
     pub fn set_render_target_array_length(&self, length: usize) {
-        msg_void_usize(self.raw, sel(b"setRenderTargetArrayLength:\0"), length);
+        msg_void_usize(self.raw, sel!(b"setRenderTargetArrayLength:\0"), length);
     }
 
     pub fn render_target_width(&self) -> usize {
-        msg_usize(self.raw, sel(b"renderTargetWidth\0"))
+        msg_usize(self.raw, sel!(b"renderTargetWidth\0"))
     }
 
     pub fn set_render_target_width(&self, width: usize) {
-        msg_void_usize(self.raw, sel(b"setRenderTargetWidth:\0"), width);
+        msg_void_usize(self.raw, sel!(b"setRenderTargetWidth:\0"), width);
     }
 
     pub fn render_target_height(&self) -> usize {
-        msg_usize(self.raw, sel(b"renderTargetHeight\0"))
+        msg_usize(self.raw, sel!(b"renderTargetHeight\0"))
     }
 
     pub fn set_render_target_height(&self, height: usize) {
-        msg_void_usize(self.raw, sel(b"setRenderTargetHeight:\0"), height);
+        msg_void_usize(self.raw, sel!(b"setRenderTargetHeight:\0"), height);
     }
 
     pub fn default_raster_sample_count(&self) -> usize {
-        msg_usize(self.raw, sel(b"defaultRasterSampleCount\0"))
+        msg_usize(self.raw, sel!(b"defaultRasterSampleCount\0"))
     }
 
     pub fn set_default_raster_sample_count(&self, count: usize) {
-        msg_void_usize(self.raw, sel(b"setDefaultRasterSampleCount:\0"), count);
+        msg_void_usize(self.raw, sel!(b"setDefaultRasterSampleCount:\0"), count);
     }
 
     pub fn imageblock_sample_length(&self) -> usize {
-        msg_usize(self.raw, sel(b"imageblockSampleLength\0"))
+        msg_usize(self.raw, sel!(b"imageblockSampleLength\0"))
     }
 
     pub fn set_imageblock_sample_length(&self, length: usize) {
-        msg_void_usize(self.raw, sel(b"setImageblockSampleLength:\0"), length);
+        msg_void_usize(self.raw, sel!(b"setImageblockSampleLength:\0"), length);
     }
 
     pub fn threadgroup_memory_length(&self) -> usize {
-        msg_usize(self.raw, sel(b"threadgroupMemoryLength\0"))
+        msg_usize(self.raw, sel!(b"threadgroupMemoryLength\0"))
     }
 
     pub fn set_threadgroup_memory_length(&self, length: usize) {
-        msg_void_usize(self.raw, sel(b"setThreadgroupMemoryLength:\0"), length);
+        msg_void_usize(self.raw, sel!(b"setThreadgroupMemoryLength:\0"), length);
     }
 
     pub fn visibility_result_buffer(&self) -> Option<Buffer> {
-        m4_optional_id(self.raw, sel(b"visibilityResultBuffer\0")).map(|raw| Buffer { raw })
+        m4_optional_id(self.raw, sel!(b"visibilityResultBuffer\0")).map(|raw| Buffer { raw })
     }
 
     pub fn set_visibility_result_buffer(&self, buffer: Option<&Buffer>) {
         m4_set_optional_id(
             self.raw,
-            sel(b"setVisibilityResultBuffer:\0"),
+            sel!(b"setVisibilityResultBuffer:\0"),
             buffer.map(|b| b.raw),
         );
     }
 
     pub fn visibility_result_type(&self) -> VisibilityResultType {
-        match msg_usize(self.raw, sel(b"visibilityResultType\0")) {
+        match msg_usize(self.raw, sel!(b"visibilityResultType\0")) {
             1 => VisibilityResultType::Accumulate,
             _ => VisibilityResultType::Reset,
         }
     }
 
     pub fn set_visibility_result_type(&self, kind: VisibilityResultType) {
-        msg_void_usize(self.raw, sel(b"setVisibilityResultType:\0"), kind as usize);
+        msg_void_usize(self.raw, sel!(b"setVisibilityResultType:\0"), kind as usize);
     }
 
     pub fn tile_width(&self) -> usize {
-        msg_usize(self.raw, sel(b"tileWidth\0"))
+        msg_usize(self.raw, sel!(b"tileWidth\0"))
     }
 
     pub fn set_tile_width(&self, width: usize) {
-        msg_void_usize(self.raw, sel(b"setTileWidth:\0"), width);
+        msg_void_usize(self.raw, sel!(b"setTileWidth:\0"), width);
     }
 
     pub fn tile_height(&self) -> usize {
-        msg_usize(self.raw, sel(b"tileHeight\0"))
+        msg_usize(self.raw, sel!(b"tileHeight\0"))
     }
 
     pub fn set_tile_height(&self, height: usize) {
-        msg_void_usize(self.raw, sel(b"setTileHeight:\0"), height);
+        msg_void_usize(self.raw, sel!(b"setTileHeight:\0"), height);
     }
 
     pub fn support_color_attachment_mapping(&self) -> bool {
-        msg_bool(self.raw, sel(b"supportColorAttachmentMapping\0")) != NO
+        msg_bool(self.raw, sel!(b"supportColorAttachmentMapping\0")) != NO
     }
 
     pub fn set_support_color_attachment_mapping(&self, value: bool) {
         msg_void_bool(
             self.raw,
-            sel(b"setSupportColorAttachmentMapping:\0"),
+            sel!(b"setSupportColorAttachmentMapping:\0"),
             if value { YES } else { NO },
         );
     }
@@ -3364,7 +3364,7 @@ impl M4ComputeCommandEncoder {
     }
 
     pub fn stages(&self) -> Stages {
-        Stages(msg_usize(self.raw, sel(b"stages\0")))
+        Stages(msg_usize(self.raw, sel!(b"stages\0")))
     }
 
     pub fn barrier_after_queue_stages(
@@ -3378,7 +3378,7 @@ impl M4ComputeCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"barrierAfterQueueStages:beforeStages:visibilityOptions:\0"),
+                sel!(b"barrierAfterQueueStages:beforeStages:visibilityOptions:\0"),
                 after_queue_stages.0,
                 before_stages.0,
                 visibility.0,
@@ -3397,7 +3397,7 @@ impl M4ComputeCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"barrierAfterStages:beforeQueueStages:visibilityOptions:\0"),
+                sel!(b"barrierAfterStages:beforeQueueStages:visibilityOptions:\0"),
                 after_stages.0,
                 before_queue_stages.0,
                 visibility.0,
@@ -3416,7 +3416,7 @@ impl M4ComputeCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"barrierAfterEncoderStages:beforeEncoderStages:visibilityOptions:\0"),
+                sel!(b"barrierAfterEncoderStages:beforeEncoderStages:visibilityOptions:\0"),
                 after_encoder_stages.0,
                 before_encoder_stages.0,
                 visibility.0,
@@ -3430,7 +3430,7 @@ impl M4ComputeCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"updateFence:afterEncoderStages:\0"),
+                sel!(b"updateFence:afterEncoderStages:\0"),
                 fence.raw,
                 after_encoder_stages.0,
             );
@@ -3443,7 +3443,7 @@ impl M4ComputeCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"waitForFence:beforeEncoderStages:\0"),
+                sel!(b"waitForFence:beforeEncoderStages:\0"),
                 fence.raw,
                 before_encoder_stages.0,
             );
@@ -3451,13 +3451,13 @@ impl M4ComputeCommandEncoder {
     }
 
     pub fn set_compute_pipeline_state(&self, state: &ComputePipelineState) {
-        msg_void_id(self.raw, sel(b"setComputePipelineState:\0"), state.raw);
+        msg_void_id(self.raw, sel!(b"setComputePipelineState:\0"), state.raw);
     }
 
     pub fn set_argument_table(&self, argument_table: Option<&M4ArgumentTable>) {
         m4_set_optional_id(
             self.raw,
-            sel(b"setArgumentTable:\0"),
+            sel!(b"setArgumentTable:\0"),
             argument_table.map(|t| t.raw),
         );
     }
@@ -3465,7 +3465,7 @@ impl M4ComputeCommandEncoder {
     pub fn dispatch_threads(&self, threads_per_grid: Size, threads_per_threadgroup: Size) {
         msg_void_size_size(
             self.raw,
-            sel(b"dispatchThreads:threadsPerThreadgroup:\0"),
+            sel!(b"dispatchThreads:threadsPerThreadgroup:\0"),
             threads_per_grid,
             threads_per_threadgroup,
         );
@@ -3478,7 +3478,7 @@ impl M4ComputeCommandEncoder {
     ) {
         msg_void_size_size(
             self.raw,
-            sel(b"dispatchThreadgroups:threadsPerThreadgroup:\0"),
+            sel!(b"dispatchThreadgroups:threadsPerThreadgroup:\0"),
             threadgroups_per_grid,
             threads_per_threadgroup,
         );
@@ -3494,7 +3494,7 @@ impl M4ComputeCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"dispatchThreadgroupsWithIndirectBuffer:threadsPerThreadgroup:\0"),
+                sel!(b"dispatchThreadgroupsWithIndirectBuffer:threadsPerThreadgroup:\0"),
                 indirect_buffer,
                 threads_per_threadgroup,
             );
@@ -3506,7 +3506,7 @@ impl M4ComputeCommandEncoder {
             let f: unsafe extern "C" fn(id, SEL, u64) = transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"dispatchThreadsWithIndirectBuffer:\0"),
+                sel!(b"dispatchThreadsWithIndirectBuffer:\0"),
                 indirect_buffer,
             );
         }
@@ -3518,7 +3518,7 @@ impl M4ComputeCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"executeCommandsInBuffer:withRange:\0"),
+                sel!(b"executeCommandsInBuffer:withRange:\0"),
                 buffer.raw,
                 range,
             );
@@ -3535,7 +3535,7 @@ impl M4ComputeCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"executeCommandsInBuffer:indirectBuffer:\0"),
+                sel!(b"executeCommandsInBuffer:indirectBuffer:\0"),
                 buffer.raw,
                 indirect_range_buffer,
             );
@@ -3548,7 +3548,7 @@ impl M4ComputeCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"resetCommandsInBuffer:withRange:\0"),
+                sel!(b"resetCommandsInBuffer:withRange:\0"),
                 buffer.raw,
                 range,
             );
@@ -3568,7 +3568,7 @@ impl M4ComputeCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"copyFromBuffer:sourceOffset:toBuffer:destinationOffset:size:\0"),
+                sel!(b"copyFromBuffer:sourceOffset:toBuffer:destinationOffset:size:\0"),
                 source.raw,
                 source_offset,
                 destination.raw,
@@ -3608,7 +3608,7 @@ impl M4ComputeCommandEncoder {
             ) = transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"copyFromBuffer:sourceOffset:sourceBytesPerRow:sourceBytesPerImage:sourceSize:toTexture:destinationSlice:destinationLevel:destinationOrigin:options:\0"),
+                sel!(b"copyFromBuffer:sourceOffset:sourceBytesPerRow:sourceBytesPerImage:sourceSize:toTexture:destinationSlice:destinationLevel:destinationOrigin:options:\0"),
                 source.raw,
                 source_offset,
                 source_bytes_per_row,
@@ -3653,7 +3653,7 @@ impl M4ComputeCommandEncoder {
             ) = transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"copyFromTexture:sourceSlice:sourceLevel:sourceOrigin:sourceSize:toBuffer:destinationOffset:destinationBytesPerRow:destinationBytesPerImage:options:\0"),
+                sel!(b"copyFromTexture:sourceSlice:sourceLevel:sourceOrigin:sourceSize:toBuffer:destinationOffset:destinationBytesPerRow:destinationBytesPerImage:options:\0"),
                 source.raw,
                 source_slice,
                 source_level,
@@ -3674,7 +3674,7 @@ impl M4ComputeCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"copyFromTexture:toTexture:\0"),
+                sel!(b"copyFromTexture:toTexture:\0"),
                 source.raw,
                 destination.raw,
             );
@@ -3709,7 +3709,7 @@ impl M4ComputeCommandEncoder {
             ) = transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"copyFromTexture:sourceSlice:sourceLevel:sourceOrigin:sourceSize:toTexture:destinationSlice:destinationLevel:destinationOrigin:\0"),
+                sel!(b"copyFromTexture:sourceSlice:sourceLevel:sourceOrigin:sourceSize:toTexture:destinationSlice:destinationLevel:destinationOrigin:\0"),
                 source.raw,
                 source_slice,
                 source_level,
@@ -3739,7 +3739,7 @@ impl M4ComputeCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"copyFromTexture:sourceSlice:sourceLevel:toTexture:destinationSlice:destinationLevel:sliceCount:levelCount:\0"),
+                sel!(b"copyFromTexture:sourceSlice:sourceLevel:toTexture:destinationSlice:destinationLevel:sliceCount:levelCount:\0"),
                 source.raw,
                 source_slice,
                 source_level,
@@ -3758,7 +3758,7 @@ impl M4ComputeCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"fillBuffer:range:value:\0"),
+                sel!(b"fillBuffer:range:value:\0"),
                 buffer.raw,
                 range,
                 value,
@@ -3767,13 +3767,13 @@ impl M4ComputeCommandEncoder {
     }
 
     pub fn generate_mipmaps(&self, texture: &Texture) {
-        msg_void_id(self.raw, sel(b"generateMipmapsForTexture:\0"), texture.raw);
+        msg_void_id(self.raw, sel!(b"generateMipmapsForTexture:\0"), texture.raw);
     }
 
     pub fn optimize_contents_for_gpu_access(&self, texture: &Texture) {
         msg_void_id(
             self.raw,
-            sel(b"optimizeContentsForGPUAccess:\0"),
+            sel!(b"optimizeContentsForGPUAccess:\0"),
             texture.raw,
         );
     }
@@ -3781,7 +3781,7 @@ impl M4ComputeCommandEncoder {
     pub fn optimize_contents_for_cpu_access(&self, texture: &Texture) {
         msg_void_id(
             self.raw,
-            sel(b"optimizeContentsForCPUAccess:\0"),
+            sel!(b"optimizeContentsForCPUAccess:\0"),
             texture.raw,
         );
     }
@@ -3797,7 +3797,7 @@ impl M4ComputeCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"writeTimestampWithGranularity:intoHeap:atIndex:\0"),
+                sel!(b"writeTimestampWithGranularity:intoHeap:atIndex:\0"),
                 granularity as isize,
                 counter_heap.raw,
                 index,
@@ -3806,7 +3806,7 @@ impl M4ComputeCommandEncoder {
     }
 
     pub fn end_encoding(&self) {
-        msg_void(self.raw, sel(b"endEncoding\0"));
+        msg_void(self.raw, sel!(b"endEncoding\0"));
     }
 }
 
@@ -3850,7 +3850,7 @@ impl M4RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"barrierAfterQueueStages:beforeStages:visibilityOptions:\0"),
+                sel!(b"barrierAfterQueueStages:beforeStages:visibilityOptions:\0"),
                 after_queue_stages.0,
                 before_stages.0,
                 visibility.0,
@@ -3869,7 +3869,7 @@ impl M4RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"barrierAfterStages:beforeQueueStages:visibilityOptions:\0"),
+                sel!(b"barrierAfterStages:beforeQueueStages:visibilityOptions:\0"),
                 after_stages.0,
                 before_queue_stages.0,
                 visibility.0,
@@ -3888,7 +3888,7 @@ impl M4RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"barrierAfterEncoderStages:beforeEncoderStages:visibilityOptions:\0"),
+                sel!(b"barrierAfterEncoderStages:beforeEncoderStages:visibilityOptions:\0"),
                 after_encoder_stages.0,
                 before_encoder_stages.0,
                 visibility.0,
@@ -3902,7 +3902,7 @@ impl M4RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"updateFence:afterEncoderStages:\0"),
+                sel!(b"updateFence:afterEncoderStages:\0"),
                 fence.raw,
                 after_encoder_stages.0,
             );
@@ -3915,7 +3915,7 @@ impl M4RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"waitForFence:beforeEncoderStages:\0"),
+                sel!(b"waitForFence:beforeEncoderStages:\0"),
                 fence.raw,
                 before_encoder_stages.0,
             );
@@ -3923,17 +3923,17 @@ impl M4RenderCommandEncoder {
     }
 
     pub fn tile_width(&self) -> usize {
-        msg_usize(self.raw, sel(b"tileWidth\0"))
+        msg_usize(self.raw, sel!(b"tileWidth\0"))
     }
 
     pub fn tile_height(&self) -> usize {
-        msg_usize(self.raw, sel(b"tileHeight\0"))
+        msg_usize(self.raw, sel!(b"tileHeight\0"))
     }
 
     pub fn set_render_pipeline_state(&self, pipeline_state: &RenderPipelineState) {
         msg_void_id(
             self.raw,
-            sel(b"setRenderPipelineState:\0"),
+            sel!(b"setRenderPipelineState:\0"),
             pipeline_state.raw,
         );
     }
@@ -3944,7 +3944,7 @@ impl M4RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setArgumentTable:atStages:\0"),
+                sel!(b"setArgumentTable:atStages:\0"),
                 argument_table.raw,
                 stages.0,
             );
@@ -3952,11 +3952,11 @@ impl M4RenderCommandEncoder {
     }
 
     pub fn set_viewport(&self, viewport: Viewport) {
-        msg_void_viewport(self.raw, sel(b"setViewport:\0"), viewport);
+        msg_void_viewport(self.raw, sel!(b"setViewport:\0"), viewport);
     }
 
     pub fn set_scissor_rect(&self, rect: ScissorRect) {
-        msg_void_scissor_rect(self.raw, sel(b"setScissorRect:\0"), rect);
+        msg_void_scissor_rect(self.raw, sel!(b"setScissorRect:\0"), rect);
     }
 
     pub fn set_viewports(&self, viewports: &[Viewport]) {
@@ -3965,7 +3965,7 @@ impl M4RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setViewports:count:\0"),
+                sel!(b"setViewports:count:\0"),
                 viewports.as_ptr(),
                 viewports.len(),
             );
@@ -3978,7 +3978,7 @@ impl M4RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setScissorRects:count:\0"),
+                sel!(b"setScissorRects:count:\0"),
                 rects.as_ptr(),
                 rects.len(),
             );
@@ -3986,13 +3986,13 @@ impl M4RenderCommandEncoder {
     }
 
     pub fn set_depth_stencil_state(&self, state: &DepthStencilState) {
-        msg_void_id(self.raw, sel(b"setDepthStencilState:\0"), state.raw);
+        msg_void_id(self.raw, sel!(b"setDepthStencilState:\0"), state.raw);
     }
 
     pub fn set_stencil_reference_value(&self, value: u32) {
         msg_void_usize(
             self.raw,
-            sel(b"setStencilReferenceValue:\0"),
+            sel!(b"setStencilReferenceValue:\0"),
             value as usize,
         );
     }
@@ -4003,7 +4003,7 @@ impl M4RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setStencilFrontReferenceValue:backReferenceValue:\0"),
+                sel!(b"setStencilFrontReferenceValue:backReferenceValue:\0"),
                 front,
                 back,
             );
@@ -4016,7 +4016,7 @@ impl M4RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setVisibilityResultMode:offset:\0"),
+                sel!(b"setVisibilityResultMode:offset:\0"),
                 mode as usize,
                 offset,
             );
@@ -4026,7 +4026,7 @@ impl M4RenderCommandEncoder {
     pub fn dispatch_threads_per_tile(&self, threads_per_tile: Size) {
         msg_void_mtlsize(
             self.raw,
-            sel(b"dispatchThreadsPerTile:\0"),
+            sel!(b"dispatchThreadsPerTile:\0"),
             threads_per_tile,
         );
     }
@@ -4042,7 +4042,7 @@ impl M4RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setThreadgroupMemoryLength:offset:atIndex:\0"),
+                sel!(b"setThreadgroupMemoryLength:offset:atIndex:\0"),
                 length,
                 offset,
                 index,
@@ -4051,19 +4051,19 @@ impl M4RenderCommandEncoder {
     }
 
     pub fn set_cull_mode(&self, mode: CullMode) {
-        msg_void_usize(self.raw, sel(b"setCullMode:\0"), mode as usize);
+        msg_void_usize(self.raw, sel!(b"setCullMode:\0"), mode as usize);
     }
 
     pub fn set_front_facing_winding(&self, winding: Winding) {
-        msg_void_usize(self.raw, sel(b"setFrontFacingWinding:\0"), winding as usize);
+        msg_void_usize(self.raw, sel!(b"setFrontFacingWinding:\0"), winding as usize);
     }
 
     pub fn set_triangle_fill_mode(&self, mode: TriangleFillMode) {
-        msg_void_usize(self.raw, sel(b"setTriangleFillMode:\0"), mode as usize);
+        msg_void_usize(self.raw, sel!(b"setTriangleFillMode:\0"), mode as usize);
     }
 
     pub fn set_depth_clip_mode(&self, mode: DepthClipMode) {
-        msg_void_usize(self.raw, sel(b"setDepthClipMode:\0"), mode as usize);
+        msg_void_usize(self.raw, sel!(b"setDepthClipMode:\0"), mode as usize);
     }
 
     pub fn set_depth_bias(&self, bias: f32, slope_scale: f32, clamp: f32) {
@@ -4072,7 +4072,7 @@ impl M4RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setDepthBias:slopeScale:clamp:\0"),
+                sel!(b"setDepthBias:slopeScale:clamp:\0"),
                 bias,
                 slope_scale,
                 clamp,
@@ -4086,7 +4086,7 @@ impl M4RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setBlendColorRed:green:blue:alpha:\0"),
+                sel!(b"setBlendColorRed:green:blue:alpha:\0"),
                 red,
                 green,
                 blue,
@@ -4106,7 +4106,7 @@ impl M4RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"drawPrimitives:vertexStart:vertexCount:\0"),
+                sel!(b"drawPrimitives:vertexStart:vertexCount:\0"),
                 primitive_type as usize,
                 vertex_start,
                 vertex_count,
@@ -4127,7 +4127,7 @@ impl M4RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"drawIndexedPrimitives:indexCount:indexType:indexBuffer:indexBufferLength:\0"),
+                sel!(b"drawIndexedPrimitives:indexCount:indexType:indexBuffer:indexBufferLength:\0"),
                 primitive_type as usize,
                 index_count,
                 index_type as usize,
@@ -4147,7 +4147,7 @@ impl M4RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"drawPrimitives:indirectBuffer:\0"),
+                sel!(b"drawPrimitives:indirectBuffer:\0"),
                 primitive_type as usize,
                 indirect_buffer,
             );
@@ -4167,7 +4167,7 @@ impl M4RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"drawIndexedPrimitives:indexType:indexBuffer:indexBufferLength:indirectBuffer:\0"),
+                sel!(b"drawIndexedPrimitives:indexType:indexBuffer:indexBufferLength:indirectBuffer:\0"),
                 primitive_type as usize,
                 index_type as usize,
                 index_buffer,
@@ -4188,7 +4188,7 @@ impl M4RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"drawMeshThreadgroups:threadsPerObjectThreadgroup:threadsPerMeshThreadgroup:\0"),
+                sel!(b"drawMeshThreadgroups:threadsPerObjectThreadgroup:threadsPerMeshThreadgroup:\0"),
                 threadgroups_per_grid,
                 threads_per_object_threadgroup,
                 threads_per_mesh_threadgroup,
@@ -4207,7 +4207,7 @@ impl M4RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"drawMeshThreads:threadsPerObjectThreadgroup:threadsPerMeshThreadgroup:\0"),
+                sel!(b"drawMeshThreads:threadsPerObjectThreadgroup:threadsPerMeshThreadgroup:\0"),
                 threads_per_grid,
                 threads_per_object_threadgroup,
                 threads_per_mesh_threadgroup,
@@ -4226,7 +4226,7 @@ impl M4RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"drawMeshThreadgroupsWithIndirectBuffer:threadsPerObjectThreadgroup:threadsPerMeshThreadgroup:\0"),
+                sel!(b"drawMeshThreadgroupsWithIndirectBuffer:threadsPerObjectThreadgroup:threadsPerMeshThreadgroup:\0"),
                 indirect_buffer,
                 threads_per_object_threadgroup,
                 threads_per_mesh_threadgroup,
@@ -4240,7 +4240,7 @@ impl M4RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"executeCommandsInBuffer:withRange:\0"),
+                sel!(b"executeCommandsInBuffer:withRange:\0"),
                 buffer.raw,
                 range,
             );
@@ -4257,7 +4257,7 @@ impl M4RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"executeCommandsInBuffer:indirectBuffer:\0"),
+                sel!(b"executeCommandsInBuffer:indirectBuffer:\0"),
                 buffer.raw,
                 indirect_range_buffer,
             );
@@ -4276,7 +4276,7 @@ impl M4RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"writeTimestampWithGranularity:afterStage:intoHeap:atIndex:\0"),
+                sel!(b"writeTimestampWithGranularity:afterStage:intoHeap:atIndex:\0"),
                 granularity as isize,
                 after_stage.0,
                 counter_heap.raw,
@@ -4286,7 +4286,7 @@ impl M4RenderCommandEncoder {
     }
 
     pub fn end_encoding(&self) {
-        msg_void(self.raw, sel(b"endEncoding\0"));
+        msg_void(self.raw, sel!(b"endEncoding\0"));
     }
 }
 
@@ -4311,23 +4311,23 @@ impl M4MachineLearningCommandEncoder {
     }
 
     pub fn set_pipeline_state(&self, pipeline_state: &M4MachineLearningPipelineState) {
-        msg_void_id(self.raw, sel(b"setPipelineState:\0"), pipeline_state.raw);
+        msg_void_id(self.raw, sel!(b"setPipelineState:\0"), pipeline_state.raw);
     }
 
     pub fn set_argument_table(&self, argument_table: &M4ArgumentTable) {
-        msg_void_id(self.raw, sel(b"setArgumentTable:\0"), argument_table.raw);
+        msg_void_id(self.raw, sel!(b"setArgumentTable:\0"), argument_table.raw);
     }
 
     pub fn dispatch_network_with_intermediates_heap(&self, heap: &Heap) {
         msg_void_id(
             self.raw,
-            sel(b"dispatchNetworkWithIntermediatesHeap:\0"),
+            sel!(b"dispatchNetworkWithIntermediatesHeap:\0"),
             heap.raw,
         );
     }
 
     pub fn end_encoding(&self) {
-        msg_void(self.raw, sel(b"endEncoding\0"));
+        msg_void(self.raw, sel!(b"endEncoding\0"));
     }
 }
 
@@ -4423,7 +4423,7 @@ impl M4PrimitiveAccelerationStructureDescriptor {
     pub fn geometry_descriptors(
         &self,
     ) -> NSArrayIterator<M4AccelerationStructureGeometryDescriptor> {
-        NSArrayIterator::new(msg_id(self.raw, sel(b"geometryDescriptors\0")))
+        NSArrayIterator::new(msg_id(self.raw, sel!(b"geometryDescriptors\0")))
     }
 
     pub fn set_geometry_descriptors(
@@ -4435,17 +4435,17 @@ impl M4PrimitiveAccelerationStructureDescriptor {
         };
         msg_void_id(
             self.raw,
-            sel(b"setGeometryDescriptors:\0"),
+            sel!(b"setGeometryDescriptors:\0"),
             ns_array_from_ids(raw_ptrs),
         );
     }
 
     pub fn motion_keyframe_count(&self) -> usize {
-        msg_usize(self.raw, sel(b"motionKeyframeCount\0"))
+        msg_usize(self.raw, sel!(b"motionKeyframeCount\0"))
     }
 
     pub fn set_motion_keyframe_count(&self, count: usize) {
-        msg_void_usize(self.raw, sel(b"setMotionKeyframeCount:\0"), count);
+        msg_void_usize(self.raw, sel!(b"setMotionKeyframeCount:\0"), count);
     }
 }
 
@@ -4525,37 +4525,37 @@ m4_as_geometry_desc!(
 
 impl M4AccelerationStructureTriangleGeometryDescriptor {
     pub fn vertex_buffer(&self) -> M4BufferRange {
-        m4_buffer_range(self.raw, sel(b"vertexBuffer\0"))
+        m4_buffer_range(self.raw, sel!(b"vertexBuffer\0"))
     }
 
     pub fn set_vertex_buffer(&self, range: M4BufferRange) {
-        m4_set_buffer_range(self.raw, sel(b"setVertexBuffer:\0"), range);
+        m4_set_buffer_range(self.raw, sel!(b"setVertexBuffer:\0"), range);
     }
 
     pub fn triangle_count(&self) -> usize {
-        msg_usize(self.raw, sel(b"triangleCount\0"))
+        msg_usize(self.raw, sel!(b"triangleCount\0"))
     }
 
     pub fn set_triangle_count(&self, count: usize) {
-        msg_void_usize(self.raw, sel(b"setTriangleCount:\0"), count);
+        msg_void_usize(self.raw, sel!(b"setTriangleCount:\0"), count);
     }
 }
 
 impl M4AccelerationStructureBoundingBoxGeometryDescriptor {
     pub fn bounding_box_buffer(&self) -> M4BufferRange {
-        m4_buffer_range(self.raw, sel(b"boundingBoxBuffer\0"))
+        m4_buffer_range(self.raw, sel!(b"boundingBoxBuffer\0"))
     }
 
     pub fn set_bounding_box_buffer(&self, range: M4BufferRange) {
-        m4_set_buffer_range(self.raw, sel(b"setBoundingBoxBuffer:\0"), range);
+        m4_set_buffer_range(self.raw, sel!(b"setBoundingBoxBuffer:\0"), range);
     }
 
     pub fn bounding_box_count(&self) -> usize {
-        msg_usize(self.raw, sel(b"boundingBoxCount\0"))
+        msg_usize(self.raw, sel!(b"boundingBoxCount\0"))
     }
 
     pub fn set_bounding_box_count(&self, count: usize) {
-        msg_void_usize(self.raw, sel(b"setBoundingBoxCount:\0"), count);
+        msg_void_usize(self.raw, sel!(b"setBoundingBoxCount:\0"), count);
     }
 }
 
@@ -4572,23 +4572,23 @@ impl M4InstanceAccelerationStructureDescriptor {
     }
 
     pub fn instance_descriptor_buffer(&self) -> M4BufferRange {
-        m4_buffer_range(self.raw, sel(b"instanceDescriptorBuffer\0"))
+        m4_buffer_range(self.raw, sel!(b"instanceDescriptorBuffer\0"))
     }
 
     pub fn set_instance_descriptor_buffer(&self, range: M4BufferRange) {
-        m4_set_buffer_range(self.raw, sel(b"setInstanceDescriptorBuffer:\0"), range);
+        m4_set_buffer_range(self.raw, sel!(b"setInstanceDescriptorBuffer:\0"), range);
     }
 
     pub fn instance_count(&self) -> usize {
-        msg_usize(self.raw, sel(b"instanceCount\0"))
+        msg_usize(self.raw, sel!(b"instanceCount\0"))
     }
 
     pub fn set_instance_count(&self, count: usize) {
-        msg_void_usize(self.raw, sel(b"setInstanceCount:\0"), count);
+        msg_void_usize(self.raw, sel!(b"setInstanceCount:\0"), count);
     }
 
     pub fn instance_descriptor_type(&self) -> AccelerationStructureInstanceDescriptorType {
-        match msg_usize(self.raw, sel(b"instanceDescriptorType\0")) {
+        match msg_usize(self.raw, sel!(b"instanceDescriptorType\0")) {
             4 => AccelerationStructureInstanceDescriptorType::IndirectMotion,
             3 => AccelerationStructureInstanceDescriptorType::Indirect,
             _ => AccelerationStructureInstanceDescriptorType::Default,
@@ -4601,7 +4601,7 @@ impl M4InstanceAccelerationStructureDescriptor {
     ) {
         msg_void_usize(
             self.raw,
-            sel(b"setInstanceDescriptorType:\0"),
+            sel!(b"setInstanceDescriptorType:\0"),
             descriptor_type as usize,
         );
     }
@@ -4632,27 +4632,27 @@ impl M4IndirectInstanceAccelerationStructureDescriptor {
     }
 
     pub fn instance_descriptor_buffer(&self) -> M4BufferRange {
-        m4_buffer_range(self.raw, sel(b"instanceDescriptorBuffer\0"))
+        m4_buffer_range(self.raw, sel!(b"instanceDescriptorBuffer\0"))
     }
 
     pub fn set_instance_descriptor_buffer(&self, range: M4BufferRange) {
-        m4_set_buffer_range(self.raw, sel(b"setInstanceDescriptorBuffer:\0"), range);
+        m4_set_buffer_range(self.raw, sel!(b"setInstanceDescriptorBuffer:\0"), range);
     }
 
     pub fn max_instance_count(&self) -> usize {
-        msg_usize(self.raw, sel(b"maxInstanceCount\0"))
+        msg_usize(self.raw, sel!(b"maxInstanceCount\0"))
     }
 
     pub fn set_max_instance_count(&self, count: usize) {
-        msg_void_usize(self.raw, sel(b"setMaxInstanceCount:\0"), count);
+        msg_void_usize(self.raw, sel!(b"setMaxInstanceCount:\0"), count);
     }
 
     pub fn instance_count_buffer(&self) -> M4BufferRange {
-        m4_buffer_range(self.raw, sel(b"instanceCountBuffer\0"))
+        m4_buffer_range(self.raw, sel!(b"instanceCountBuffer\0"))
     }
 
     pub fn set_instance_count_buffer(&self, range: M4BufferRange) {
-        m4_set_buffer_range(self.raw, sel(b"setInstanceCountBuffer:\0"), range);
+        m4_set_buffer_range(self.raw, sel!(b"setInstanceCountBuffer:\0"), range);
     }
 }
 
@@ -4674,7 +4674,7 @@ impl Drop for M4IndirectInstanceAccelerationStructureDescriptor {
 
 impl Device {
     pub fn new_m4_command_allocator(&self) -> Option<M4CommandAllocator> {
-        let selector = sel(b"newCommandAllocator\0");
+        let selector = sel!(b"newCommandAllocator\0");
         if !responds_to_selector(self.raw, selector) {
             return None;
         }
@@ -4687,7 +4687,7 @@ impl Device {
         descriptor: &M4CommandAllocatorDescriptor,
     ) -> Result<M4CommandAllocator, MetalError> {
         let mut error = NIL;
-        let selector = sel(b"newCommandAllocatorWithDescriptor:error:\0");
+        let selector = sel!(b"newCommandAllocatorWithDescriptor:error:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "newCommandAllocatorWithDescriptor:error: not supported",
@@ -4710,7 +4710,7 @@ impl Device {
     }
 
     pub fn new_m4_command_queue(&self) -> Option<M4CommandQueue> {
-        let selector = sel(b"newMTL4CommandQueue\0");
+        let selector = sel!(b"newMTL4CommandQueue\0");
         if !responds_to_selector(self.raw, selector) {
             return None;
         }
@@ -4723,7 +4723,7 @@ impl Device {
         descriptor: &M4CommandQueueDescriptor,
     ) -> Result<M4CommandQueue, MetalError> {
         let mut error = NIL;
-        let selector = sel(b"newMTL4CommandQueueWithDescriptor:error:\0");
+        let selector = sel!(b"newMTL4CommandQueueWithDescriptor:error:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "newMTL4CommandQueueWithDescriptor:error: not supported",
@@ -4746,7 +4746,7 @@ impl Device {
     }
 
     pub fn new_m4_command_buffer(&self) -> Option<M4CommandBuffer> {
-        let selector = sel(b"newCommandBuffer\0");
+        let selector = sel!(b"newCommandBuffer\0");
         if !responds_to_selector(self.raw, selector) {
             return None;
         }
@@ -4759,7 +4759,7 @@ impl Device {
         descriptor: &M4ArgumentTableDescriptor,
     ) -> Result<M4ArgumentTable, MetalError> {
         let mut error = NIL;
-        let selector = sel(b"newArgumentTableWithDescriptor:error:\0");
+        let selector = sel!(b"newArgumentTableWithDescriptor:error:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "newArgumentTableWithDescriptor:error: not supported",
@@ -4786,7 +4786,7 @@ impl Device {
         descriptor: &M4CompilerDescriptor,
     ) -> Result<M4Compiler, MetalError> {
         let mut error = NIL;
-        let selector = sel(b"newCompilerWithDescriptor:error:\0");
+        let selector = sel!(b"newCompilerWithDescriptor:error:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "newCompilerWithDescriptor:error: not supported",
@@ -4810,7 +4810,7 @@ impl Device {
 
     pub fn new_m4_archive_with_url(&self, url_path: &str) -> Result<M4Archive, MetalError> {
         let mut error = NIL;
-        let selector = sel(b"newArchiveWithURL:error:\0");
+        let selector = sel!(b"newArchiveWithURL:error:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new("newArchiveWithURL:error: not supported"));
         }
@@ -4830,7 +4830,7 @@ impl Device {
         &self,
         descriptor: &M4PipelineDataSetSerializerDescriptor,
     ) -> Result<M4PipelineDataSetSerializer, MetalError> {
-        let selector = sel(b"newPipelineDataSetSerializerWithDescriptor:\0");
+        let selector = sel!(b"newPipelineDataSetSerializerWithDescriptor:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "newPipelineDataSetSerializerWithDescriptor: not supported",
@@ -4851,7 +4851,7 @@ impl Device {
         descriptor: &M4CounterHeapDescriptor,
     ) -> Result<M4CounterHeap, MetalError> {
         let mut error = NIL;
-        let selector = sel(b"newCounterHeapWithDescriptor:error:\0");
+        let selector = sel!(b"newCounterHeapWithDescriptor:error:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "newCounterHeapWithDescriptor:error: not supported",
@@ -4874,7 +4874,7 @@ impl Device {
     }
 
     pub fn size_of_m4_counter_heap_entry(&self, heap_type: M4CounterHeapType) -> usize {
-        let selector = sel(b"sizeOfCounterHeapEntry:\0");
+        let selector = sel!(b"sizeOfCounterHeapEntry:\0");
         if !responds_to_selector(self.raw, selector) {
             return 0;
         }
@@ -4886,7 +4886,7 @@ impl Device {
         function: &M4BinaryFunction,
     ) -> Result<FunctionHandle, MetalError> {
         let mut error = NIL;
-        let selector = sel(b"functionHandleWithBinaryFunction:error:\0");
+        let selector = sel!(b"functionHandleWithBinaryFunction:error:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "functionHandleWithBinaryFunction:error: not supported",

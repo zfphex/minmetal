@@ -48,7 +48,7 @@ fn pipeline_label(raw: id) -> Option<NSString> {
     if raw.is_null() {
         return None;
     }
-    let ptr = msg_id(raw, sel(b"label\0"));
+    let ptr = msg_id(raw, sel!(b"label\0"));
     if ptr.is_null() {
         None
     } else {
@@ -63,9 +63,9 @@ pub struct FunctionConstantValues {
 
 impl FunctionConstantValues {
     pub fn new() -> Self {
-        let allocated = msg_id(class(b"MTLFunctionConstantValues\0"), sel(b"alloc\0"));
+        let allocated = msg_id(class(b"MTLFunctionConstantValues\0"), sel!(b"alloc\0"));
         Self {
-            raw: msg_id(allocated, sel(b"init\0")),
+            raw: msg_id(allocated, sel!(b"init\0")),
         }
     }
 
@@ -124,7 +124,7 @@ impl FunctionConstantValues {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setConstantValues:type:withRange:\0"),
+                sel!(b"setConstantValues:type:withRange:\0"),
                 bytes.as_ptr() as *const c_void,
                 data_type as usize,
                 range,
@@ -148,7 +148,7 @@ impl FunctionConstantValues {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setConstantValue:type:withName:\0"),
+                sel!(b"setConstantValue:type:withName:\0"),
                 bytes.as_ptr() as *const c_void,
                 data_type as usize,
                 ns_name.raw(),
@@ -157,7 +157,7 @@ impl FunctionConstantValues {
     }
 
     pub fn reset(&self) {
-        msg_void(self.raw, sel(b"reset\0"));
+        msg_void(self.raw, sel!(b"reset\0"));
     }
 
     fn set_raw(&self, index: usize, data_type: DataType, ptr: *const c_void) {
@@ -166,7 +166,7 @@ impl FunctionConstantValues {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setConstantValue:type:atIndex:\0"),
+                sel!(b"setConstantValue:type:atIndex:\0"),
                 ptr,
                 data_type as usize,
                 index,
@@ -194,20 +194,20 @@ pub struct BinaryArchiveDescriptor {
 
 impl BinaryArchiveDescriptor {
     pub fn new() -> Self {
-        let allocated = msg_id(class(b"MTLBinaryArchiveDescriptor\0"), sel(b"alloc\0"));
+        let allocated = msg_id(class(b"MTLBinaryArchiveDescriptor\0"), sel!(b"alloc\0"));
         Self {
-            raw: msg_id(allocated, sel(b"init\0")),
+            raw: msg_id(allocated, sel!(b"init\0")),
         }
     }
 
     pub fn url(&self) -> Option<NSString> {
-        let url = msg_id(self.raw, sel(b"url\0"));
+        let url = msg_id(self.raw, sel!(b"url\0"));
         ns_url_to_path(url)
     }
 
     pub fn set_url(&self, path: Option<&str>) {
         let url = path.map(ns_url_from_path).unwrap_or(NIL);
-        msg_void_id(self.raw, sel(b"setUrl:\0"), url);
+        msg_void_id(self.raw, sel!(b"setUrl:\0"), url);
     }
 }
 
@@ -245,7 +245,7 @@ impl FromRawId for BinaryArchive {
 
 impl BinaryArchive {
     pub fn device(&self) -> Device {
-        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        let ptr = retain(msg_id(self.raw, sel!(b"device\0")));
         Device { raw: ptr }
     }
 
@@ -255,7 +255,7 @@ impl BinaryArchive {
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 
     pub fn serialize_to_url(&self, url_path: &str) -> Result<(), MetalError> {
@@ -264,7 +264,7 @@ impl BinaryArchive {
             let mut error = NIL;
             let f: unsafe extern "C" fn(id, SEL, id, *mut id) -> BOOL =
                 transmute(objc_msgSend as *const c_void);
-            let ok = f(self.raw, sel(b"serializeToURL:error:\0"), url, &mut error);
+            let ok = f(self.raw, sel!(b"serializeToURL:error:\0"), url, &mut error);
             if ok == NO {
                 Err(MetalError::new(error_message(
                     error,
@@ -286,7 +286,7 @@ impl BinaryArchive {
                 transmute(objc_msgSend as *const c_void);
             let ok = f(
                 self.raw,
-                sel(b"addRenderPipelineFunctionsWithDescriptor:error:\0"),
+                sel!(b"addRenderPipelineFunctionsWithDescriptor:error:\0"),
                 descriptor.raw,
                 &mut error,
             );
@@ -311,7 +311,7 @@ impl BinaryArchive {
                 transmute(objc_msgSend as *const c_void);
             let ok = f(
                 self.raw,
-                sel(b"addComputePipelineFunctionsWithDescriptor:error:\0"),
+                sel!(b"addComputePipelineFunctionsWithDescriptor:error:\0"),
                 descriptor.raw,
                 &mut error,
             );
@@ -332,7 +332,7 @@ impl BinaryArchive {
     ) -> Result<(), MetalError> {
         unsafe {
             let mut error = NIL;
-            let selector = sel(b"addTileRenderPipelineFunctionsWithDescriptor:error:\0");
+            let selector = sel!(b"addTileRenderPipelineFunctionsWithDescriptor:error:\0");
             if !responds_to_selector(self.raw, selector) {
                 return Err(MetalError::new(
                     "addTileRenderPipelineFunctionsWithDescriptor:error: not supported",
@@ -358,7 +358,7 @@ impl BinaryArchive {
     ) -> Result<(), MetalError> {
         unsafe {
             let mut error = NIL;
-            let selector = sel(b"addMeshRenderPipelineFunctionsWithDescriptor:error:\0");
+            let selector = sel!(b"addMeshRenderPipelineFunctionsWithDescriptor:error:\0");
             if !responds_to_selector(self.raw, selector) {
                 return Err(MetalError::new(
                     "addMeshRenderPipelineFunctionsWithDescriptor:error: not supported",
@@ -384,7 +384,7 @@ impl BinaryArchive {
     ) -> Result<(), MetalError> {
         unsafe {
             let mut error = NIL;
-            let selector = sel(b"addLibraryWithDescriptor:error:\0");
+            let selector = sel!(b"addLibraryWithDescriptor:error:\0");
             if !responds_to_selector(self.raw, selector) {
                 return Err(MetalError::new(
                     "addLibraryWithDescriptor:error: not supported",
@@ -411,7 +411,7 @@ impl BinaryArchive {
     ) -> Result<(), MetalError> {
         unsafe {
             let mut error = NIL;
-            let selector = sel(b"addFunctionWithDescriptor:library:error:\0");
+            let selector = sel!(b"addFunctionWithDescriptor:library:error:\0");
             if !responds_to_selector(self.raw, selector) {
                 return Err(MetalError::new(
                     "addFunctionWithDescriptor:library:error: not supported",
@@ -449,12 +449,12 @@ impl PipelineBufferDescriptor {
     }
 
     pub fn mutability(&self) -> Mutability {
-        Mutability::from_raw(msg_usize(self.raw, sel(b"mutability\0")))
+        Mutability::from_raw(msg_usize(self.raw, sel!(b"mutability\0")))
             .unwrap_or(Mutability::Default)
     }
 
     pub fn set_mutability(&self, mutability: Mutability) {
-        msg_void_usize(self.raw, sel(b"setMutability:\0"), mutability as usize);
+        msg_void_usize(self.raw, sel!(b"setMutability:\0"), mutability as usize);
     }
 }
 
@@ -465,7 +465,7 @@ pub struct PipelineBufferDescriptorArray {
 
 impl PipelineBufferDescriptorArray {
     pub fn object_at_index(&self, index: usize) -> PipelineBufferDescriptor {
-        let ptr = msg_id_usize(self.raw, sel(b"objectAtIndexedSubscript:\0"), index);
+        let ptr = msg_id_usize(self.raw, sel!(b"objectAtIndexedSubscript:\0"), index);
         PipelineBufferDescriptor::borrowed(ptr)
     }
 }
@@ -477,7 +477,7 @@ pub struct ComputePipelineReflection {
 
 impl ComputePipelineReflection {
     pub fn bindings(&self) -> NSArrayIterator<Binding> {
-        let array = msg_id(self.raw, sel(b"bindings\0"));
+        let array = msg_id(self.raw, sel!(b"bindings\0"));
         NSArrayIterator::new(array)
     }
 }
@@ -495,75 +495,75 @@ pub struct ComputePipelineDescriptor {
 
 impl ComputePipelineDescriptor {
     pub fn new() -> Self {
-        let allocated = msg_id(class(b"MTLComputePipelineDescriptor\0"), sel(b"alloc\0"));
+        let allocated = msg_id(class(b"MTLComputePipelineDescriptor\0"), sel!(b"alloc\0"));
         Self {
-            raw: msg_id(allocated, sel(b"init\0")),
+            raw: msg_id(allocated, sel!(b"init\0")),
         }
     }
 
     pub fn set_compute_function(&self, function: &Function) {
-        msg_void_id(self.raw, sel(b"setComputeFunction:\0"), function.raw);
+        msg_void_id(self.raw, sel!(b"setComputeFunction:\0"), function.raw);
     }
 
     pub fn set_binary_archives(&self, archives: &[BinaryArchive]) {
         let raw_ptrs =
             unsafe { std::slice::from_raw_parts(archives.as_ptr() as *const id, archives.len()) };
         let array = ns_array_from_ids(raw_ptrs);
-        msg_void_id(self.raw, sel(b"setBinaryArchives:\0"), array);
+        msg_void_id(self.raw, sel!(b"setBinaryArchives:\0"), array);
     }
 
     pub fn set_support_indirect_command_buffers(&self, support: bool) {
         msg_void_bool(
             self.raw,
-            sel(b"setSupportIndirectCommandBuffers:\0"),
+            sel!(b"setSupportIndirectCommandBuffers:\0"),
             if support { YES } else { NO },
         );
     }
 
     pub fn linked_functions(&self) -> LinkedFunctions {
-        let lf = msg_id(self.raw, sel(b"linkedFunctions\0"));
+        let lf = msg_id(self.raw, sel!(b"linkedFunctions\0"));
         LinkedFunctions { raw: retain(lf) }
     }
 
     pub fn set_linked_functions(&self, linked_functions: &LinkedFunctions) {
         msg_void_id(
             self.raw,
-            sel(b"setLinkedFunctions:\0"),
+            sel!(b"setLinkedFunctions:\0"),
             linked_functions.raw,
         );
     }
 
     pub fn support_adding_binary_functions(&self) -> bool {
-        msg_bool(self.raw, sel(b"supportAddingBinaryFunctions\0")) != NO
+        msg_bool(self.raw, sel!(b"supportAddingBinaryFunctions\0")) != NO
     }
 
     pub fn set_support_adding_binary_functions(&self, support: bool) {
         msg_void_bool(
             self.raw,
-            sel(b"setSupportAddingBinaryFunctions:\0"),
+            sel!(b"setSupportAddingBinaryFunctions:\0"),
             if support { YES } else { NO },
         );
     }
 
     pub fn max_total_threads_per_threadgroup(&self) -> usize {
-        msg_usize(self.raw, sel(b"maxTotalThreadsPerThreadgroup\0"))
+        msg_usize(self.raw, sel!(b"maxTotalThreadsPerThreadgroup\0"))
     }
 
     pub fn set_max_total_threads_per_threadgroup(&self, max: usize) {
-        msg_void_usize(self.raw, sel(b"setMaxTotalThreadsPerThreadgroup:\0"), max);
+        msg_void_usize(self.raw, sel!(b"setMaxTotalThreadsPerThreadgroup:\0"), max);
     }
 
     pub fn thread_group_size_is_multiple_of_thread_execution_width(&self) -> bool {
         msg_bool(
             self.raw,
-            sel(b"threadGroupSizeIsMultipleOfThreadExecutionWidth\0"),
+            sel!(b"threadGroupSizeIsMultipleOfThreadExecutionWidth\0"),
         ) != NO
     }
 
     pub fn set_thread_group_size_is_multiple_of_thread_execution_width(&self, value: bool) {
         msg_void_bool(
             self.raw,
-            sel(b"setThreadGroupSizeIsMultipleOfThreadExecutionWidth:\0"),
+            sel!(b"setThreadGroupSizeIsMultipleOfThreadExecutionWidth:\0"),
             if value { YES } else { NO },
         );
     }
@@ -574,23 +574,23 @@ impl ComputePipelineDescriptor {
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 
     pub fn compute_function(&self) -> Option<Function> {
-        let f = msg_id(self.raw, sel(b"computeFunction\0"));
+        let f = msg_id(self.raw, sel!(b"computeFunction\0"));
         (!f.is_null()).then(|| Function { raw: retain(f) })
     }
 
     pub fn reset(&self) {
-        let selector = sel(b"reset\0");
+        let selector = sel!(b"reset\0");
         if responds_to_selector(self.raw, selector) {
             msg_void(self.raw, selector);
         }
     }
 
     pub fn stage_input_output_descriptor(&self) -> Option<StageInputOutputDescriptor> {
-        let selector = sel(b"stageInputOutputDescriptor\0");
+        let selector = sel!(b"stageInputOutputDescriptor\0");
         if responds_to_selector(self.raw, selector) {
             let ptr = msg_id(self.raw, selector);
             (!ptr.is_null()).then(|| StageInputOutputDescriptor { raw: retain(ptr) })
@@ -603,7 +603,7 @@ impl ComputePipelineDescriptor {
         &self,
         descriptor: Option<&StageInputOutputDescriptor>,
     ) {
-        let selector = sel(b"setStageInputOutputDescriptor:\0");
+        let selector = sel!(b"setStageInputOutputDescriptor:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_id(
                 self.raw,
@@ -615,12 +615,12 @@ impl ComputePipelineDescriptor {
 
     pub fn buffers(&self) -> PipelineBufferDescriptorArray {
         PipelineBufferDescriptorArray {
-            raw: msg_id(self.raw, sel(b"buffers\0")),
+            raw: msg_id(self.raw, sel!(b"buffers\0")),
         }
     }
 
     pub fn preloaded_libraries(&self) -> Result<NSArrayIterator<DynamicLibrary>, MetalError> {
-        let selector = sel(b"preloadedLibraries\0");
+        let selector = sel!(b"preloadedLibraries\0");
         if responds_to_selector(self.raw, selector) {
             let array = msg_id(self.raw, selector);
             Ok(NSArrayIterator::new(array))
@@ -632,7 +632,7 @@ impl ComputePipelineDescriptor {
     }
 
     pub fn set_preloaded_libraries(&self, libraries: &[DynamicLibrary]) -> Result<(), MetalError> {
-        let selector = sel(b"setPreloadedLibraries:\0");
+        let selector = sel!(b"setPreloadedLibraries:\0");
         if responds_to_selector(self.raw, selector) {
             let raw_ptrs = unsafe {
                 std::slice::from_raw_parts(libraries.as_ptr() as *const id, libraries.len())
@@ -648,7 +648,7 @@ impl ComputePipelineDescriptor {
     }
 
     pub fn binary_archives(&self) -> Result<NSArrayIterator<BinaryArchive>, MetalError> {
-        let selector = sel(b"binaryArchives\0");
+        let selector = sel!(b"binaryArchives\0");
         if responds_to_selector(self.raw, selector) {
             let array = msg_id(self.raw, selector);
             Ok(NSArrayIterator::new(array))
@@ -660,7 +660,7 @@ impl ComputePipelineDescriptor {
     }
 
     pub fn support_indirect_command_buffers(&self) -> bool {
-        let selector = sel(b"supportIndirectCommandBuffers\0");
+        let selector = sel!(b"supportIndirectCommandBuffers\0");
         if responds_to_selector(self.raw, selector) {
             msg_bool(self.raw, selector) != NO
         } else {
@@ -669,7 +669,7 @@ impl ComputePipelineDescriptor {
     }
 
     pub fn max_call_stack_depth(&self) -> usize {
-        let selector = sel(b"maxCallStackDepth\0");
+        let selector = sel!(b"maxCallStackDepth\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -678,14 +678,14 @@ impl ComputePipelineDescriptor {
     }
 
     pub fn set_max_call_stack_depth(&self, depth: usize) {
-        let selector = sel(b"setMaxCallStackDepth:\0");
+        let selector = sel!(b"setMaxCallStackDepth:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_usize(self.raw, selector, depth);
         }
     }
 
     pub fn shader_validation(&self) -> ShaderValidation {
-        let selector = sel(b"shaderValidation\0");
+        let selector = sel!(b"shaderValidation\0");
         if responds_to_selector(self.raw, selector) {
             ShaderValidation::from_raw(msg_usize(self.raw, selector) as isize)
                 .unwrap_or(ShaderValidation::Default)
@@ -695,7 +695,7 @@ impl ComputePipelineDescriptor {
     }
 
     pub fn set_shader_validation(&self, validation: ShaderValidation) {
-        let selector = sel(b"setShaderValidation:\0");
+        let selector = sel!(b"setShaderValidation:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_usize(self.raw, selector, validation as usize);
         }
@@ -741,7 +741,7 @@ impl ComputePipelineState {
     }
 
     pub fn device(&self) -> Device {
-        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        let ptr = retain(msg_id(self.raw, sel!(b"device\0")));
         Device { raw: ptr }
     }
 
@@ -755,14 +755,14 @@ impl ComputePipelineState {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"imageblockMemoryLengthForDimensions:\0"),
+                sel!(b"imageblockMemoryLengthForDimensions:\0"),
                 dimensions,
             )
         }
     }
 
     pub fn reflection(&self) -> Option<ComputePipelineReflection> {
-        let selector = sel(b"reflection\0");
+        let selector = sel!(b"reflection\0");
         if responds_to_selector(self.raw, selector) {
             let ptr = msg_id(self.raw, selector);
             (!ptr.is_null()).then(|| ComputePipelineReflection { raw: retain(ptr) })
@@ -772,15 +772,15 @@ impl ComputePipelineState {
     }
 
     pub fn max_total_threads_per_threadgroup(&self) -> usize {
-        msg_usize(self.raw, sel(b"maxTotalThreadsPerThreadgroup\0"))
+        msg_usize(self.raw, sel!(b"maxTotalThreadsPerThreadgroup\0"))
     }
 
     pub fn thread_execution_width(&self) -> usize {
-        msg_usize(self.raw, sel(b"threadExecutionWidth\0"))
+        msg_usize(self.raw, sel!(b"threadExecutionWidth\0"))
     }
 
     pub fn static_threadgroup_memory_length(&self) -> usize {
-        let selector = sel(b"staticThreadgroupMemoryLength\0");
+        let selector = sel!(b"staticThreadgroupMemoryLength\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -789,7 +789,7 @@ impl ComputePipelineState {
     }
 
     pub fn support_indirect_command_buffers(&self) -> bool {
-        let selector = sel(b"supportIndirectCommandBuffers\0");
+        let selector = sel!(b"supportIndirectCommandBuffers\0");
         if responds_to_selector(self.raw, selector) {
             msg_bool(self.raw, selector) != NO
         } else {
@@ -798,7 +798,7 @@ impl ComputePipelineState {
     }
 
     pub fn gpu_resource_id(&self) -> Result<ResourceID, MetalError> {
-        let selector = sel(b"gpuResourceID\0");
+        let selector = sel!(b"gpuResourceID\0");
         if responds_to_selector(self.raw, selector) {
             Ok(msg_resource_id(self.raw, selector))
         } else {
@@ -812,7 +812,7 @@ impl ComputePipelineState {
         &self,
         function: &Function,
     ) -> Result<FunctionHandle, MetalError> {
-        let selector = sel(b"functionHandleWithFunction:\0");
+        let selector = sel!(b"functionHandleWithFunction:\0");
         if responds_to_selector(self.raw, selector) {
             let raw = retain(msg_id_id(self.raw, selector, function.raw));
             if raw.is_null() {
@@ -831,7 +831,7 @@ impl ComputePipelineState {
         &self,
         descriptor: &VisibleFunctionTableDescriptor,
     ) -> Result<VisibleFunctionTable, MetalError> {
-        let selector = sel(b"newVisibleFunctionTableWithDescriptor:\0");
+        let selector = sel!(b"newVisibleFunctionTableWithDescriptor:\0");
         if responds_to_selector(self.raw, selector) {
             let raw = msg_id_id(self.raw, selector, descriptor.raw);
             if raw.is_null() {
@@ -850,7 +850,7 @@ impl ComputePipelineState {
         &self,
         descriptor: &IntersectionFunctionTableDescriptor,
     ) -> Result<IntersectionFunctionTable, MetalError> {
-        let selector = sel(b"newIntersectionFunctionTableWithDescriptor:\0");
+        let selector = sel!(b"newIntersectionFunctionTableWithDescriptor:\0");
         if responds_to_selector(self.raw, selector) {
             let raw = msg_id_id(self.raw, selector, descriptor.raw);
             if raw.is_null() {
@@ -879,16 +879,16 @@ impl VertexAttributeDescriptor {
     }
 
     pub fn format(&self) -> VertexFormat {
-        let val = msg_usize(self.raw, sel(b"format\0"));
+        let val = msg_usize(self.raw, sel!(b"format\0"));
         unsafe { std::mem::transmute(val) }
     }
 
     pub fn offset(&self) -> usize {
-        msg_usize(self.raw, sel(b"offset\0"))
+        msg_usize(self.raw, sel!(b"offset\0"))
     }
 
     pub fn buffer_index(&self) -> usize {
-        msg_usize(self.raw, sel(b"bufferIndex\0"))
+        msg_usize(self.raw, sel!(b"bufferIndex\0"))
     }
 }
 
@@ -899,7 +899,7 @@ pub struct VertexAttributeDescriptorArray {
 
 impl VertexAttributeDescriptorArray {
     pub fn object_at_index(&self, index: usize) -> VertexAttributeDescriptor {
-        let ptr = msg_id_usize(self.raw, sel(b"objectAtIndexedSubscript:\0"), index);
+        let ptr = msg_id_usize(self.raw, sel!(b"objectAtIndexedSubscript:\0"), index);
         VertexAttributeDescriptor::borrowed(ptr)
     }
 }
@@ -915,16 +915,16 @@ impl VertexBufferLayoutDescriptor {
     }
 
     pub fn stride(&self) -> usize {
-        msg_usize(self.raw, sel(b"stride\0"))
+        msg_usize(self.raw, sel!(b"stride\0"))
     }
 
     pub fn step_function(&self) -> VertexStepFunction {
-        let val = msg_usize(self.raw, sel(b"stepFunction\0"));
+        let val = msg_usize(self.raw, sel!(b"stepFunction\0"));
         unsafe { std::mem::transmute(val) }
     }
 
     pub fn step_rate(&self) -> usize {
-        msg_usize(self.raw, sel(b"stepRate\0"))
+        msg_usize(self.raw, sel!(b"stepRate\0"))
     }
 }
 
@@ -935,7 +935,7 @@ pub struct VertexBufferLayoutDescriptorArray {
 
 impl VertexBufferLayoutDescriptorArray {
     pub fn object_at_index(&self, index: usize) -> VertexBufferLayoutDescriptor {
-        let ptr = msg_id_usize(self.raw, sel(b"objectAtIndexedSubscript:\0"), index);
+        let ptr = msg_id_usize(self.raw, sel!(b"objectAtIndexedSubscript:\0"), index);
         VertexBufferLayoutDescriptor::borrowed(ptr)
     }
 }
@@ -949,7 +949,7 @@ impl VertexDescriptor {
     pub fn new() -> Self {
         let raw = retain(msg_id(
             class(b"MTLVertexDescriptor\0"),
-            sel(b"vertexDescriptor\0"),
+            sel!(b"vertexDescriptor\0"),
         ));
         Self { raw }
     }
@@ -961,11 +961,11 @@ impl VertexDescriptor {
         offset: usize,
         buffer_index: usize,
     ) {
-        let attributes = msg_id(self.raw, sel(b"attributes\0"));
-        let attribute = msg_id_usize(attributes, sel(b"objectAtIndexedSubscript:\0"), index);
-        msg_void_usize(attribute, sel(b"setFormat:\0"), format as usize);
-        msg_void_usize(attribute, sel(b"setOffset:\0"), offset);
-        msg_void_usize(attribute, sel(b"setBufferIndex:\0"), buffer_index);
+        let attributes = msg_id(self.raw, sel!(b"attributes\0"));
+        let attribute = msg_id_usize(attributes, sel!(b"objectAtIndexedSubscript:\0"), index);
+        msg_void_usize(attribute, sel!(b"setFormat:\0"), format as usize);
+        msg_void_usize(attribute, sel!(b"setOffset:\0"), offset);
+        msg_void_usize(attribute, sel!(b"setBufferIndex:\0"), buffer_index);
     }
 
     pub fn set_layout(
@@ -975,22 +975,22 @@ impl VertexDescriptor {
         step_function: VertexStepFunction,
         step_rate: usize,
     ) {
-        let layouts = msg_id(self.raw, sel(b"layouts\0"));
-        let layout = msg_id_usize(layouts, sel(b"objectAtIndexedSubscript:\0"), index);
-        msg_void_usize(layout, sel(b"setStride:\0"), stride);
-        msg_void_usize(layout, sel(b"setStepFunction:\0"), step_function as usize);
-        msg_void_usize(layout, sel(b"setStepRate:\0"), step_rate);
+        let layouts = msg_id(self.raw, sel!(b"layouts\0"));
+        let layout = msg_id_usize(layouts, sel!(b"objectAtIndexedSubscript:\0"), index);
+        msg_void_usize(layout, sel!(b"setStride:\0"), stride);
+        msg_void_usize(layout, sel!(b"setStepFunction:\0"), step_function as usize);
+        msg_void_usize(layout, sel!(b"setStepRate:\0"), step_rate);
     }
 
     pub fn attributes(&self) -> VertexAttributeDescriptorArray {
         VertexAttributeDescriptorArray {
-            raw: msg_id(self.raw, sel(b"attributes\0")),
+            raw: msg_id(self.raw, sel!(b"attributes\0")),
         }
     }
 
     pub fn layouts(&self) -> VertexBufferLayoutDescriptorArray {
         VertexBufferLayoutDescriptorArray {
-            raw: msg_id(self.raw, sel(b"layouts\0")),
+            raw: msg_id(self.raw, sel!(b"layouts\0")),
         }
     }
 }
@@ -1016,7 +1016,7 @@ impl StageInputOutputDescriptor {
     pub fn new() -> Self {
         let raw = retain(msg_id(
             class(b"MTLStageInputOutputDescriptor\0"),
-            sel(b"stageInputOutputDescriptor\0"),
+            sel!(b"stageInputOutputDescriptor\0"),
         ));
         Self { raw }
     }
@@ -1028,11 +1028,11 @@ impl StageInputOutputDescriptor {
         offset: usize,
         buffer_index: usize,
     ) {
-        let attributes = msg_id(self.raw, sel(b"attributes\0"));
-        let attribute = msg_id_usize(attributes, sel(b"objectAtIndexedSubscript:\0"), index);
-        msg_void_usize(attribute, sel(b"setFormat:\0"), format as usize);
-        msg_void_usize(attribute, sel(b"setOffset:\0"), offset);
-        msg_void_usize(attribute, sel(b"setBufferIndex:\0"), buffer_index);
+        let attributes = msg_id(self.raw, sel!(b"attributes\0"));
+        let attribute = msg_id_usize(attributes, sel!(b"objectAtIndexedSubscript:\0"), index);
+        msg_void_usize(attribute, sel!(b"setFormat:\0"), format as usize);
+        msg_void_usize(attribute, sel!(b"setOffset:\0"), offset);
+        msg_void_usize(attribute, sel!(b"setBufferIndex:\0"), buffer_index);
     }
 
     pub fn set_layout(
@@ -1042,15 +1042,15 @@ impl StageInputOutputDescriptor {
         step_function: StepFunction,
         step_rate: usize,
     ) {
-        let layouts = msg_id(self.raw, sel(b"layouts\0"));
-        let layout = msg_id_usize(layouts, sel(b"objectAtIndexedSubscript:\0"), index);
-        msg_void_usize(layout, sel(b"setStride:\0"), stride);
-        msg_void_usize(layout, sel(b"setStepFunction:\0"), step_function as usize);
-        msg_void_usize(layout, sel(b"setStepRate:\0"), step_rate);
+        let layouts = msg_id(self.raw, sel!(b"layouts\0"));
+        let layout = msg_id_usize(layouts, sel!(b"objectAtIndexedSubscript:\0"), index);
+        msg_void_usize(layout, sel!(b"setStride:\0"), stride);
+        msg_void_usize(layout, sel!(b"setStepFunction:\0"), step_function as usize);
+        msg_void_usize(layout, sel!(b"setStepRate:\0"), step_rate);
     }
 
     pub fn index_type(&self) -> IndexType {
-        let val = msg_usize(self.raw, sel(b"indexType\0"));
+        let val = msg_usize(self.raw, sel!(b"indexType\0"));
         match val {
             1 => IndexType::UInt32,
             _ => IndexType::UInt16,
@@ -1058,19 +1058,19 @@ impl StageInputOutputDescriptor {
     }
 
     pub fn set_index_type(&self, index_type: IndexType) {
-        msg_void_usize(self.raw, sel(b"setIndexType:\0"), index_type as usize);
+        msg_void_usize(self.raw, sel!(b"setIndexType:\0"), index_type as usize);
     }
 
     pub fn index_buffer_index(&self) -> usize {
-        msg_usize(self.raw, sel(b"indexBufferIndex\0"))
+        msg_usize(self.raw, sel!(b"indexBufferIndex\0"))
     }
 
     pub fn set_index_buffer_index(&self, index: usize) {
-        msg_void_usize(self.raw, sel(b"setIndexBufferIndex:\0"), index);
+        msg_void_usize(self.raw, sel!(b"setIndexBufferIndex:\0"), index);
     }
 
     pub fn reset(&self) {
-        msg_void(self.raw, sel(b"reset\0"));
+        msg_void(self.raw, sel!(b"reset\0"));
     }
 }
 
@@ -1083,7 +1083,7 @@ impl Default for StageInputOutputDescriptor {
 impl Clone for StageInputOutputDescriptor {
     fn clone(&self) -> Self {
         Self {
-            raw: retain(msg_id(self.raw, sel(b"copy\0"))),
+            raw: retain(msg_id(self.raw, sel!(b"copy\0"))),
         }
     }
 }
@@ -1105,45 +1105,45 @@ impl RenderPipelineColorAttachmentDescriptor {
     }
 
     pub fn pixel_format(&self) -> PixelFormat {
-        PixelFormat::from_raw(msg_usize(self.raw, sel(b"pixelFormat\0")))
+        PixelFormat::from_raw(msg_usize(self.raw, sel!(b"pixelFormat\0")))
     }
 
     pub fn blending_enabled(&self) -> bool {
-        msg_bool(self.raw, sel(b"isBlendingEnabled\0")) != NO
+        msg_bool(self.raw, sel!(b"isBlendingEnabled\0")) != NO
     }
 
     pub fn source_rgb_blend_factor(&self) -> BlendFactor {
-        let val = msg_usize(self.raw, sel(b"sourceRGBBlendFactor\0"));
+        let val = msg_usize(self.raw, sel!(b"sourceRGBBlendFactor\0"));
         unsafe { std::mem::transmute(val) }
     }
 
     pub fn destination_rgb_blend_factor(&self) -> BlendFactor {
-        let val = msg_usize(self.raw, sel(b"destinationRGBBlendFactor\0"));
+        let val = msg_usize(self.raw, sel!(b"destinationRGBBlendFactor\0"));
         unsafe { std::mem::transmute(val) }
     }
 
     pub fn rgb_blend_operation(&self) -> BlendOperation {
-        let val = msg_usize(self.raw, sel(b"rgbBlendOperation\0"));
+        let val = msg_usize(self.raw, sel!(b"rgbBlendOperation\0"));
         unsafe { std::mem::transmute(val) }
     }
 
     pub fn source_alpha_blend_factor(&self) -> BlendFactor {
-        let val = msg_usize(self.raw, sel(b"sourceAlphaBlendFactor\0"));
+        let val = msg_usize(self.raw, sel!(b"sourceAlphaBlendFactor\0"));
         unsafe { std::mem::transmute(val) }
     }
 
     pub fn destination_alpha_blend_factor(&self) -> BlendFactor {
-        let val = msg_usize(self.raw, sel(b"destinationAlphaBlendFactor\0"));
+        let val = msg_usize(self.raw, sel!(b"destinationAlphaBlendFactor\0"));
         unsafe { std::mem::transmute(val) }
     }
 
     pub fn alpha_blend_operation(&self) -> BlendOperation {
-        let val = msg_usize(self.raw, sel(b"alphaBlendOperation\0"));
+        let val = msg_usize(self.raw, sel!(b"alphaBlendOperation\0"));
         unsafe { std::mem::transmute(val) }
     }
 
     pub fn write_mask(&self) -> ColorWriteMask {
-        let raw = msg_usize(self.raw, sel(b"writeMask\0"));
+        let raw = msg_usize(self.raw, sel!(b"writeMask\0"));
         unsafe { std::mem::transmute(raw) }
     }
 }
@@ -1155,7 +1155,7 @@ pub struct RenderPipelineColorAttachmentDescriptorArray {
 
 impl RenderPipelineColorAttachmentDescriptorArray {
     pub fn object_at_index(&self, index: usize) -> RenderPipelineColorAttachmentDescriptor {
-        let ptr = msg_id_usize(self.raw, sel(b"objectAtIndexedSubscript:\0"), index);
+        let ptr = msg_id_usize(self.raw, sel!(b"objectAtIndexedSubscript:\0"), index);
         RenderPipelineColorAttachmentDescriptor::borrowed(ptr)
     }
 }
@@ -1167,42 +1167,42 @@ pub struct RenderPipelineDescriptor {
 
 impl RenderPipelineDescriptor {
     pub fn new() -> Self {
-        let allocated = msg_id(class(b"MTLRenderPipelineDescriptor\0"), sel(b"alloc\0"));
+        let allocated = msg_id(class(b"MTLRenderPipelineDescriptor\0"), sel!(b"alloc\0"));
         Self {
-            raw: msg_id(allocated, sel(b"init\0")),
+            raw: msg_id(allocated, sel!(b"init\0")),
         }
     }
 
     pub fn set_vertex_function(&self, function: &Function) {
-        msg_void_id(self.raw, sel(b"setVertexFunction:\0"), function.raw);
+        msg_void_id(self.raw, sel!(b"setVertexFunction:\0"), function.raw);
     }
 
     pub fn set_fragment_function(&self, function: &Function) {
-        msg_void_id(self.raw, sel(b"setFragmentFunction:\0"), function.raw);
+        msg_void_id(self.raw, sel!(b"setFragmentFunction:\0"), function.raw);
     }
 
     pub fn set_color_attachment_pixel_format(&self, index: usize, pixel_format: PixelFormat) {
-        let attachments = msg_id(self.raw, sel(b"colorAttachments\0"));
-        let attachment = msg_id_usize(attachments, sel(b"objectAtIndexedSubscript:\0"), index);
-        msg_void_usize(attachment, sel(b"setPixelFormat:\0"), pixel_format.as_raw());
+        let attachments = msg_id(self.raw, sel!(b"colorAttachments\0"));
+        let attachment = msg_id_usize(attachments, sel!(b"objectAtIndexedSubscript:\0"), index);
+        msg_void_usize(attachment, sel!(b"setPixelFormat:\0"), pixel_format.as_raw());
     }
 
     pub fn set_vertex_descriptor(&self, vertex_descriptor: &VertexDescriptor) {
         msg_void_id(
             self.raw,
-            sel(b"setVertexDescriptor:\0"),
+            sel!(b"setVertexDescriptor:\0"),
             vertex_descriptor.raw,
         );
     }
 
     pub fn set_sample_count(&self, sample_count: usize) {
-        msg_void_usize(self.raw, sel(b"setSampleCount:\0"), sample_count);
+        msg_void_usize(self.raw, sel!(b"setSampleCount:\0"), sample_count);
     }
 
     pub fn set_raster_sample_count(&self, raster_sample_count: usize) {
         msg_void_usize(
             self.raw,
-            sel(b"setRasterSampleCount:\0"),
+            sel!(b"setRasterSampleCount:\0"),
             raster_sample_count,
         );
     }
@@ -1210,7 +1210,7 @@ impl RenderPipelineDescriptor {
     pub fn set_depth_attachment_pixel_format(&self, pixel_format: PixelFormat) {
         msg_void_usize(
             self.raw,
-            sel(b"setDepthAttachmentPixelFormat:\0"),
+            sel!(b"setDepthAttachmentPixelFormat:\0"),
             pixel_format.as_raw(),
         );
     }
@@ -1218,7 +1218,7 @@ impl RenderPipelineDescriptor {
     pub fn set_stencil_attachment_pixel_format(&self, pixel_format: PixelFormat) {
         msg_void_usize(
             self.raw,
-            sel(b"setStencilAttachmentPixelFormat:\0"),
+            sel!(b"setStencilAttachmentPixelFormat:\0"),
             pixel_format.as_raw(),
         );
     }
@@ -1226,7 +1226,7 @@ impl RenderPipelineDescriptor {
     pub fn set_alpha_to_coverage_enabled(&self, enabled: bool) {
         msg_void_bool(
             self.raw,
-            sel(b"setAlphaToCoverageEnabled:\0"),
+            sel!(b"setAlphaToCoverageEnabled:\0"),
             if enabled { YES } else { NO },
         );
     }
@@ -1242,81 +1242,81 @@ impl RenderPipelineDescriptor {
         destination_alpha: BlendFactor,
         alpha_operation: BlendOperation,
     ) {
-        let attachments = msg_id(self.raw, sel(b"colorAttachments\0"));
-        let attachment = msg_id_usize(attachments, sel(b"objectAtIndexedSubscript:\0"), index);
+        let attachments = msg_id(self.raw, sel!(b"colorAttachments\0"));
+        let attachment = msg_id_usize(attachments, sel!(b"objectAtIndexedSubscript:\0"), index);
         msg_void_bool(
             attachment,
-            sel(b"setBlendingEnabled:\0"),
+            sel!(b"setBlendingEnabled:\0"),
             if enabled { YES } else { NO },
         );
         msg_void_usize(
             attachment,
-            sel(b"setSourceRGBBlendFactor:\0"),
+            sel!(b"setSourceRGBBlendFactor:\0"),
             source_rgb as usize,
         );
         msg_void_usize(
             attachment,
-            sel(b"setDestinationRGBBlendFactor:\0"),
+            sel!(b"setDestinationRGBBlendFactor:\0"),
             destination_rgb as usize,
         );
         msg_void_usize(
             attachment,
-            sel(b"setRgbBlendOperation:\0"),
+            sel!(b"setRgbBlendOperation:\0"),
             rgb_operation as usize,
         );
         msg_void_usize(
             attachment,
-            sel(b"setSourceAlphaBlendFactor:\0"),
+            sel!(b"setSourceAlphaBlendFactor:\0"),
             source_alpha as usize,
         );
         msg_void_usize(
             attachment,
-            sel(b"setDestinationAlphaBlendFactor:\0"),
+            sel!(b"setDestinationAlphaBlendFactor:\0"),
             destination_alpha as usize,
         );
         msg_void_usize(
             attachment,
-            sel(b"setAlphaBlendOperation:\0"),
+            sel!(b"setAlphaBlendOperation:\0"),
             alpha_operation as usize,
         );
     }
 
     pub fn set_color_attachment_write_mask(&self, index: usize, mask: ColorWriteMask) {
-        let attachments = msg_id(self.raw, sel(b"colorAttachments\0"));
-        let attachment = msg_id_usize(attachments, sel(b"objectAtIndexedSubscript:\0"), index);
-        msg_void_usize(attachment, sel(b"setWriteMask:\0"), mask.as_raw());
+        let attachments = msg_id(self.raw, sel!(b"colorAttachments\0"));
+        let attachment = msg_id_usize(attachments, sel!(b"objectAtIndexedSubscript:\0"), index);
+        msg_void_usize(attachment, sel!(b"setWriteMask:\0"), mask.as_raw());
     }
 
     pub fn set_binary_archives(&self, archives: &[BinaryArchive]) {
         let raw_ptrs =
             unsafe { std::slice::from_raw_parts(archives.as_ptr() as *const id, archives.len()) };
         let array = ns_array_from_ids(raw_ptrs);
-        msg_void_id(self.raw, sel(b"setBinaryArchives:\0"), array);
+        msg_void_id(self.raw, sel!(b"setBinaryArchives:\0"), array);
     }
 
     pub fn set_support_indirect_command_buffers(&self, support: bool) {
         msg_void_bool(
             self.raw,
-            sel(b"setSupportIndirectCommandBuffers:\0"),
+            sel!(b"setSupportIndirectCommandBuffers:\0"),
             if support { YES } else { NO },
         );
     }
 
     pub fn linked_functions(&self) -> LinkedFunctions {
-        let lf = msg_id(self.raw, sel(b"linkedFunctions\0"));
+        let lf = msg_id(self.raw, sel!(b"linkedFunctions\0"));
         LinkedFunctions { raw: retain(lf) }
     }
 
     pub fn set_linked_functions(&self, linked_functions: &LinkedFunctions) {
         msg_void_id(
             self.raw,
-            sel(b"setLinkedFunctions:\0"),
+            sel!(b"setLinkedFunctions:\0"),
             linked_functions.raw,
         );
     }
 
     pub fn support_adding_binary_functions(&self) -> bool {
-        let selector = sel(b"supportAddingBinaryFunctions\0");
+        let selector = sel!(b"supportAddingBinaryFunctions\0");
         if responds_to_selector(self.raw, selector) {
             msg_bool(self.raw, selector) != NO
         } else {
@@ -1325,14 +1325,14 @@ impl RenderPipelineDescriptor {
     }
 
     pub fn set_support_adding_binary_functions(&self, support: bool) {
-        let selector = sel(b"setSupportAddingBinaryFunctions:\0");
+        let selector = sel!(b"setSupportAddingBinaryFunctions:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_bool(self.raw, selector, if support { YES } else { NO });
         }
     }
 
     pub fn max_call_stack_depth(&self) -> usize {
-        let selector = sel(b"maxCallStackDepth\0");
+        let selector = sel!(b"maxCallStackDepth\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -1341,7 +1341,7 @@ impl RenderPipelineDescriptor {
     }
 
     pub fn set_max_call_stack_depth(&self, depth: usize) {
-        let selector = sel(b"setMaxCallStackDepth:\0");
+        let selector = sel!(b"setMaxCallStackDepth:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_usize(self.raw, selector, depth);
         }
@@ -1352,42 +1352,42 @@ impl RenderPipelineDescriptor {
     }
 
     pub fn vertex_function(&self) -> Option<Function> {
-        let f = msg_id(self.raw, sel(b"vertexFunction\0"));
+        let f = msg_id(self.raw, sel!(b"vertexFunction\0"));
         (!f.is_null()).then(|| Function { raw: retain(f) })
     }
 
     pub fn fragment_function(&self) -> Option<Function> {
-        let f = msg_id(self.raw, sel(b"fragmentFunction\0"));
+        let f = msg_id(self.raw, sel!(b"fragmentFunction\0"));
         (!f.is_null()).then(|| Function { raw: retain(f) })
     }
 
     pub fn vertex_descriptor(&self) -> Option<VertexDescriptor> {
-        let ptr = msg_id(self.raw, sel(b"vertexDescriptor\0"));
+        let ptr = msg_id(self.raw, sel!(b"vertexDescriptor\0"));
         (!ptr.is_null()).then(|| VertexDescriptor { raw: retain(ptr) })
     }
 
     pub fn sample_count(&self) -> usize {
-        msg_usize(self.raw, sel(b"sampleCount\0"))
+        msg_usize(self.raw, sel!(b"sampleCount\0"))
     }
 
     pub fn raster_sample_count(&self) -> usize {
-        msg_usize(self.raw, sel(b"rasterSampleCount\0"))
+        msg_usize(self.raw, sel!(b"rasterSampleCount\0"))
     }
 
     pub fn alpha_to_coverage_enabled(&self) -> bool {
-        msg_bool(self.raw, sel(b"isAlphaToCoverageEnabled\0")) != NO
+        msg_bool(self.raw, sel!(b"isAlphaToCoverageEnabled\0")) != NO
     }
 
     pub fn alpha_to_one_enabled(&self) -> bool {
-        msg_bool(self.raw, sel(b"isAlphaToOneEnabled\0")) != NO
+        msg_bool(self.raw, sel!(b"isAlphaToOneEnabled\0")) != NO
     }
 
     pub fn rasterization_enabled(&self) -> bool {
-        msg_bool(self.raw, sel(b"isRasterizationEnabled\0")) != NO
+        msg_bool(self.raw, sel!(b"isRasterizationEnabled\0")) != NO
     }
 
     pub fn support_indirect_command_buffers(&self) -> bool {
-        let selector = sel(b"supportIndirectCommandBuffers\0");
+        let selector = sel!(b"supportIndirectCommandBuffers\0");
         if responds_to_selector(self.raw, selector) {
             msg_bool(self.raw, selector) != NO
         } else {
@@ -1396,7 +1396,7 @@ impl RenderPipelineDescriptor {
     }
 
     pub fn reset(&self) {
-        let selector = sel(b"reset\0");
+        let selector = sel!(b"reset\0");
         if responds_to_selector(self.raw, selector) {
             msg_void(self.raw, selector);
         }
@@ -1404,7 +1404,7 @@ impl RenderPipelineDescriptor {
 
     pub fn color_attachments(&self) -> RenderPipelineColorAttachmentDescriptorArray {
         RenderPipelineColorAttachmentDescriptorArray {
-            raw: msg_id(self.raw, sel(b"colorAttachments\0")),
+            raw: msg_id(self.raw, sel!(b"colorAttachments\0")),
         }
     }
 }
@@ -1428,14 +1428,14 @@ pub struct TileRenderPipelineDescriptor {
 
 impl TileRenderPipelineDescriptor {
     pub fn new() -> Self {
-        let allocated = msg_id(class(b"MTLTileRenderPipelineDescriptor\0"), sel(b"alloc\0"));
+        let allocated = msg_id(class(b"MTLTileRenderPipelineDescriptor\0"), sel!(b"alloc\0"));
         Self {
-            raw: msg_id(allocated, sel(b"init\0")),
+            raw: msg_id(allocated, sel!(b"init\0")),
         }
     }
 
     pub fn set_tile_function(&self, function: &Function) {
-        msg_void_id(self.raw, sel(b"setTileFunction:\0"), function.raw);
+        msg_void_id(self.raw, sel!(b"setTileFunction:\0"), function.raw);
     }
 }
 
@@ -1458,34 +1458,34 @@ pub struct MeshRenderPipelineDescriptor {
 
 impl MeshRenderPipelineDescriptor {
     pub fn new() -> Self {
-        let allocated = msg_id(class(b"MTLMeshRenderPipelineDescriptor\0"), sel(b"alloc\0"));
+        let allocated = msg_id(class(b"MTLMeshRenderPipelineDescriptor\0"), sel!(b"alloc\0"));
         Self {
-            raw: msg_id(allocated, sel(b"init\0")),
+            raw: msg_id(allocated, sel!(b"init\0")),
         }
     }
 
     pub fn set_mesh_function(&self, function: &Function) {
-        msg_void_id(self.raw, sel(b"setMeshFunction:\0"), function.raw);
+        msg_void_id(self.raw, sel!(b"setMeshFunction:\0"), function.raw);
     }
 
     pub fn set_object_function(&self, function: &Function) {
-        msg_void_id(self.raw, sel(b"setObjectFunction:\0"), function.raw);
+        msg_void_id(self.raw, sel!(b"setObjectFunction:\0"), function.raw);
     }
 
     pub fn set_fragment_function(&self, function: &Function) {
-        msg_void_id(self.raw, sel(b"setFragmentFunction:\0"), function.raw);
+        msg_void_id(self.raw, sel!(b"setFragmentFunction:\0"), function.raw);
     }
 
     pub fn set_color_attachment_pixel_format(&self, index: usize, pixel_format: PixelFormat) {
-        let attachments = msg_id(self.raw, sel(b"colorAttachments\0"));
-        let attachment = msg_id_usize(attachments, sel(b"objectAtIndexedSubscript:\0"), index);
-        msg_void_usize(attachment, sel(b"setPixelFormat:\0"), pixel_format.as_raw());
+        let attachments = msg_id(self.raw, sel!(b"colorAttachments\0"));
+        let attachment = msg_id_usize(attachments, sel!(b"objectAtIndexedSubscript:\0"), index);
+        msg_void_usize(attachment, sel!(b"setPixelFormat:\0"), pixel_format.as_raw());
     }
 
     pub fn set_color_attachment_write_mask(&self, index: usize, mask: ColorWriteMask) {
-        let attachments = msg_id(self.raw, sel(b"colorAttachments\0"));
-        let attachment = msg_id_usize(attachments, sel(b"objectAtIndexedSubscript:\0"), index);
-        msg_void_usize(attachment, sel(b"setWriteMask:\0"), mask.as_raw());
+        let attachments = msg_id(self.raw, sel!(b"colorAttachments\0"));
+        let attachment = msg_id_usize(attachments, sel!(b"objectAtIndexedSubscript:\0"), index);
+        msg_void_usize(attachment, sel!(b"setWriteMask:\0"), mask.as_raw());
     }
 
     pub fn set_color_attachment_blending(
@@ -1499,41 +1499,41 @@ impl MeshRenderPipelineDescriptor {
         destination_alpha: BlendFactor,
         alpha_operation: BlendOperation,
     ) {
-        let attachments = msg_id(self.raw, sel(b"colorAttachments\0"));
-        let attachment = msg_id_usize(attachments, sel(b"objectAtIndexedSubscript:\0"), index);
+        let attachments = msg_id(self.raw, sel!(b"colorAttachments\0"));
+        let attachment = msg_id_usize(attachments, sel!(b"objectAtIndexedSubscript:\0"), index);
         msg_void_bool(
             attachment,
-            sel(b"setBlendingEnabled:\0"),
+            sel!(b"setBlendingEnabled:\0"),
             if enabled { YES } else { NO },
         );
         msg_void_usize(
             attachment,
-            sel(b"setSourceRGBBlendFactor:\0"),
+            sel!(b"setSourceRGBBlendFactor:\0"),
             source_rgb as usize,
         );
         msg_void_usize(
             attachment,
-            sel(b"setDestinationRGBBlendFactor:\0"),
+            sel!(b"setDestinationRGBBlendFactor:\0"),
             destination_rgb as usize,
         );
         msg_void_usize(
             attachment,
-            sel(b"setRgbBlendOperation:\0"),
+            sel!(b"setRgbBlendOperation:\0"),
             rgb_operation as usize,
         );
         msg_void_usize(
             attachment,
-            sel(b"setSourceAlphaBlendFactor:\0"),
+            sel!(b"setSourceAlphaBlendFactor:\0"),
             source_alpha as usize,
         );
         msg_void_usize(
             attachment,
-            sel(b"setDestinationAlphaBlendFactor:\0"),
+            sel!(b"setDestinationAlphaBlendFactor:\0"),
             destination_alpha as usize,
         );
         msg_void_usize(
             attachment,
-            sel(b"setAlphaBlendOperation:\0"),
+            sel!(b"setAlphaBlendOperation:\0"),
             alpha_operation as usize,
         );
     }
@@ -1541,7 +1541,7 @@ impl MeshRenderPipelineDescriptor {
     pub fn set_depth_attachment_pixel_format(&self, pixel_format: PixelFormat) {
         msg_void_usize(
             self.raw,
-            sel(b"setDepthAttachmentPixelFormat:\0"),
+            sel!(b"setDepthAttachmentPixelFormat:\0"),
             pixel_format.as_raw(),
         );
     }
@@ -1549,19 +1549,19 @@ impl MeshRenderPipelineDescriptor {
     pub fn set_stencil_attachment_pixel_format(&self, pixel_format: PixelFormat) {
         msg_void_usize(
             self.raw,
-            sel(b"setStencilAttachmentPixelFormat:\0"),
+            sel!(b"setStencilAttachmentPixelFormat:\0"),
             pixel_format.as_raw(),
         );
     }
 
     pub fn set_raster_sample_count(&self, sample_count: usize) {
-        msg_void_usize(self.raw, sel(b"setRasterSampleCount:\0"), sample_count);
+        msg_void_usize(self.raw, sel!(b"setRasterSampleCount:\0"), sample_count);
     }
 
     pub fn set_alpha_to_coverage_enabled(&self, enabled: bool) {
         msg_void_bool(
             self.raw,
-            sel(b"setAlphaToCoverageEnabled:\0"),
+            sel!(b"setAlphaToCoverageEnabled:\0"),
             if enabled { YES } else { NO },
         );
     }
@@ -1569,7 +1569,7 @@ impl MeshRenderPipelineDescriptor {
     pub fn set_max_total_threads_per_object_threadgroup(&self, threads: usize) {
         msg_void_usize(
             self.raw,
-            sel(b"setMaxTotalThreadsPerObjectThreadgroup:\0"),
+            sel!(b"setMaxTotalThreadsPerObjectThreadgroup:\0"),
             threads,
         );
     }
@@ -1577,7 +1577,7 @@ impl MeshRenderPipelineDescriptor {
     pub fn set_max_total_threads_per_mesh_threadgroup(&self, threads: usize) {
         msg_void_usize(
             self.raw,
-            sel(b"setMaxTotalThreadsPerMeshThreadgroup:\0"),
+            sel!(b"setMaxTotalThreadsPerMeshThreadgroup:\0"),
             threads,
         );
     }
@@ -1622,7 +1622,7 @@ impl RenderPipelineState {
     }
 
     pub fn device(&self) -> Device {
-        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        let ptr = retain(msg_id(self.raw, sel!(b"device\0")));
         Device { raw: ptr }
     }
 
@@ -1631,11 +1631,11 @@ impl RenderPipelineState {
     }
 
     pub fn imageblock_sample_length(&self) -> usize {
-        msg_usize(self.raw, sel(b"imageblockSampleLength\0"))
+        msg_usize(self.raw, sel!(b"imageblockSampleLength\0"))
     }
 
     pub fn support_indirect_command_buffers(&self) -> bool {
-        let selector = sel(b"supportIndirectCommandBuffers\0");
+        let selector = sel!(b"supportIndirectCommandBuffers\0");
         if responds_to_selector(self.raw, selector) {
             msg_bool(self.raw, selector) != NO
         } else {
@@ -1644,7 +1644,7 @@ impl RenderPipelineState {
     }
 
     pub fn max_total_threads_per_threadgroup(&self) -> usize {
-        let selector = sel(b"maxTotalThreadsPerThreadgroup\0");
+        let selector = sel!(b"maxTotalThreadsPerThreadgroup\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -1653,7 +1653,7 @@ impl RenderPipelineState {
     }
 
     pub fn threadgroup_size_matches_tile_size(&self) -> bool {
-        let selector = sel(b"threadgroupSizeMatchesTileSize\0");
+        let selector = sel!(b"threadgroupSizeMatchesTileSize\0");
         if responds_to_selector(self.raw, selector) {
             msg_bool(self.raw, selector) != NO
         } else {
@@ -1662,7 +1662,7 @@ impl RenderPipelineState {
     }
 
     pub fn max_total_threads_per_object_threadgroup(&self) -> usize {
-        let selector = sel(b"maxTotalThreadsPerObjectThreadgroup\0");
+        let selector = sel!(b"maxTotalThreadsPerObjectThreadgroup\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -1671,7 +1671,7 @@ impl RenderPipelineState {
     }
 
     pub fn max_total_threads_per_mesh_threadgroup(&self) -> usize {
-        let selector = sel(b"maxTotalThreadsPerMeshThreadgroup\0");
+        let selector = sel!(b"maxTotalThreadsPerMeshThreadgroup\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -1680,7 +1680,7 @@ impl RenderPipelineState {
     }
 
     pub fn object_thread_execution_width(&self) -> usize {
-        let selector = sel(b"objectThreadExecutionWidth\0");
+        let selector = sel!(b"objectThreadExecutionWidth\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -1689,7 +1689,7 @@ impl RenderPipelineState {
     }
 
     pub fn mesh_thread_execution_width(&self) -> usize {
-        let selector = sel(b"meshThreadExecutionWidth\0");
+        let selector = sel!(b"meshThreadExecutionWidth\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -1698,7 +1698,7 @@ impl RenderPipelineState {
     }
 
     pub fn max_total_threadgroups_per_mesh_grid(&self) -> usize {
-        let selector = sel(b"maxTotalThreadgroupsPerMeshGrid\0");
+        let selector = sel!(b"maxTotalThreadgroupsPerMeshGrid\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -1707,7 +1707,7 @@ impl RenderPipelineState {
     }
 
     pub fn gpu_resource_id(&self) -> Result<ResourceID, MetalError> {
-        let selector = sel(b"gpuResourceID\0");
+        let selector = sel!(b"gpuResourceID\0");
         if responds_to_selector(self.raw, selector) {
             Ok(msg_resource_id(self.raw, selector))
         } else {
@@ -1722,7 +1722,7 @@ impl RenderPipelineState {
         function: &Function,
         stage: RenderStages,
     ) -> Result<FunctionHandle, MetalError> {
-        let selector = sel(b"functionHandleWithFunction:stage:\0");
+        let selector = sel!(b"functionHandleWithFunction:stage:\0");
         if responds_to_selector(self.raw, selector) {
             let raw = retain(msg_id_id_usize(self.raw, selector, function.raw, stage.0));
             if raw.is_null() {
@@ -1742,7 +1742,7 @@ impl RenderPipelineState {
         descriptor: &VisibleFunctionTableDescriptor,
         stage: RenderStages,
     ) -> Result<VisibleFunctionTable, MetalError> {
-        let selector = sel(b"newVisibleFunctionTableWithDescriptor:stage:\0");
+        let selector = sel!(b"newVisibleFunctionTableWithDescriptor:stage:\0");
         if responds_to_selector(self.raw, selector) {
             let raw = msg_id_id_usize(self.raw, selector, descriptor.raw, stage.0);
             if raw.is_null() {
@@ -1762,7 +1762,7 @@ impl RenderPipelineState {
         descriptor: &IntersectionFunctionTableDescriptor,
         stage: RenderStages,
     ) -> Result<IntersectionFunctionTable, MetalError> {
-        let selector = sel(b"newIntersectionFunctionTableWithDescriptor:stage:\0");
+        let selector = sel!(b"newIntersectionFunctionTableWithDescriptor:stage:\0");
         if responds_to_selector(self.raw, selector) {
             let raw = msg_id_id_usize(self.raw, selector, descriptor.raw, stage.0);
             if raw.is_null() {
@@ -1788,9 +1788,9 @@ pub struct StencilDescriptor {
 
 impl StencilDescriptor {
     pub fn new() -> Self {
-        let allocated = msg_id(class(b"MTLStencilDescriptor\0"), sel(b"alloc\0"));
+        let allocated = msg_id(class(b"MTLStencilDescriptor\0"), sel!(b"alloc\0"));
         Self {
-            raw: msg_id(allocated, sel(b"init\0")),
+            raw: msg_id(allocated, sel!(b"init\0")),
             owned: true,
         }
     }
@@ -1800,7 +1800,7 @@ impl StencilDescriptor {
     }
 
     pub fn stencil_compare_function(&self) -> CompareFunction {
-        let val = msg_usize(self.raw, sel(b"stencilCompareFunction\0"));
+        let val = msg_usize(self.raw, sel!(b"stencilCompareFunction\0"));
         match val {
             0 => CompareFunction::Never,
             1 => CompareFunction::Less,
@@ -1817,13 +1817,13 @@ impl StencilDescriptor {
     pub fn set_stencil_compare_function(&self, compare_function: CompareFunction) {
         msg_void_usize(
             self.raw,
-            sel(b"setStencilCompareFunction:\0"),
+            sel!(b"setStencilCompareFunction:\0"),
             compare_function as usize,
         );
     }
 
     pub fn stencil_failure_operation(&self) -> StencilOperation {
-        let val = msg_usize(self.raw, sel(b"stencilFailureOperation\0"));
+        let val = msg_usize(self.raw, sel!(b"stencilFailureOperation\0"));
         match val {
             0 => StencilOperation::Keep,
             1 => StencilOperation::Zero,
@@ -1840,13 +1840,13 @@ impl StencilDescriptor {
     pub fn set_stencil_failure_operation(&self, operation: StencilOperation) {
         msg_void_usize(
             self.raw,
-            sel(b"setStencilFailureOperation:\0"),
+            sel!(b"setStencilFailureOperation:\0"),
             operation as usize,
         );
     }
 
     pub fn depth_failure_operation(&self) -> StencilOperation {
-        let val = msg_usize(self.raw, sel(b"depthFailureOperation\0"));
+        let val = msg_usize(self.raw, sel!(b"depthFailureOperation\0"));
         match val {
             0 => StencilOperation::Keep,
             1 => StencilOperation::Zero,
@@ -1863,13 +1863,13 @@ impl StencilDescriptor {
     pub fn set_depth_failure_operation(&self, operation: StencilOperation) {
         msg_void_usize(
             self.raw,
-            sel(b"setDepthFailureOperation:\0"),
+            sel!(b"setDepthFailureOperation:\0"),
             operation as usize,
         );
     }
 
     pub fn depth_stencil_pass_operation(&self) -> StencilOperation {
-        let val = msg_usize(self.raw, sel(b"depthStencilPassOperation\0"));
+        let val = msg_usize(self.raw, sel!(b"depthStencilPassOperation\0"));
         match val {
             0 => StencilOperation::Keep,
             1 => StencilOperation::Zero,
@@ -1886,25 +1886,25 @@ impl StencilDescriptor {
     pub fn set_depth_stencil_pass_operation(&self, operation: StencilOperation) {
         msg_void_usize(
             self.raw,
-            sel(b"setDepthStencilPassOperation:\0"),
+            sel!(b"setDepthStencilPassOperation:\0"),
             operation as usize,
         );
     }
 
     pub fn read_mask(&self) -> u32 {
-        msg_usize(self.raw, sel(b"readMask\0")) as u32
+        msg_usize(self.raw, sel!(b"readMask\0")) as u32
     }
 
     pub fn set_read_mask(&self, mask: u32) {
-        msg_void_usize(self.raw, sel(b"setReadMask:\0"), mask as usize);
+        msg_void_usize(self.raw, sel!(b"setReadMask:\0"), mask as usize);
     }
 
     pub fn write_mask(&self) -> u32 {
-        msg_usize(self.raw, sel(b"writeMask\0")) as u32
+        msg_usize(self.raw, sel!(b"writeMask\0")) as u32
     }
 
     pub fn set_write_mask(&self, mask: u32) {
-        msg_void_usize(self.raw, sel(b"setWriteMask:\0"), mask as usize);
+        msg_void_usize(self.raw, sel!(b"setWriteMask:\0"), mask as usize);
     }
 }
 
@@ -1915,14 +1915,14 @@ pub struct DepthStencilDescriptor {
 
 impl DepthStencilDescriptor {
     pub fn new() -> Self {
-        let allocated = msg_id(class(b"MTLDepthStencilDescriptor\0"), sel(b"alloc\0"));
+        let allocated = msg_id(class(b"MTLDepthStencilDescriptor\0"), sel!(b"alloc\0"));
         Self {
-            raw: msg_id(allocated, sel(b"init\0")),
+            raw: msg_id(allocated, sel!(b"init\0")),
         }
     }
 
     pub fn depth_compare_function(&self) -> CompareFunction {
-        let val = msg_usize(self.raw, sel(b"depthCompareFunction\0"));
+        let val = msg_usize(self.raw, sel!(b"depthCompareFunction\0"));
         match val {
             0 => CompareFunction::Never,
             1 => CompareFunction::Less,
@@ -1939,37 +1939,37 @@ impl DepthStencilDescriptor {
     pub fn set_depth_compare_function(&self, compare_function: CompareFunction) {
         msg_void_usize(
             self.raw,
-            sel(b"setDepthCompareFunction:\0"),
+            sel!(b"setDepthCompareFunction:\0"),
             compare_function as usize,
         );
     }
 
     pub fn is_depth_write_enabled(&self) -> bool {
-        msg_bool(self.raw, sel(b"isDepthWriteEnabled\0")) == YES
+        msg_bool(self.raw, sel!(b"isDepthWriteEnabled\0")) == YES
     }
 
     pub fn set_depth_write_enabled(&self, enabled: bool) {
         msg_void_bool(
             self.raw,
-            sel(b"setDepthWriteEnabled:\0"),
+            sel!(b"setDepthWriteEnabled:\0"),
             if enabled { YES } else { NO },
         );
     }
 
     pub fn front_face_stencil(&self) -> StencilDescriptor {
-        StencilDescriptor::borrowed(msg_id(self.raw, sel(b"frontFaceStencil\0")))
+        StencilDescriptor::borrowed(msg_id(self.raw, sel!(b"frontFaceStencil\0")))
     }
 
     pub fn back_face_stencil(&self) -> StencilDescriptor {
-        StencilDescriptor::borrowed(msg_id(self.raw, sel(b"backFaceStencil\0")))
+        StencilDescriptor::borrowed(msg_id(self.raw, sel!(b"backFaceStencil\0")))
     }
 
     pub fn set_front_face_stencil(&self, stencil: &StencilDescriptor) {
-        msg_void_id(self.raw, sel(b"setFrontFaceStencil:\0"), stencil.raw);
+        msg_void_id(self.raw, sel!(b"setFrontFaceStencil:\0"), stencil.raw);
     }
 
     pub fn set_back_face_stencil(&self, stencil: &StencilDescriptor) {
-        msg_void_id(self.raw, sel(b"setBackFaceStencil:\0"), stencil.raw);
+        msg_void_id(self.raw, sel!(b"setBackFaceStencil:\0"), stencil.raw);
     }
 
     pub fn label(&self) -> Option<NSString> {
@@ -1978,7 +1978,7 @@ impl DepthStencilDescriptor {
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 }
 
@@ -2013,12 +2013,12 @@ impl DepthStencilState {
     }
 
     pub fn device(&self) -> Device {
-        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        let ptr = retain(msg_id(self.raw, sel!(b"device\0")));
         Device { raw: ptr }
     }
 
     pub fn gpu_resource_id(&self) -> Result<ResourceID, MetalError> {
-        let selector = sel(b"gpuResourceID\0");
+        let selector = sel!(b"gpuResourceID\0");
         if responds_to_selector(self.raw, selector) {
             Ok(msg_resource_id(self.raw, selector))
         } else {
@@ -2048,14 +2048,14 @@ pub struct SamplerDescriptor {
 
 impl SamplerDescriptor {
     pub fn new() -> Self {
-        let allocated = msg_id(class(b"MTLSamplerDescriptor\0"), sel(b"alloc\0"));
+        let allocated = msg_id(class(b"MTLSamplerDescriptor\0"), sel!(b"alloc\0"));
         Self {
-            raw: msg_id(allocated, sel(b"init\0")),
+            raw: msg_id(allocated, sel!(b"init\0")),
         }
     }
 
     pub fn min_filter(&self) -> SamplerMinMagFilter {
-        let val = msg_usize(self.raw, sel(b"minFilter\0"));
+        let val = msg_usize(self.raw, sel!(b"minFilter\0"));
         match val {
             1 => SamplerMinMagFilter::Linear,
             _ => SamplerMinMagFilter::Nearest,
@@ -2063,11 +2063,11 @@ impl SamplerDescriptor {
     }
 
     pub fn set_min_filter(&self, filter: SamplerMinMagFilter) {
-        msg_void_usize(self.raw, sel(b"setMinFilter:\0"), filter as usize);
+        msg_void_usize(self.raw, sel!(b"setMinFilter:\0"), filter as usize);
     }
 
     pub fn mag_filter(&self) -> SamplerMinMagFilter {
-        let val = msg_usize(self.raw, sel(b"magFilter\0"));
+        let val = msg_usize(self.raw, sel!(b"magFilter\0"));
         match val {
             1 => SamplerMinMagFilter::Linear,
             _ => SamplerMinMagFilter::Nearest,
@@ -2075,11 +2075,11 @@ impl SamplerDescriptor {
     }
 
     pub fn set_mag_filter(&self, filter: SamplerMinMagFilter) {
-        msg_void_usize(self.raw, sel(b"setMagFilter:\0"), filter as usize);
+        msg_void_usize(self.raw, sel!(b"setMagFilter:\0"), filter as usize);
     }
 
     pub fn mip_filter(&self) -> SamplerMipFilter {
-        let val = msg_usize(self.raw, sel(b"mipFilter\0"));
+        let val = msg_usize(self.raw, sel!(b"mipFilter\0"));
         match val {
             1 => SamplerMipFilter::Nearest,
             2 => SamplerMipFilter::Linear,
@@ -2088,7 +2088,7 @@ impl SamplerDescriptor {
     }
 
     pub fn set_mip_filter(&self, filter: SamplerMipFilter) {
-        msg_void_usize(self.raw, sel(b"setMipFilter:\0"), filter as usize);
+        msg_void_usize(self.raw, sel!(b"setMipFilter:\0"), filter as usize);
     }
 
     pub fn set_address_mode(&self, mode: SamplerAddressMode) {
@@ -2098,7 +2098,7 @@ impl SamplerDescriptor {
     }
 
     pub fn s_address_mode(&self) -> SamplerAddressMode {
-        let val = msg_usize(self.raw, sel(b"sAddressMode\0"));
+        let val = msg_usize(self.raw, sel!(b"sAddressMode\0"));
         match val {
             0 => SamplerAddressMode::ClampToEdge,
             1 => SamplerAddressMode::MirrorClampToEdge,
@@ -2111,11 +2111,11 @@ impl SamplerDescriptor {
     }
 
     pub fn set_s_address_mode(&self, mode: SamplerAddressMode) {
-        msg_void_usize(self.raw, sel(b"setSAddressMode:\0"), mode as usize);
+        msg_void_usize(self.raw, sel!(b"setSAddressMode:\0"), mode as usize);
     }
 
     pub fn t_address_mode(&self) -> SamplerAddressMode {
-        let val = msg_usize(self.raw, sel(b"tAddressMode\0"));
+        let val = msg_usize(self.raw, sel!(b"tAddressMode\0"));
         match val {
             0 => SamplerAddressMode::ClampToEdge,
             1 => SamplerAddressMode::MirrorClampToEdge,
@@ -2128,11 +2128,11 @@ impl SamplerDescriptor {
     }
 
     pub fn set_t_address_mode(&self, mode: SamplerAddressMode) {
-        msg_void_usize(self.raw, sel(b"setTAddressMode:\0"), mode as usize);
+        msg_void_usize(self.raw, sel!(b"setTAddressMode:\0"), mode as usize);
     }
 
     pub fn r_address_mode(&self) -> SamplerAddressMode {
-        let val = msg_usize(self.raw, sel(b"rAddressMode\0"));
+        let val = msg_usize(self.raw, sel!(b"rAddressMode\0"));
         match val {
             0 => SamplerAddressMode::ClampToEdge,
             1 => SamplerAddressMode::MirrorClampToEdge,
@@ -2145,11 +2145,11 @@ impl SamplerDescriptor {
     }
 
     pub fn set_r_address_mode(&self, mode: SamplerAddressMode) {
-        msg_void_usize(self.raw, sel(b"setRAddressMode:\0"), mode as usize);
+        msg_void_usize(self.raw, sel!(b"setRAddressMode:\0"), mode as usize);
     }
 
     pub fn border_color(&self) -> SamplerBorderColor {
-        let selector = sel(b"borderColor\0");
+        let selector = sel!(b"borderColor\0");
         if responds_to_selector(self.raw, selector) {
             let val = msg_usize(self.raw, selector);
             match val {
@@ -2163,14 +2163,14 @@ impl SamplerDescriptor {
     }
 
     pub fn set_border_color(&self, border_color: SamplerBorderColor) {
-        let selector = sel(b"setBorderColor:\0");
+        let selector = sel!(b"setBorderColor:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_usize(self.raw, selector, border_color as usize);
         }
     }
 
     pub fn reduction_mode(&self) -> SamplerReductionMode {
-        let selector = sel(b"reductionMode\0");
+        let selector = sel!(b"reductionMode\0");
         if responds_to_selector(self.raw, selector) {
             let val = msg_usize(self.raw, selector);
             match val {
@@ -2184,42 +2184,42 @@ impl SamplerDescriptor {
     }
 
     pub fn set_reduction_mode(&self, reduction_mode: SamplerReductionMode) {
-        let selector = sel(b"setReductionMode:\0");
+        let selector = sel!(b"setReductionMode:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_usize(self.raw, selector, reduction_mode as usize);
         }
     }
 
     pub fn normalized_coordinates(&self) -> bool {
-        msg_bool(self.raw, sel(b"normalizedCoordinates\0")) != 0
+        msg_bool(self.raw, sel!(b"normalizedCoordinates\0")) != 0
     }
 
     pub fn set_normalized_coordinates(&self, normalized_coordinates: bool) {
         msg_void_bool(
             self.raw,
-            sel(b"setNormalizedCoordinates:\0"),
+            sel!(b"setNormalizedCoordinates:\0"),
             if normalized_coordinates { YES } else { NO },
         );
     }
 
     pub fn lod_min_clamp(&self) -> f32 {
-        msg_f32(self.raw, sel(b"lodMinClamp\0"))
+        msg_f32(self.raw, sel!(b"lodMinClamp\0"))
     }
 
     pub fn set_lod_min_clamp(&self, value: f32) {
-        msg_void_f32(self.raw, sel(b"setLodMinClamp:\0"), value);
+        msg_void_f32(self.raw, sel!(b"setLodMinClamp:\0"), value);
     }
 
     pub fn lod_max_clamp(&self) -> f32 {
-        msg_f32(self.raw, sel(b"lodMaxClamp\0"))
+        msg_f32(self.raw, sel!(b"lodMaxClamp\0"))
     }
 
     pub fn set_lod_max_clamp(&self, value: f32) {
-        msg_void_f32(self.raw, sel(b"setLodMaxClamp:\0"), value);
+        msg_void_f32(self.raw, sel!(b"setLodMaxClamp:\0"), value);
     }
 
     pub fn lod_average(&self) -> bool {
-        let selector = sel(b"lodAverage\0");
+        let selector = sel!(b"lodAverage\0");
         if responds_to_selector(self.raw, selector) {
             msg_bool(self.raw, selector) != 0
         } else {
@@ -2228,14 +2228,14 @@ impl SamplerDescriptor {
     }
 
     pub fn set_lod_average(&self, lod_average: bool) {
-        let selector = sel(b"setLodAverage:\0");
+        let selector = sel!(b"setLodAverage:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_bool(self.raw, selector, if lod_average { YES } else { NO });
         }
     }
 
     pub fn lod_bias(&self) -> f32 {
-        let selector = sel(b"lodBias\0");
+        let selector = sel!(b"lodBias\0");
         if responds_to_selector(self.raw, selector) {
             msg_f32(self.raw, selector)
         } else {
@@ -2244,14 +2244,14 @@ impl SamplerDescriptor {
     }
 
     pub fn set_lod_bias(&self, bias: f32) {
-        let selector = sel(b"setLodBias:\0");
+        let selector = sel!(b"setLodBias:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_f32(self.raw, selector, bias);
         }
     }
 
     pub fn compare_function(&self) -> CompareFunction {
-        let val = msg_usize(self.raw, sel(b"compareFunction\0"));
+        let val = msg_usize(self.raw, sel!(b"compareFunction\0"));
         match val {
             0 => CompareFunction::Never,
             1 => CompareFunction::Less,
@@ -2268,21 +2268,21 @@ impl SamplerDescriptor {
     pub fn set_compare_function(&self, compare_function: CompareFunction) {
         msg_void_usize(
             self.raw,
-            sel(b"setCompareFunction:\0"),
+            sel!(b"setCompareFunction:\0"),
             compare_function as usize,
         );
     }
 
     pub fn max_anisotropy(&self) -> usize {
-        msg_usize(self.raw, sel(b"maxAnisotropy\0"))
+        msg_usize(self.raw, sel!(b"maxAnisotropy\0"))
     }
 
     pub fn set_max_anisotropy(&self, max_anisotropy: usize) {
-        msg_void_usize(self.raw, sel(b"setMaxAnisotropy:\0"), max_anisotropy);
+        msg_void_usize(self.raw, sel!(b"setMaxAnisotropy:\0"), max_anisotropy);
     }
 
     pub fn support_argument_buffers(&self) -> bool {
-        let selector = sel(b"supportArgumentBuffers\0");
+        let selector = sel!(b"supportArgumentBuffers\0");
         if responds_to_selector(self.raw, selector) {
             msg_bool(self.raw, selector) != 0
         } else {
@@ -2291,7 +2291,7 @@ impl SamplerDescriptor {
     }
 
     pub fn set_support_argument_buffers(&self, support: bool) {
-        let selector = sel(b"setSupportArgumentBuffers:\0");
+        let selector = sel!(b"setSupportArgumentBuffers:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_bool(self.raw, selector, if support { YES } else { NO });
         }
@@ -2303,7 +2303,7 @@ impl SamplerDescriptor {
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 }
 
@@ -2345,11 +2345,11 @@ impl SamplerState {
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 
     pub fn gpu_resource_id(&self) -> Result<ResourceID, MetalError> {
-        let selector = sel(b"gpuResourceID\0");
+        let selector = sel!(b"gpuResourceID\0");
         if responds_to_selector(self.raw, selector) {
             Ok(msg_resource_id(self.raw, selector))
         } else {
@@ -2360,7 +2360,7 @@ impl SamplerState {
     }
 
     pub fn device(&self) -> Device {
-        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        let ptr = retain(msg_id(self.raw, sel!(b"device\0")));
         Device { raw: ptr }
     }
 }
@@ -2372,7 +2372,7 @@ pub struct Fence {
 
 impl Fence {
     pub fn device(&self) -> Device {
-        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        let ptr = retain(msg_id(self.raw, sel!(b"device\0")));
         Device { raw: ptr }
     }
 
@@ -2382,7 +2382,7 @@ impl Fence {
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 }
 
@@ -2399,9 +2399,9 @@ pub struct FunctionDescriptor {
 
 impl FunctionDescriptor {
     pub fn new() -> Self {
-        let allocated = msg_id(class(b"MTLFunctionDescriptor\0"), sel(b"alloc\0"));
+        let allocated = msg_id(class(b"MTLFunctionDescriptor\0"), sel!(b"alloc\0"));
         Self {
-            raw: msg_id(allocated, sel(b"init\0")),
+            raw: msg_id(allocated, sel!(b"init\0")),
         }
     }
 
@@ -2409,13 +2409,13 @@ impl FunctionDescriptor {
         Self {
             raw: retain(msg_id(
                 class(b"MTLFunctionDescriptor\0"),
-                sel(b"functionDescriptor\0"),
+                sel!(b"functionDescriptor\0"),
             )),
         }
     }
 
     pub fn name(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"name\0"));
+        let ptr = msg_id(self.raw, sel!(b"name\0"));
         if ptr.is_null() {
             None
         } else {
@@ -2425,11 +2425,11 @@ impl FunctionDescriptor {
 
     pub fn set_name(&self, name: &str) {
         let ns_name = NSString::new(name);
-        msg_void_id(self.raw, sel(b"setName:\0"), ns_name.raw());
+        msg_void_id(self.raw, sel!(b"setName:\0"), ns_name.raw());
     }
 
     pub fn specialized_name(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"specializedName\0"));
+        let ptr = msg_id(self.raw, sel!(b"specializedName\0"));
         if ptr.is_null() {
             None
         } else {
@@ -2439,32 +2439,32 @@ impl FunctionDescriptor {
 
     pub fn set_specialized_name(&self, name: &str) {
         let ns_name = NSString::new(name);
-        msg_void_id(self.raw, sel(b"setSpecializedName:\0"), ns_name.raw());
+        msg_void_id(self.raw, sel!(b"setSpecializedName:\0"), ns_name.raw());
     }
 
     pub fn constant_values(&self) -> Option<FunctionConstantValues> {
-        let cv = msg_id(self.raw, sel(b"constantValues\0"));
+        let cv = msg_id(self.raw, sel!(b"constantValues\0"));
         (!cv.is_null()).then_some(FunctionConstantValues { raw: retain(cv) })
     }
 
     pub fn set_constant_values(&self, constant_values: Option<&FunctionConstantValues>) {
         msg_void_id(
             self.raw,
-            sel(b"setConstantValues:\0"),
+            sel!(b"setConstantValues:\0"),
             constant_values.map_or(NIL, |cv| cv.raw),
         );
     }
 
     pub fn options(&self) -> FunctionOptions {
-        FunctionOptions(msg_usize(self.raw, sel(b"options\0")))
+        FunctionOptions(msg_usize(self.raw, sel!(b"options\0")))
     }
 
     pub fn set_options(&self, options: FunctionOptions) {
-        msg_void_usize(self.raw, sel(b"setOptions:\0"), options.0);
+        msg_void_usize(self.raw, sel!(b"setOptions:\0"), options.0);
     }
 
     pub fn set_binary_archives(&self, archives: &[BinaryArchive]) -> Result<(), MetalError> {
-        let selector = sel(b"setBinaryArchives:\0");
+        let selector = sel!(b"setBinaryArchives:\0");
         if responds_to_selector(self.raw, selector) {
             let raw_ptrs = unsafe {
                 std::slice::from_raw_parts(archives.as_ptr() as *const id, archives.len())
@@ -2480,7 +2480,7 @@ impl FunctionDescriptor {
     }
 
     pub fn binary_archives(&self) -> Result<NSArrayIterator<BinaryArchive>, MetalError> {
-        let selector = sel(b"binaryArchives\0");
+        let selector = sel!(b"binaryArchives\0");
         if responds_to_selector(self.raw, selector) {
             let array = msg_id(self.raw, selector);
             Ok(NSArrayIterator::new(array))
@@ -2513,10 +2513,10 @@ impl IntersectionFunctionDescriptor {
     pub fn new() -> Self {
         let allocated = msg_id(
             class(b"MTLIntersectionFunctionDescriptor\0"),
-            sel(b"alloc\0"),
+            sel!(b"alloc\0"),
         );
         Self {
-            raw: msg_id(allocated, sel(b"init\0")),
+            raw: msg_id(allocated, sel!(b"init\0")),
         }
     }
 
@@ -2544,9 +2544,9 @@ pub struct LinkedFunctions {
 
 impl LinkedFunctions {
     pub fn new() -> Self {
-        let allocated = msg_id(class(b"MTLLinkedFunctions\0"), sel(b"alloc\0"));
+        let allocated = msg_id(class(b"MTLLinkedFunctions\0"), sel!(b"alloc\0"));
         Self {
-            raw: msg_id(allocated, sel(b"init\0")),
+            raw: msg_id(allocated, sel!(b"init\0")),
         }
     }
 
@@ -2554,18 +2554,18 @@ impl LinkedFunctions {
         let raw_ptrs =
             unsafe { std::slice::from_raw_parts(functions.as_ptr() as *const id, functions.len()) };
         let array = ns_array_from_ids(raw_ptrs);
-        msg_void_id(self.raw, sel(b"setFunctions:\0"), array);
+        msg_void_id(self.raw, sel!(b"setFunctions:\0"), array);
     }
 
     pub fn set_binary_functions(&self, functions: &[Function]) {
         let raw_ptrs =
             unsafe { std::slice::from_raw_parts(functions.as_ptr() as *const id, functions.len()) };
         let array = ns_array_from_ids(raw_ptrs);
-        msg_void_id(self.raw, sel(b"setBinaryFunctions:\0"), array);
+        msg_void_id(self.raw, sel!(b"setBinaryFunctions:\0"), array);
     }
 
     pub fn set_private_functions(&self, functions: &[Function]) {
-        let selector = sel(b"setPrivateFunctions:\0");
+        let selector = sel!(b"setPrivateFunctions:\0");
         if responds_to_selector(self.raw, selector) {
             let raw_ptrs = unsafe {
                 std::slice::from_raw_parts(functions.as_ptr() as *const id, functions.len())
@@ -2576,11 +2576,11 @@ impl LinkedFunctions {
     }
 
     pub fn functions(&self) -> NSArrayIterator<Function> {
-        functions_from_array(msg_id(self.raw, sel(b"functions\0")))
+        functions_from_array(msg_id(self.raw, sel!(b"functions\0")))
     }
 
     pub fn private_functions(&self) -> NSArrayIterator<Function> {
-        let selector = sel(b"privateFunctions\0");
+        let selector = sel!(b"privateFunctions\0");
         if responds_to_selector(self.raw, selector) {
             functions_from_array(msg_id(self.raw, selector))
         } else {
@@ -2589,11 +2589,11 @@ impl LinkedFunctions {
     }
 
     pub fn groups(&self) -> DynamicLibraryGroupIterator {
-        let dict = msg_id(self.raw, sel(b"groups\0"));
+        let dict = msg_id(self.raw, sel!(b"groups\0"));
         let keys = if dict.is_null() {
             NIL
         } else {
-            msg_id(dict, sel(b"allKeys\0"))
+            msg_id(dict, sel!(b"allKeys\0"))
         };
         DynamicLibraryGroupIterator {
             dict: retain(dict),
@@ -2618,7 +2618,7 @@ impl Iterator for DynamicLibraryGroupIterator {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.keys_iter.next().map(|name| {
-            let array = msg_id_id(self.dict, sel(b"objectForKey:\0"), name.raw());
+            let array = msg_id_id(self.dict, sel!(b"objectForKey:\0"), name.raw());
             (name, NSArrayIterator::new(array))
         })
     }
@@ -2664,7 +2664,7 @@ impl FromRawId for DynamicLibrary {
 
 impl DynamicLibrary {
     pub fn device(&self) -> Device {
-        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        let ptr = retain(msg_id(self.raw, sel!(b"device\0")));
         Device { raw: ptr }
     }
 
@@ -2674,11 +2674,11 @@ impl DynamicLibrary {
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 
     pub fn install_name(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"installName\0"));
+        let ptr = msg_id(self.raw, sel!(b"installName\0"));
         if ptr.is_null() {
             None
         } else {
@@ -2692,7 +2692,7 @@ impl DynamicLibrary {
             let mut error = NIL;
             let f: unsafe extern "C" fn(id, SEL, id, *mut id) -> BOOL =
                 transmute(objc_msgSend as *const c_void);
-            let ok = f(self.raw, sel(b"serializeToURL:error:\0"), url, &mut error);
+            let ok = f(self.raw, sel!(b"serializeToURL:error:\0"), url, &mut error);
             if ok == NO {
                 Err(MetalError::new(error_message(
                     error,
@@ -2726,7 +2726,7 @@ impl FunctionHandle {
     }
 
     pub fn name(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"name\0"));
+        let ptr = msg_id(self.raw, sel!(b"name\0"));
         if ptr.is_null() {
             None
         } else {
@@ -2735,12 +2735,12 @@ impl FunctionHandle {
     }
 
     pub fn device(&self) -> Device {
-        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        let ptr = retain(msg_id(self.raw, sel!(b"device\0")));
         Device { raw: ptr }
     }
 
     pub fn function_type(&self) -> FunctionType {
-        let val = msg_usize(self.raw, sel(b"functionType\0"));
+        let val = msg_usize(self.raw, sel!(b"functionType\0"));
         match val {
             1 => FunctionType::Vertex,
             2 => FunctionType::Fragment,
@@ -2754,7 +2754,7 @@ impl FunctionHandle {
     }
 
     pub fn gpu_resource_id(&self) -> Result<ResourceID, MetalError> {
-        let selector = sel(b"gpuResourceID\0");
+        let selector = sel!(b"gpuResourceID\0");
         if responds_to_selector(self.raw, selector) {
             Ok(msg_resource_id(self.raw, selector))
         } else {
@@ -2778,7 +2778,7 @@ pub struct FunctionLogDebugLocation {
 
 impl FunctionLogDebugLocation {
     pub fn function_name(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"functionName\0"));
+        let ptr = msg_id(self.raw, sel!(b"functionName\0"));
         if ptr.is_null() {
             None
         } else {
@@ -2787,11 +2787,11 @@ impl FunctionLogDebugLocation {
     }
 
     pub fn url_path(&self) -> Option<NSString> {
-        let url = msg_id(self.raw, sel(b"URL\0"));
+        let url = msg_id(self.raw, sel!(b"URL\0"));
         if url.is_null() {
             None
         } else {
-            let ptr = msg_id(url, sel(b"path\0"));
+            let ptr = msg_id(url, sel!(b"path\0"));
             if ptr.is_null() {
                 None
             } else {
@@ -2801,11 +2801,11 @@ impl FunctionLogDebugLocation {
     }
 
     pub fn line(&self) -> usize {
-        msg_usize(self.raw, sel(b"line\0"))
+        msg_usize(self.raw, sel!(b"line\0"))
     }
 
     pub fn column(&self) -> usize {
-        msg_usize(self.raw, sel(b"column\0"))
+        msg_usize(self.raw, sel!(b"column\0"))
     }
 }
 
@@ -2836,7 +2836,7 @@ impl FromRawId for FunctionLog {
 
 impl FunctionLog {
     pub fn log_type(&self) -> FunctionLogType {
-        let val = msg_usize(self.raw, sel(b"type\0"));
+        let val = msg_usize(self.raw, sel!(b"type\0"));
         match val {
             0 => FunctionLogType::Validation,
             _ => FunctionLogType::Validation,
@@ -2844,7 +2844,7 @@ impl FunctionLog {
     }
 
     pub fn encoder_label(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"encoderLabel\0"));
+        let ptr = msg_id(self.raw, sel!(b"encoderLabel\0"));
         if ptr.is_null() {
             None
         } else {
@@ -2853,12 +2853,12 @@ impl FunctionLog {
     }
 
     pub fn function(&self) -> Option<Function> {
-        let f = msg_id(self.raw, sel(b"function\0"));
+        let f = msg_id(self.raw, sel!(b"function\0"));
         (!f.is_null()).then_some(Function { raw: retain(f) })
     }
 
     pub fn debug_location(&self) -> Option<FunctionLogDebugLocation> {
-        let loc = msg_id(self.raw, sel(b"debugLocation\0"));
+        let loc = msg_id(self.raw, sel!(b"debugLocation\0"));
         (!loc.is_null()).then_some(FunctionLogDebugLocation { raw: retain(loc) })
     }
 }
@@ -2880,8 +2880,8 @@ impl LogStateDescriptor {
         if class_ptr.is_null() {
             return Err(MetalError::new("MTLLogStateDescriptor is not available"));
         }
-        let raw = retain(msg_id(class_ptr, sel(b"alloc\0")));
-        let init_raw = msg_id(raw, sel(b"init\0"));
+        let raw = retain(msg_id(class_ptr, sel!(b"alloc\0")));
+        let init_raw = msg_id(raw, sel!(b"init\0"));
         if init_raw.is_null() {
             Err(MetalError::new(
                 "failed to initialize MTLLogStateDescriptor",
@@ -2892,22 +2892,22 @@ impl LogStateDescriptor {
     }
 
     pub fn level(&self) -> Result<LogLevel, MetalError> {
-        let raw = msg_usize(self.raw, sel(b"level\0"));
+        let raw = msg_usize(self.raw, sel!(b"level\0"));
         LogLevel::from_raw(raw as isize).ok_or_else(|| {
             MetalError::new(format!("invalid MTLLogLevel value from Metal: {}", raw))
         })
     }
 
     pub fn set_level(&self, level: LogLevel) {
-        msg_void_usize(self.raw, sel(b"setLevel:\0"), level as usize);
+        msg_void_usize(self.raw, sel!(b"setLevel:\0"), level as usize);
     }
 
     pub fn buffer_size(&self) -> usize {
-        msg_usize(self.raw, sel(b"bufferSize\0"))
+        msg_usize(self.raw, sel!(b"bufferSize\0"))
     }
 
     pub fn set_buffer_size(&self, size: usize) {
-        msg_void_usize(self.raw, sel(b"setBufferSize:\0"), size);
+        msg_void_usize(self.raw, sel!(b"setBufferSize:\0"), size);
     }
 }
 
@@ -2924,7 +2924,7 @@ pub struct LogState {
 
 impl LogState {
     pub fn device(&self) -> Device {
-        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        let ptr = retain(msg_id(self.raw, sel!(b"device\0")));
         Device { raw: ptr }
     }
 
@@ -2934,7 +2934,7 @@ impl LogState {
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 }
 
@@ -2953,19 +2953,19 @@ impl VisibleFunctionTableDescriptor {
     pub fn new() -> Self {
         let allocated = msg_id(
             class(b"MTLVisibleFunctionTableDescriptor\0"),
-            sel(b"alloc\0"),
+            sel!(b"alloc\0"),
         );
         Self {
-            raw: msg_id(allocated, sel(b"init\0")),
+            raw: msg_id(allocated, sel!(b"init\0")),
         }
     }
 
     pub fn function_count(&self) -> usize {
-        msg_usize(self.raw, sel(b"functionCount\0"))
+        msg_usize(self.raw, sel!(b"functionCount\0"))
     }
 
     pub fn set_function_count(&self, count: usize) {
-        msg_void_usize(self.raw, sel(b"setFunctionCount:\0"), count);
+        msg_void_usize(self.raw, sel!(b"setFunctionCount:\0"), count);
     }
 }
 
@@ -2996,7 +2996,7 @@ impl VisibleFunctionTable {
     }
 
     pub fn device(&self) -> Device {
-        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        let ptr = retain(msg_id(self.raw, sel!(b"device\0")));
         Device { raw: ptr }
     }
 
@@ -3006,11 +3006,11 @@ impl VisibleFunctionTable {
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 
     pub fn gpu_resource_id(&self) -> Result<ResourceID, MetalError> {
-        let selector = sel(b"gpuResourceID\0");
+        let selector = sel!(b"gpuResourceID\0");
         if responds_to_selector(self.raw, selector) {
             Ok(msg_resource_id(self.raw, selector))
         } else {
@@ -3021,7 +3021,7 @@ impl VisibleFunctionTable {
     pub fn set_function(&self, function: Option<&FunctionHandle>, index: usize) {
         msg_void_id_usize(
             self.raw,
-            sel(b"setFunction:atIndex:\0"),
+            sel!(b"setFunction:atIndex:\0"),
             function.map_or(NIL, |f| f.raw),
             index,
         );
@@ -3030,7 +3030,7 @@ impl VisibleFunctionTable {
     pub fn set_functions(&self, functions: &[FunctionHandle], range: Range) {
         msg_void_ptr_range(
             self.raw,
-            sel(b"setFunctions:withRange:\0"),
+            sel!(b"setFunctions:withRange:\0"),
             functions.as_ptr() as *const id,
             range,
         );
@@ -3052,7 +3052,7 @@ impl IntersectionFunctionTableDescriptor {
     pub fn intersection_function_table_descriptor() -> Self {
         let raw = retain(msg_id(
             class(b"MTLIntersectionFunctionTableDescriptor\0"),
-            sel(b"intersectionFunctionTableDescriptor\0"),
+            sel!(b"intersectionFunctionTableDescriptor\0"),
         ));
         Self { raw }
     }
@@ -3060,19 +3060,19 @@ impl IntersectionFunctionTableDescriptor {
     pub fn new() -> Self {
         let allocated = msg_id(
             class(b"MTLIntersectionFunctionTableDescriptor\0"),
-            sel(b"alloc\0"),
+            sel!(b"alloc\0"),
         );
         Self {
-            raw: msg_id(allocated, sel(b"init\0")),
+            raw: msg_id(allocated, sel!(b"init\0")),
         }
     }
 
     pub fn function_count(&self) -> usize {
-        msg_usize(self.raw, sel(b"functionCount\0"))
+        msg_usize(self.raw, sel!(b"functionCount\0"))
     }
 
     pub fn set_function_count(&self, count: usize) {
-        msg_void_usize(self.raw, sel(b"setFunctionCount:\0"), count);
+        msg_void_usize(self.raw, sel!(b"setFunctionCount:\0"), count);
     }
 
     pub fn copy(&self) -> Self {
@@ -3119,7 +3119,7 @@ impl IntersectionFunctionTable {
     }
 
     pub fn device(&self) -> Device {
-        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        let ptr = retain(msg_id(self.raw, sel!(b"device\0")));
         Device { raw: ptr }
     }
 
@@ -3129,11 +3129,11 @@ impl IntersectionFunctionTable {
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 
     pub fn gpu_resource_id(&self) -> Result<ResourceID, MetalError> {
-        let selector = sel(b"gpuResourceID\0");
+        let selector = sel!(b"gpuResourceID\0");
         if responds_to_selector(self.raw, selector) {
             Ok(msg_resource_id(self.raw, selector))
         } else {
@@ -3142,7 +3142,7 @@ impl IntersectionFunctionTable {
     }
 
     pub fn cpu_cache_mode(&self) -> CpuCacheMode {
-        let val = msg_usize(self.raw, sel(b"cpuCacheMode\0"));
+        let val = msg_usize(self.raw, sel!(b"cpuCacheMode\0"));
         match val {
             1 => CpuCacheMode::WriteCombined,
             _ => CpuCacheMode::DefaultCache,
@@ -3150,7 +3150,7 @@ impl IntersectionFunctionTable {
     }
 
     pub fn storage_mode(&self) -> StorageMode {
-        let val = msg_usize(self.raw, sel(b"storageMode\0"));
+        let val = msg_usize(self.raw, sel!(b"storageMode\0"));
         match val {
             0 => StorageMode::Shared,
             1 => StorageMode::Managed,
@@ -3161,7 +3161,7 @@ impl IntersectionFunctionTable {
     }
 
     pub fn hazard_tracking_mode(&self) -> HazardTrackingMode {
-        let selector = sel(b"hazardTrackingMode\0");
+        let selector = sel!(b"hazardTrackingMode\0");
         if responds_to_selector(self.raw, selector) {
             let val = msg_usize(self.raw, selector);
             match val {
@@ -3175,7 +3175,7 @@ impl IntersectionFunctionTable {
     }
 
     pub fn resource_options(&self) -> ResourceOptions {
-        let selector = sel(b"resourceOptions\0");
+        let selector = sel!(b"resourceOptions\0");
         if responds_to_selector(self.raw, selector) {
             ResourceOptions::from_raw(msg_usize(self.raw, selector))
         } else {
@@ -3184,7 +3184,7 @@ impl IntersectionFunctionTable {
     }
 
     pub fn heap(&self) -> Option<Heap> {
-        let selector = sel(b"heap\0");
+        let selector = sel!(b"heap\0");
         if responds_to_selector(self.raw, selector) {
             let ptr = msg_id(self.raw, selector);
             if ptr.is_null() {
@@ -3198,7 +3198,7 @@ impl IntersectionFunctionTable {
     }
 
     pub fn heap_offset(&self) -> usize {
-        let selector = sel(b"heapOffset\0");
+        let selector = sel!(b"heapOffset\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -3207,7 +3207,7 @@ impl IntersectionFunctionTable {
     }
 
     pub fn allocated_size(&self) -> usize {
-        let selector = sel(b"allocatedSize\0");
+        let selector = sel!(b"allocatedSize\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -3216,7 +3216,7 @@ impl IntersectionFunctionTable {
     }
 
     pub fn set_purgeable_state(&self, state: PurgeableState) -> PurgeableState {
-        let val = msg_usize_usize(self.raw, sel(b"setPurgeableState:\0"), state as usize);
+        let val = msg_usize_usize(self.raw, sel!(b"setPurgeableState:\0"), state as usize);
         match val {
             1 => PurgeableState::KeepCurrent,
             2 => PurgeableState::NonVolatile,
@@ -3233,7 +3233,7 @@ impl IntersectionFunctionTable {
     ) -> Result<(), MetalError> {
         msg_void_id_usize(
             self.raw,
-            sel(b"setFunction:atIndex:\0"),
+            sel!(b"setFunction:atIndex:\0"),
             function.map_or(NIL, |f| f.raw),
             index,
         );
@@ -3248,7 +3248,7 @@ impl IntersectionFunctionTable {
         self.validate_range(range, functions.len())?;
         msg_void_ptr_range(
             self.raw,
-            sel(b"setFunctions:withRange:\0"),
+            sel!(b"setFunctions:withRange:\0"),
             functions.as_ptr() as *const id,
             range,
         );
@@ -3263,7 +3263,7 @@ impl IntersectionFunctionTable {
     ) -> Result<(), MetalError> {
         msg_void_id_usize_usize(
             self.raw,
-            sel(b"setBuffer:offset:atIndex:\0"),
+            sel!(b"setBuffer:offset:atIndex:\0"),
             buffer.map_or(NIL, |b| b.raw),
             offset,
             index,
@@ -3287,7 +3287,7 @@ impl IntersectionFunctionTable {
         }
         msg_void_ptr_ptr_range(
             self.raw,
-            sel(b"setBuffers:offsets:withRange:\0"),
+            sel!(b"setBuffers:offsets:withRange:\0"),
             buffers.as_ptr() as *const id,
             offsets.as_ptr(),
             range,
@@ -3305,7 +3305,7 @@ impl IntersectionFunctionTable {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setOpaqueTriangleIntersectionFunctionWithSignature:atIndex:\0"),
+                sel!(b"setOpaqueTriangleIntersectionFunctionWithSignature:atIndex:\0"),
                 signature.0,
                 index,
             );
@@ -3327,7 +3327,7 @@ impl IntersectionFunctionTable {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setOpaqueTriangleIntersectionFunctionWithSignature:withRange:\0"),
+                sel!(b"setOpaqueTriangleIntersectionFunctionWithSignature:withRange:\0"),
                 signature.0,
                 range,
             );
@@ -3345,7 +3345,7 @@ impl IntersectionFunctionTable {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setOpaqueCurveIntersectionFunctionWithSignature:atIndex:\0"),
+                sel!(b"setOpaqueCurveIntersectionFunctionWithSignature:atIndex:\0"),
                 signature.0,
                 index,
             );
@@ -3367,7 +3367,7 @@ impl IntersectionFunctionTable {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setOpaqueCurveIntersectionFunctionWithSignature:withRange:\0"),
+                sel!(b"setOpaqueCurveIntersectionFunctionWithSignature:withRange:\0"),
                 signature.0,
                 range,
             );
@@ -3382,7 +3382,7 @@ impl IntersectionFunctionTable {
     ) {
         msg_void_id_usize(
             self.raw,
-            sel(b"setVisibleFunctionTable:atBufferIndex:\0"),
+            sel!(b"setVisibleFunctionTable:atBufferIndex:\0"),
             table.map_or(NIL, |t| t.raw),
             buffer_index,
         );
@@ -3396,7 +3396,7 @@ impl IntersectionFunctionTable {
         self.validate_range(range, tables.len())?;
         msg_void_ptr_range(
             self.raw,
-            sel(b"setVisibleFunctionTables:withBufferRange:\0"),
+            sel!(b"setVisibleFunctionTables:withBufferRange:\0"),
             tables.as_ptr() as *const id,
             range,
         );

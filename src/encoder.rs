@@ -24,13 +24,13 @@ pub struct RenderCommandEncoder {
 
 impl RenderCommandEncoder {
     pub fn set_render_pipeline_state(&self, state: &RenderPipelineState) {
-        msg_void_id(self.raw, sel(b"setRenderPipelineState:\0"), state.raw);
+        msg_void_id(self.raw, sel!(b"setRenderPipelineState:\0"), state.raw);
     }
 
     pub fn set_vertex_buffer(&self, index: usize, buffer: &Buffer, offset: usize) {
         msg_void_id_usize_usize(
             self.raw,
-            sel(b"setVertexBuffer:offset:atIndex:\0"),
+            sel!(b"setVertexBuffer:offset:atIndex:\0"),
             buffer.raw,
             offset,
             index,
@@ -40,7 +40,7 @@ impl RenderCommandEncoder {
     pub fn set_vertex_texture(&self, index: usize, texture: &Texture) {
         msg_void_id_usize(
             self.raw,
-            sel(b"setVertexTexture:atIndex:\0"),
+            sel!(b"setVertexTexture:atIndex:\0"),
             texture.raw,
             index,
         );
@@ -49,7 +49,7 @@ impl RenderCommandEncoder {
     pub fn set_vertex_sampler_state(&self, index: usize, sampler: &SamplerState) {
         msg_void_id_usize(
             self.raw,
-            sel(b"setVertexSamplerState:atIndex:\0"),
+            sel!(b"setVertexSamplerState:atIndex:\0"),
             sampler.raw,
             index,
         );
@@ -58,7 +58,7 @@ impl RenderCommandEncoder {
     pub fn set_vertex_bytes<T>(&self, index: usize, value: &T) {
         msg_void_ptr_usize_usize(
             self.raw,
-            sel(b"setVertexBytes:length:atIndex:\0"),
+            sel!(b"setVertexBytes:length:atIndex:\0"),
             value as *const T as *const c_void,
             std::mem::size_of::<T>(),
             index,
@@ -68,7 +68,7 @@ impl RenderCommandEncoder {
     pub fn set_fragment_buffer(&self, index: usize, buffer: &Buffer, offset: usize) {
         msg_void_id_usize_usize(
             self.raw,
-            sel(b"setFragmentBuffer:offset:atIndex:\0"),
+            sel!(b"setFragmentBuffer:offset:atIndex:\0"),
             buffer.raw,
             offset,
             index,
@@ -78,7 +78,7 @@ impl RenderCommandEncoder {
     pub fn set_fragment_texture(&self, index: usize, texture: &Texture) {
         msg_void_id_usize(
             self.raw,
-            sel(b"setFragmentTexture:atIndex:\0"),
+            sel!(b"setFragmentTexture:atIndex:\0"),
             texture.raw,
             index,
         );
@@ -87,7 +87,7 @@ impl RenderCommandEncoder {
     pub fn set_fragment_sampler_state(&self, index: usize, sampler: &SamplerState) {
         msg_void_id_usize(
             self.raw,
-            sel(b"setFragmentSamplerState:atIndex:\0"),
+            sel!(b"setFragmentSamplerState:atIndex:\0"),
             sampler.raw,
             index,
         );
@@ -96,7 +96,7 @@ impl RenderCommandEncoder {
     pub fn set_fragment_bytes<T>(&self, index: usize, value: &T) {
         msg_void_ptr_usize_usize(
             self.raw,
-            sel(b"setFragmentBytes:length:atIndex:\0"),
+            sel!(b"setFragmentBytes:length:atIndex:\0"),
             value as *const T as *const c_void,
             std::mem::size_of::<T>(),
             index,
@@ -104,19 +104,19 @@ impl RenderCommandEncoder {
     }
 
     pub fn set_depth_stencil_state(&self, state: &DepthStencilState) {
-        msg_void_id(self.raw, sel(b"setDepthStencilState:\0"), state.raw);
+        msg_void_id(self.raw, sel!(b"setDepthStencilState:\0"), state.raw);
     }
 
     pub fn set_viewport(&self, viewport: Viewport) {
-        msg_void_viewport(self.raw, sel(b"setViewport:\0"), viewport);
+        msg_void_viewport(self.raw, sel!(b"setViewport:\0"), viewport);
     }
 
     pub fn set_scissor_rect(&self, rect: ScissorRect) {
-        msg_void_scissor_rect(self.raw, sel(b"setScissorRect:\0"), rect);
+        msg_void_scissor_rect(self.raw, sel!(b"setScissorRect:\0"), rect);
     }
 
     pub fn set_viewports(&self, viewports: &[Viewport]) -> Result<(), MetalError> {
-        let selector = sel(b"setViewports:count:\0");
+        let selector = sel!(b"setViewports:count:\0");
         if responds_to_selector(self.raw, selector) {
             unsafe {
                 let f: unsafe extern "C" fn(id, SEL, *const Viewport, usize) =
@@ -130,7 +130,7 @@ impl RenderCommandEncoder {
     }
 
     pub fn set_scissor_rects(&self, rects: &[ScissorRect]) -> Result<(), MetalError> {
-        let selector = sel(b"setScissorRects:count:\0");
+        let selector = sel!(b"setScissorRects:count:\0");
         if responds_to_selector(self.raw, selector) {
             unsafe {
                 let f: unsafe extern "C" fn(id, SEL, *const ScissorRect, usize) =
@@ -149,7 +149,7 @@ impl RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setVisibilityResultMode:offset:\0"),
+                sel!(b"setVisibilityResultMode:offset:\0"),
                 mode as usize,
                 offset,
             );
@@ -157,7 +157,7 @@ impl RenderCommandEncoder {
     }
 
     pub fn set_depth_clip_mode(&self, mode: DepthClipMode) -> Result<(), MetalError> {
-        let selector = sel(b"setDepthClipMode:\0");
+        let selector = sel!(b"setDepthClipMode:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_usize(self.raw, selector, mode as usize);
             Ok(())
@@ -171,7 +171,7 @@ impl RenderCommandEncoder {
             let f: unsafe extern "C" fn(id, SEL, u32) = transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setStencilReferenceValue:\0"),
+                sel!(b"setStencilReferenceValue:\0"),
                 reference_value,
             );
         }
@@ -183,7 +183,7 @@ impl RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setBlendColorRed:green:blue:alpha:\0"),
+                sel!(b"setBlendColorRed:green:blue:alpha:\0"),
                 red,
                 green,
                 blue,
@@ -193,7 +193,7 @@ impl RenderCommandEncoder {
     }
 
     pub fn set_vertex_buffer_offset(&self, offset: usize, index: usize) -> Result<(), MetalError> {
-        let selector = sel(b"setVertexBufferOffset:atIndex:\0");
+        let selector = sel!(b"setVertexBufferOffset:atIndex:\0");
         if responds_to_selector(self.raw, selector) {
             unsafe {
                 let f: unsafe extern "C" fn(id, SEL, usize, usize) =
@@ -213,7 +213,7 @@ impl RenderCommandEncoder {
         offset: usize,
         index: usize,
     ) -> Result<(), MetalError> {
-        let selector = sel(b"setFragmentBufferOffset:atIndex:\0");
+        let selector = sel!(b"setFragmentBufferOffset:atIndex:\0");
         if responds_to_selector(self.raw, selector) {
             unsafe {
                 let f: unsafe extern "C" fn(id, SEL, usize, usize) =
@@ -229,15 +229,15 @@ impl RenderCommandEncoder {
     }
 
     pub fn set_cull_mode(&self, mode: CullMode) {
-        msg_void_usize(self.raw, sel(b"setCullMode:\0"), mode as usize);
+        msg_void_usize(self.raw, sel!(b"setCullMode:\0"), mode as usize);
     }
 
     pub fn set_front_facing_winding(&self, winding: Winding) {
-        msg_void_usize(self.raw, sel(b"setFrontFacingWinding:\0"), winding as usize);
+        msg_void_usize(self.raw, sel!(b"setFrontFacingWinding:\0"), winding as usize);
     }
 
     pub fn set_triangle_fill_mode(&self, mode: TriangleFillMode) {
-        msg_void_usize(self.raw, sel(b"setTriangleFillMode:\0"), mode as usize);
+        msg_void_usize(self.raw, sel!(b"setTriangleFillMode:\0"), mode as usize);
     }
 
     pub fn set_depth_bias(&self, bias: f32, slope_scale: f32, clamp: f32) {
@@ -246,7 +246,7 @@ impl RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setDepthBias:slopeScale:clamp:\0"),
+                sel!(b"setDepthBias:slopeScale:clamp:\0"),
                 bias,
                 slope_scale,
                 clamp,
@@ -265,7 +265,7 @@ impl RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"drawPrimitives:vertexStart:vertexCount:\0"),
+                sel!(b"drawPrimitives:vertexStart:vertexCount:\0"),
                 primitive_type as usize,
                 vertex_start,
                 vertex_count,
@@ -283,7 +283,7 @@ impl RenderCommandEncoder {
         instance_count: usize,
         base_instance: usize,
     ) -> Result<(), MetalError> {
-        let selector = sel(
+        let selector = sel!(
             b"drawPatches:patchStart:patchCount:patchIndexBuffer:patchIndexBufferOffset:instanceCount:baseInstance:\0",
         );
         if responds_to_selector(self.raw, selector) {
@@ -320,7 +320,7 @@ impl RenderCommandEncoder {
         instance_count: usize,
         base_instance: usize,
     ) -> Result<(), MetalError> {
-        let selector = sel(
+        let selector = sel!(
             b"drawIndexedPatches:patchStart:patchCount:patchIndexBuffer:patchIndexBufferOffset:controlPointIndexBuffer:controlPointIndexBufferOffset:instanceCount:baseInstance:\0",
         );
         if responds_to_selector(self.raw, selector) {
@@ -370,7 +370,7 @@ impl RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"drawPrimitives:vertexStart:vertexCount:instanceCount:\0"),
+                sel!(b"drawPrimitives:vertexStart:vertexCount:instanceCount:\0"),
                 primitive_type as usize,
                 vertex_start,
                 vertex_count,
@@ -392,7 +392,7 @@ impl RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"drawIndexedPrimitives:indexCount:indexType:indexBuffer:indexBufferOffset:\0"),
+                sel!(b"drawIndexedPrimitives:indexCount:indexType:indexBuffer:indexBufferOffset:\0"),
                 primitive_type as usize,
                 index_count,
                 index_type as usize,
@@ -416,7 +416,7 @@ impl RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"drawIndexedPrimitives:indexCount:indexType:indexBuffer:indexBufferOffset:instanceCount:\0"),
+                sel!(b"drawIndexedPrimitives:indexCount:indexType:indexBuffer:indexBufferOffset:instanceCount:\0"),
                 primitive_type as usize,
                 index_count,
                 index_type as usize,
@@ -438,7 +438,7 @@ impl RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"drawPrimitives:indirectBuffer:indirectBufferOffset:\0"),
+                sel!(b"drawPrimitives:indirectBuffer:indirectBufferOffset:\0"),
                 primitive_type as usize,
                 indirect_buffer.raw,
                 indirect_buffer_offset,
@@ -460,7 +460,7 @@ impl RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"drawIndexedPrimitives:indexType:indexBuffer:indexBufferOffset:indirectBuffer:indirectBufferOffset:\0"),
+                sel!(b"drawIndexedPrimitives:indexType:indexBuffer:indexBufferOffset:indirectBuffer:indirectBufferOffset:\0"),
                 primitive_type as usize,
                 index_type as usize,
                 index_buffer.raw,
@@ -472,11 +472,11 @@ impl RenderCommandEncoder {
     }
 
     pub fn update_fence(&self, fence: &Fence) {
-        msg_void_id(self.raw, sel(b"updateFence:\0"), fence.raw);
+        msg_void_id(self.raw, sel!(b"updateFence:\0"), fence.raw);
     }
 
     pub fn wait_for_fence(&self, fence: &Fence) {
-        msg_void_id(self.raw, sel(b"waitForFence:\0"), fence.raw);
+        msg_void_id(self.raw, sel!(b"waitForFence:\0"), fence.raw);
     }
 
     pub fn update_fence_after_stages(
@@ -485,7 +485,7 @@ impl RenderCommandEncoder {
         stages: RenderStages,
     ) -> Result<(), MetalError> {
         unsafe {
-            let selector = sel(b"updateFence:afterStages:\0");
+            let selector = sel!(b"updateFence:afterStages:\0");
             if responds_to_selector(self.raw, selector) {
                 let f: unsafe extern "C" fn(id, SEL, id, usize) =
                     transmute(objc_msgSend as *const c_void);
@@ -503,7 +503,7 @@ impl RenderCommandEncoder {
         stages: RenderStages,
     ) -> Result<(), MetalError> {
         unsafe {
-            let selector = sel(b"waitForFence:beforeStages:\0");
+            let selector = sel!(b"waitForFence:beforeStages:\0");
             if responds_to_selector(self.raw, selector) {
                 let f: unsafe extern "C" fn(id, SEL, id, usize) =
                     transmute(objc_msgSend as *const c_void);
@@ -518,7 +518,7 @@ impl RenderCommandEncoder {
     pub fn use_buffer(&self, buffer: &Buffer, usage: ResourceUsage) {
         msg_void_id_usize(
             self.raw,
-            sel(b"useResource:usage:\0"),
+            sel!(b"useResource:usage:\0"),
             buffer.raw,
             usage.as_raw(),
         );
@@ -527,7 +527,7 @@ impl RenderCommandEncoder {
     pub fn use_texture(&self, texture: &Texture, usage: ResourceUsage) {
         msg_void_id_usize(
             self.raw,
-            sel(b"useResource:usage:\0"),
+            sel!(b"useResource:usage:\0"),
             texture.raw,
             usage.as_raw(),
         );
@@ -540,7 +540,7 @@ impl RenderCommandEncoder {
         stages: RenderStages,
     ) -> Result<(), MetalError> {
         unsafe {
-            let selector = sel(b"useResource:usage:stages:\0");
+            let selector = sel!(b"useResource:usage:stages:\0");
             if responds_to_selector(self.raw, selector) {
                 let f: unsafe extern "C" fn(id, SEL, id, usize, usize) =
                     transmute(objc_msgSend as *const c_void);
@@ -559,7 +559,7 @@ impl RenderCommandEncoder {
         stages: RenderStages,
     ) -> Result<(), MetalError> {
         unsafe {
-            let selector = sel(b"useResource:usage:stages:\0");
+            let selector = sel!(b"useResource:usage:stages:\0");
             if responds_to_selector(self.raw, selector) {
                 let f: unsafe extern "C" fn(id, SEL, id, usize, usize) =
                     transmute(objc_msgSend as *const c_void);
@@ -572,12 +572,12 @@ impl RenderCommandEncoder {
     }
 
     pub fn use_heap(&self, heap: &Heap) {
-        msg_void_id(self.raw, sel(b"useHeap:\0"), heap.raw);
+        msg_void_id(self.raw, sel!(b"useHeap:\0"), heap.raw);
     }
 
     pub fn use_heap_at_stages(&self, heap: &Heap, stages: RenderStages) -> Result<(), MetalError> {
         unsafe {
-            let selector = sel(b"useHeap:stages:\0");
+            let selector = sel!(b"useHeap:stages:\0");
             if responds_to_selector(self.raw, selector) {
                 let f: unsafe extern "C" fn(id, SEL, id, usize) =
                     transmute(objc_msgSend as *const c_void);
@@ -596,7 +596,7 @@ impl RenderCommandEncoder {
         stages: RenderStages,
     ) -> Result<(), MetalError> {
         unsafe {
-            let selector = sel(b"useResources:count:usage:stages:\0");
+            let selector = sel!(b"useResources:count:usage:stages:\0");
             if responds_to_selector(self.raw, selector) {
                 let f: unsafe extern "C" fn(id, SEL, *const id, usize, usize, usize) =
                     transmute(objc_msgSend as *const c_void);
@@ -624,7 +624,7 @@ impl RenderCommandEncoder {
         stages: RenderStages,
     ) -> Result<(), MetalError> {
         unsafe {
-            let selector = sel(b"useResources:count:usage:stages:\0");
+            let selector = sel!(b"useResources:count:usage:stages:\0");
             if responds_to_selector(self.raw, selector) {
                 let f: unsafe extern "C" fn(id, SEL, *const id, usize, usize, usize) =
                     transmute(objc_msgSend as *const c_void);
@@ -651,7 +651,7 @@ impl RenderCommandEncoder {
         stages: RenderStages,
     ) -> Result<(), MetalError> {
         unsafe {
-            let selector = sel(b"useHeaps:count:stages:\0");
+            let selector = sel!(b"useHeaps:count:stages:\0");
             if responds_to_selector(self.raw, selector) {
                 let f: unsafe extern "C" fn(id, SEL, *const id, usize, usize) =
                     transmute(objc_msgSend as *const c_void);
@@ -677,7 +677,7 @@ impl RenderCommandEncoder {
         buffer.validate_reset_range(range)?;
         msg_void_id_range(
             self.raw,
-            sel(b"executeCommandsInBuffer:withRange:\0"),
+            sel!(b"executeCommandsInBuffer:withRange:\0"),
             buffer.raw,
             range,
         );
@@ -687,7 +687,7 @@ impl RenderCommandEncoder {
     pub fn set_tile_buffer(&self, index: usize, buffer: &Buffer, offset: usize) {
         msg_void_id_usize_usize(
             self.raw,
-            sel(b"setTileBuffer:offset:atIndex:\0"),
+            sel!(b"setTileBuffer:offset:atIndex:\0"),
             buffer.raw,
             offset,
             index,
@@ -697,7 +697,7 @@ impl RenderCommandEncoder {
     pub fn set_tile_bytes<T>(&self, index: usize, value: &T) {
         msg_void_ptr_usize_usize(
             self.raw,
-            sel(b"setTileBytes:length:atIndex:\0"),
+            sel!(b"setTileBytes:length:atIndex:\0"),
             value as *const T as *const c_void,
             std::mem::size_of::<T>(),
             index,
@@ -707,7 +707,7 @@ impl RenderCommandEncoder {
     pub fn set_tile_texture(&self, index: usize, texture: &Texture) {
         msg_void_id_usize(
             self.raw,
-            sel(b"setTileTexture:atIndex:\0"),
+            sel!(b"setTileTexture:atIndex:\0"),
             texture.raw,
             index,
         );
@@ -716,7 +716,7 @@ impl RenderCommandEncoder {
     pub fn set_tile_sampler_state(&self, index: usize, sampler: &SamplerState) {
         msg_void_id_usize(
             self.raw,
-            sel(b"setTileSamplerState:atIndex:\0"),
+            sel!(b"setTileSamplerState:atIndex:\0"),
             sampler.raw,
             index,
         );
@@ -725,7 +725,7 @@ impl RenderCommandEncoder {
     pub fn dispatch_threads_per_tile(&self, threads_per_tile: Size) {
         msg_void_mtlsize(
             self.raw,
-            sel(b"dispatchThreadsPerTile:\0"),
+            sel!(b"dispatchThreadsPerTile:\0"),
             threads_per_tile,
         );
     }
@@ -741,7 +741,7 @@ impl RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setThreadgroupMemoryLength:offset:atIndex:\0"),
+                sel!(b"setThreadgroupMemoryLength:offset:atIndex:\0"),
                 length,
                 offset,
                 index,
@@ -752,7 +752,7 @@ impl RenderCommandEncoder {
     pub fn set_object_buffer(&self, index: usize, buffer: &Buffer, offset: usize) {
         msg_void_id_usize_usize(
             self.raw,
-            sel(b"setObjectBuffer:offset:atIndex:\0"),
+            sel!(b"setObjectBuffer:offset:atIndex:\0"),
             buffer.raw,
             offset,
             index,
@@ -762,7 +762,7 @@ impl RenderCommandEncoder {
     pub fn set_object_bytes<T>(&self, index: usize, value: &T) {
         msg_void_ptr_usize_usize(
             self.raw,
-            sel(b"setObjectBytes:length:atIndex:\0"),
+            sel!(b"setObjectBytes:length:atIndex:\0"),
             value as *const T as *const c_void,
             std::mem::size_of::<T>(),
             index,
@@ -772,7 +772,7 @@ impl RenderCommandEncoder {
     pub fn set_object_texture(&self, index: usize, texture: &Texture) {
         msg_void_id_usize(
             self.raw,
-            sel(b"setObjectTexture:atIndex:\0"),
+            sel!(b"setObjectTexture:atIndex:\0"),
             texture.raw,
             index,
         );
@@ -781,7 +781,7 @@ impl RenderCommandEncoder {
     pub fn set_object_sampler_state(&self, index: usize, sampler: &SamplerState) {
         msg_void_id_usize(
             self.raw,
-            sel(b"setObjectSamplerState:atIndex:\0"),
+            sel!(b"setObjectSamplerState:atIndex:\0"),
             sampler.raw,
             index,
         );
@@ -790,7 +790,7 @@ impl RenderCommandEncoder {
     pub fn set_mesh_buffer(&self, index: usize, buffer: &Buffer, offset: usize) {
         msg_void_id_usize_usize(
             self.raw,
-            sel(b"setMeshBuffer:offset:atIndex:\0"),
+            sel!(b"setMeshBuffer:offset:atIndex:\0"),
             buffer.raw,
             offset,
             index,
@@ -800,7 +800,7 @@ impl RenderCommandEncoder {
     pub fn set_mesh_bytes<T>(&self, index: usize, value: &T) {
         msg_void_ptr_usize_usize(
             self.raw,
-            sel(b"setMeshBytes:length:atIndex:\0"),
+            sel!(b"setMeshBytes:length:atIndex:\0"),
             value as *const T as *const c_void,
             std::mem::size_of::<T>(),
             index,
@@ -810,7 +810,7 @@ impl RenderCommandEncoder {
     pub fn set_mesh_texture(&self, index: usize, texture: &Texture) {
         msg_void_id_usize(
             self.raw,
-            sel(b"setMeshTexture:atIndex:\0"),
+            sel!(b"setMeshTexture:atIndex:\0"),
             texture.raw,
             index,
         );
@@ -819,7 +819,7 @@ impl RenderCommandEncoder {
     pub fn set_mesh_sampler_state(&self, index: usize, sampler: &SamplerState) {
         msg_void_id_usize(
             self.raw,
-            sel(b"setMeshSamplerState:atIndex:\0"),
+            sel!(b"setMeshSamplerState:atIndex:\0"),
             sampler.raw,
             index,
         );
@@ -836,7 +836,7 @@ impl RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"drawMeshThreadgroups:threadsPerObjectThreadgroup:threadsPerMeshThreadgroup:\0"),
+                sel!(b"drawMeshThreadgroups:threadsPerObjectThreadgroup:threadsPerMeshThreadgroup:\0"),
                 threadgroups_per_grid,
                 threads_per_object_threadgroup,
                 threads_per_mesh_threadgroup,
@@ -855,7 +855,7 @@ impl RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"drawMeshThreads:threadsPerObjectThreadgroup:threadsPerMeshThreadgroup:\0"),
+                sel!(b"drawMeshThreads:threadsPerObjectThreadgroup:threadsPerMeshThreadgroup:\0"),
                 threads_per_grid,
                 threads_per_object_threadgroup,
                 threads_per_mesh_threadgroup,
@@ -875,7 +875,7 @@ impl RenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"drawMeshThreadgroupsWithIndirectBuffer:indirectBufferOffset:threadsPerObjectThreadgroup:threadsPerMeshThreadgroup:\0"),
+                sel!(b"drawMeshThreadgroupsWithIndirectBuffer:indirectBufferOffset:threadsPerObjectThreadgroup:threadsPerMeshThreadgroup:\0"),
                 indirect_buffer.raw,
                 indirect_buffer_offset,
                 threads_per_object_threadgroup,
@@ -887,7 +887,7 @@ impl RenderCommandEncoder {
     pub fn set_vertex_visible_function_table(&self, table: &VisibleFunctionTable, index: usize) {
         msg_void_id_usize(
             self.raw,
-            sel(b"setVertexVisibleFunctionTable:atBufferIndex:\0"),
+            sel!(b"setVertexVisibleFunctionTable:atBufferIndex:\0"),
             table.raw,
             index,
         );
@@ -900,7 +900,7 @@ impl RenderCommandEncoder {
     ) {
         msg_void_id_usize(
             self.raw,
-            sel(b"setVertexIntersectionFunctionTable:atBufferIndex:\0"),
+            sel!(b"setVertexIntersectionFunctionTable:atBufferIndex:\0"),
             table.raw,
             index,
         );
@@ -913,7 +913,7 @@ impl RenderCommandEncoder {
     ) {
         msg_void_id_usize(
             self.raw,
-            sel(b"setVertexAccelerationStructure:atBufferIndex:\0"),
+            sel!(b"setVertexAccelerationStructure:atBufferIndex:\0"),
             structure.raw,
             index,
         );
@@ -922,7 +922,7 @@ impl RenderCommandEncoder {
     pub fn set_fragment_visible_function_table(&self, table: &VisibleFunctionTable, index: usize) {
         msg_void_id_usize(
             self.raw,
-            sel(b"setFragmentVisibleFunctionTable:atBufferIndex:\0"),
+            sel!(b"setFragmentVisibleFunctionTable:atBufferIndex:\0"),
             table.raw,
             index,
         );
@@ -935,7 +935,7 @@ impl RenderCommandEncoder {
     ) {
         msg_void_id_usize(
             self.raw,
-            sel(b"setFragmentIntersectionFunctionTable:atBufferIndex:\0"),
+            sel!(b"setFragmentIntersectionFunctionTable:atBufferIndex:\0"),
             table.raw,
             index,
         );
@@ -948,7 +948,7 @@ impl RenderCommandEncoder {
     ) {
         msg_void_id_usize(
             self.raw,
-            sel(b"setFragmentAccelerationStructure:atBufferIndex:\0"),
+            sel!(b"setFragmentAccelerationStructure:atBufferIndex:\0"),
             structure.raw,
             index,
         );
@@ -957,7 +957,7 @@ impl RenderCommandEncoder {
     pub fn set_tile_visible_function_table(&self, table: &VisibleFunctionTable, index: usize) {
         msg_void_id_usize(
             self.raw,
-            sel(b"setTileVisibleFunctionTable:atBufferIndex:\0"),
+            sel!(b"setTileVisibleFunctionTable:atBufferIndex:\0"),
             table.raw,
             index,
         );
@@ -970,7 +970,7 @@ impl RenderCommandEncoder {
     ) {
         msg_void_id_usize(
             self.raw,
-            sel(b"setTileIntersectionFunctionTable:atBufferIndex:\0"),
+            sel!(b"setTileIntersectionFunctionTable:atBufferIndex:\0"),
             table.raw,
             index,
         );
@@ -979,7 +979,7 @@ impl RenderCommandEncoder {
     pub fn set_tile_acceleration_structure(&self, structure: &AccelerationStructure, index: usize) {
         msg_void_id_usize(
             self.raw,
-            sel(b"setTileAccelerationStructure:atBufferIndex:\0"),
+            sel!(b"setTileAccelerationStructure:atBufferIndex:\0"),
             structure.raw,
             index,
         );
@@ -988,7 +988,7 @@ impl RenderCommandEncoder {
     pub fn set_vertex_buffers(&self, buffers: &[Buffer], offsets: &[usize], range: Range) {
         msg_void_ptr_ptr_range(
             self.raw,
-            sel(b"setVertexBuffers:offsets:withRange:\0"),
+            sel!(b"setVertexBuffers:offsets:withRange:\0"),
             buffers.as_ptr() as *const id,
             offsets.as_ptr(),
             range,
@@ -998,7 +998,7 @@ impl RenderCommandEncoder {
     pub fn set_vertex_textures(&self, textures: &[Texture], range: Range) {
         msg_void_ptr_range(
             self.raw,
-            sel(b"setVertexTextures:withRange:\0"),
+            sel!(b"setVertexTextures:withRange:\0"),
             textures.as_ptr() as *const id,
             range,
         );
@@ -1007,7 +1007,7 @@ impl RenderCommandEncoder {
     pub fn set_vertex_sampler_states(&self, samplers: &[SamplerState], range: Range) {
         msg_void_ptr_range(
             self.raw,
-            sel(b"setVertexSamplerStates:withRange:\0"),
+            sel!(b"setVertexSamplerStates:withRange:\0"),
             samplers.as_ptr() as *const id,
             range,
         );
@@ -1016,7 +1016,7 @@ impl RenderCommandEncoder {
     pub fn set_fragment_buffers(&self, buffers: &[Buffer], offsets: &[usize], range: Range) {
         msg_void_ptr_ptr_range(
             self.raw,
-            sel(b"setFragmentBuffers:offsets:withRange:\0"),
+            sel!(b"setFragmentBuffers:offsets:withRange:\0"),
             buffers.as_ptr() as *const id,
             offsets.as_ptr(),
             range,
@@ -1026,7 +1026,7 @@ impl RenderCommandEncoder {
     pub fn set_fragment_textures(&self, textures: &[Texture], range: Range) {
         msg_void_ptr_range(
             self.raw,
-            sel(b"setFragmentTextures:withRange:\0"),
+            sel!(b"setFragmentTextures:withRange:\0"),
             textures.as_ptr() as *const id,
             range,
         );
@@ -1035,7 +1035,7 @@ impl RenderCommandEncoder {
     pub fn set_fragment_sampler_states(&self, samplers: &[SamplerState], range: Range) {
         msg_void_ptr_range(
             self.raw,
-            sel(b"setFragmentSamplerStates:withRange:\0"),
+            sel!(b"setFragmentSamplerStates:withRange:\0"),
             samplers.as_ptr() as *const id,
             range,
         );
@@ -1048,7 +1048,7 @@ impl RenderCommandEncoder {
     ) {
         msg_void_ptr_range(
             self.raw,
-            sel(b"setVertexVisibleFunctionTables:withBufferRange:\0"),
+            sel!(b"setVertexVisibleFunctionTables:withBufferRange:\0"),
             tables.as_ptr() as *const id,
             range,
         );
@@ -1061,7 +1061,7 @@ impl RenderCommandEncoder {
     ) {
         msg_void_ptr_range(
             self.raw,
-            sel(b"setVertexIntersectionFunctionTables:withBufferRange:\0"),
+            sel!(b"setVertexIntersectionFunctionTables:withBufferRange:\0"),
             tables.as_ptr() as *const id,
             range,
         );
@@ -1074,7 +1074,7 @@ impl RenderCommandEncoder {
     ) {
         msg_void_ptr_range(
             self.raw,
-            sel(b"setFragmentVisibleFunctionTables:withBufferRange:\0"),
+            sel!(b"setFragmentVisibleFunctionTables:withBufferRange:\0"),
             tables.as_ptr() as *const id,
             range,
         );
@@ -1087,7 +1087,7 @@ impl RenderCommandEncoder {
     ) {
         msg_void_ptr_range(
             self.raw,
-            sel(b"setFragmentIntersectionFunctionTables:withBufferRange:\0"),
+            sel!(b"setFragmentIntersectionFunctionTables:withBufferRange:\0"),
             tables.as_ptr() as *const id,
             range,
         );
@@ -1096,7 +1096,7 @@ impl RenderCommandEncoder {
     pub fn set_tile_visible_function_tables(&self, tables: &[VisibleFunctionTable], range: Range) {
         msg_void_ptr_range(
             self.raw,
-            sel(b"setTileVisibleFunctionTables:withBufferRange:\0"),
+            sel!(b"setTileVisibleFunctionTables:withBufferRange:\0"),
             tables.as_ptr() as *const id,
             range,
         );
@@ -1109,7 +1109,7 @@ impl RenderCommandEncoder {
     ) {
         msg_void_ptr_range(
             self.raw,
-            sel(b"setTileIntersectionFunctionTables:withBufferRange:\0"),
+            sel!(b"setTileIntersectionFunctionTables:withBufferRange:\0"),
             tables.as_ptr() as *const id,
             range,
         );
@@ -1121,7 +1121,7 @@ impl RenderCommandEncoder {
         after: RenderStages,
         before: RenderStages,
     ) -> Result<(), MetalError> {
-        let selector = sel(b"memoryBarrierWithScope:afterStages:beforeStages:\0");
+        let selector = sel!(b"memoryBarrierWithScope:afterStages:beforeStages:\0");
         if responds_to_selector(self.raw, selector) {
             unsafe {
                 let f: unsafe extern "C" fn(id, SEL, usize, usize, usize) =
@@ -1137,12 +1137,12 @@ impl RenderCommandEncoder {
     }
 
     pub fn device(&self) -> Device {
-        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        let ptr = retain(msg_id(self.raw, sel!(b"device\0")));
         Device { raw: ptr }
     }
 
     pub fn label(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"label\0"));
+        let ptr = msg_id(self.raw, sel!(b"label\0"));
         if ptr.is_null() {
             None
         } else {
@@ -1152,25 +1152,25 @@ impl RenderCommandEncoder {
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 
     pub fn insert_debug_signpost(&self, string: &str) {
         let ns_str = NSString::new(string);
-        msg_void_id(self.raw, sel(b"insertDebugSignpost:\0"), ns_str.raw());
+        msg_void_id(self.raw, sel!(b"insertDebugSignpost:\0"), ns_str.raw());
     }
 
     pub fn push_debug_group(&self, string: &str) {
         let ns_str = NSString::new(string);
-        msg_void_id(self.raw, sel(b"pushDebugGroup:\0"), ns_str.raw());
+        msg_void_id(self.raw, sel!(b"pushDebugGroup:\0"), ns_str.raw());
     }
 
     pub fn pop_debug_group(&self) {
-        msg_void(self.raw, sel(b"popDebugGroup\0"));
+        msg_void(self.raw, sel!(b"popDebugGroup\0"));
     }
 
     pub fn end_encoding(&self) {
-        msg_void(self.raw, sel(b"endEncoding\0"));
+        msg_void(self.raw, sel!(b"endEncoding\0"));
     }
 }
 
@@ -1187,13 +1187,13 @@ pub struct ComputeCommandEncoder {
 
 impl ComputeCommandEncoder {
     pub fn set_compute_pipeline_state(&self, state: &ComputePipelineState) {
-        msg_void_id(self.raw, sel(b"setComputePipelineState:\0"), state.raw);
+        msg_void_id(self.raw, sel!(b"setComputePipelineState:\0"), state.raw);
     }
 
     pub fn set_buffer(&self, index: usize, buffer: &Buffer, offset: usize) {
         msg_void_id_usize_usize(
             self.raw,
-            sel(b"setBuffer:offset:atIndex:\0"),
+            sel!(b"setBuffer:offset:atIndex:\0"),
             buffer.raw,
             offset,
             index,
@@ -1201,13 +1201,13 @@ impl ComputeCommandEncoder {
     }
 
     pub fn set_texture(&self, index: usize, texture: &Texture) {
-        msg_void_id_usize(self.raw, sel(b"setTexture:atIndex:\0"), texture.raw, index);
+        msg_void_id_usize(self.raw, sel!(b"setTexture:atIndex:\0"), texture.raw, index);
     }
 
     pub fn set_sampler_state(&self, index: usize, sampler: &SamplerState) {
         msg_void_id_usize(
             self.raw,
-            sel(b"setSamplerState:atIndex:\0"),
+            sel!(b"setSamplerState:atIndex:\0"),
             sampler.raw,
             index,
         );
@@ -1216,7 +1216,7 @@ impl ComputeCommandEncoder {
     pub fn set_bytes<T>(&self, index: usize, value: &T) {
         msg_void_ptr_usize_usize(
             self.raw,
-            sel(b"setBytes:length:atIndex:\0"),
+            sel!(b"setBytes:length:atIndex:\0"),
             value as *const T as *const c_void,
             std::mem::size_of::<T>(),
             index,
@@ -1226,7 +1226,7 @@ impl ComputeCommandEncoder {
     pub fn dispatch_threadgroups(&self, threadgroups: Size, threads_per_threadgroup: Size) {
         msg_void_size_size(
             self.raw,
-            sel(b"dispatchThreadgroups:threadsPerThreadgroup:\0"),
+            sel!(b"dispatchThreadgroups:threadsPerThreadgroup:\0"),
             threadgroups,
             threads_per_threadgroup,
         );
@@ -1235,24 +1235,24 @@ impl ComputeCommandEncoder {
     pub fn dispatch_threads(&self, threads: Size, threads_per_threadgroup: Size) {
         msg_void_size_size(
             self.raw,
-            sel(b"dispatchThreads:threadsPerThreadgroup:\0"),
+            sel!(b"dispatchThreads:threadsPerThreadgroup:\0"),
             threads,
             threads_per_threadgroup,
         );
     }
 
     pub fn update_fence(&self, fence: &Fence) {
-        msg_void_id(self.raw, sel(b"updateFence:\0"), fence.raw);
+        msg_void_id(self.raw, sel!(b"updateFence:\0"), fence.raw);
     }
 
     pub fn wait_for_fence(&self, fence: &Fence) {
-        msg_void_id(self.raw, sel(b"waitForFence:\0"), fence.raw);
+        msg_void_id(self.raw, sel!(b"waitForFence:\0"), fence.raw);
     }
 
     pub fn use_buffer(&self, buffer: &Buffer, usage: ResourceUsage) {
         msg_void_id_usize(
             self.raw,
-            sel(b"useResource:usage:\0"),
+            sel!(b"useResource:usage:\0"),
             buffer.raw,
             usage.as_raw(),
         );
@@ -1261,14 +1261,14 @@ impl ComputeCommandEncoder {
     pub fn use_texture(&self, texture: &Texture, usage: ResourceUsage) {
         msg_void_id_usize(
             self.raw,
-            sel(b"useResource:usage:\0"),
+            sel!(b"useResource:usage:\0"),
             texture.raw,
             usage.as_raw(),
         );
     }
 
     pub fn use_heap(&self, heap: &Heap) {
-        msg_void_id(self.raw, sel(b"useHeap:\0"), heap.raw);
+        msg_void_id(self.raw, sel!(b"useHeap:\0"), heap.raw);
     }
 
     pub fn execute_commands_in_buffer(
@@ -1279,7 +1279,7 @@ impl ComputeCommandEncoder {
         buffer.validate_reset_range(range)?;
         msg_void_id_range(
             self.raw,
-            sel(b"executeCommandsInBuffer:withRange:\0"),
+            sel!(b"executeCommandsInBuffer:withRange:\0"),
             buffer.raw,
             range,
         );
@@ -1289,7 +1289,7 @@ impl ComputeCommandEncoder {
     pub fn set_acceleration_structure(&self, structure: &AccelerationStructure, index: usize) {
         msg_void_id_usize(
             self.raw,
-            sel(b"setAccelerationStructure:atBufferIndex:\0"),
+            sel!(b"setAccelerationStructure:atBufferIndex:\0"),
             structure.raw,
             index,
         );
@@ -1298,7 +1298,7 @@ impl ComputeCommandEncoder {
     pub fn set_visible_function_table(&self, table: &VisibleFunctionTable, index: usize) {
         msg_void_id_usize(
             self.raw,
-            sel(b"setVisibleFunctionTable:atBufferIndex:\0"),
+            sel!(b"setVisibleFunctionTable:atBufferIndex:\0"),
             table.raw,
             index,
         );
@@ -1307,7 +1307,7 @@ impl ComputeCommandEncoder {
     pub fn set_intersection_function_table(&self, table: &IntersectionFunctionTable, index: usize) {
         msg_void_id_usize(
             self.raw,
-            sel(b"setIntersectionFunctionTable:atBufferIndex:\0"),
+            sel!(b"setIntersectionFunctionTable:atBufferIndex:\0"),
             table.raw,
             index,
         );
@@ -1316,7 +1316,7 @@ impl ComputeCommandEncoder {
     pub fn set_buffers(&self, buffers: &[Buffer], offsets: &[usize], range: Range) {
         msg_void_ptr_ptr_range(
             self.raw,
-            sel(b"setBuffers:offsets:withRange:\0"),
+            sel!(b"setBuffers:offsets:withRange:\0"),
             buffers.as_ptr() as *const id,
             offsets.as_ptr(),
             range,
@@ -1326,7 +1326,7 @@ impl ComputeCommandEncoder {
     pub fn set_textures(&self, textures: &[Texture], range: Range) {
         msg_void_ptr_range(
             self.raw,
-            sel(b"setTextures:withRange:\0"),
+            sel!(b"setTextures:withRange:\0"),
             textures.as_ptr() as *const id,
             range,
         );
@@ -1335,7 +1335,7 @@ impl ComputeCommandEncoder {
     pub fn set_sampler_states(&self, samplers: &[SamplerState], range: Range) {
         msg_void_ptr_range(
             self.raw,
-            sel(b"setSamplerStates:withRange:\0"),
+            sel!(b"setSamplerStates:withRange:\0"),
             samplers.as_ptr() as *const id,
             range,
         );
@@ -1344,7 +1344,7 @@ impl ComputeCommandEncoder {
     pub fn set_visible_function_tables(&self, tables: &[VisibleFunctionTable], range: Range) {
         msg_void_ptr_range(
             self.raw,
-            sel(b"setVisibleFunctionTables:withBufferRange:\0"),
+            sel!(b"setVisibleFunctionTables:withBufferRange:\0"),
             tables.as_ptr() as *const id,
             range,
         );
@@ -1357,14 +1357,14 @@ impl ComputeCommandEncoder {
     ) {
         msg_void_ptr_range(
             self.raw,
-            sel(b"setIntersectionFunctionTables:withBufferRange:\0"),
+            sel!(b"setIntersectionFunctionTables:withBufferRange:\0"),
             tables.as_ptr() as *const id,
             range,
         );
     }
 
     pub fn dispatch_type(&self) -> DispatchType {
-        let val = msg_usize(self.raw, sel(b"dispatchType\0"));
+        let val = msg_usize(self.raw, sel!(b"dispatchType\0"));
         match val {
             0 => DispatchType::Serial,
             _ => DispatchType::Concurrent,
@@ -1375,7 +1375,7 @@ impl ComputeCommandEncoder {
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, usize, usize) =
                 transmute(objc_msgSend as *const c_void);
-            f(self.raw, sel(b"setBufferOffset:atIndex:\0"), offset, index);
+            f(self.raw, sel!(b"setBufferOffset:atIndex:\0"), offset, index);
         }
     }
 
@@ -1390,7 +1390,7 @@ impl ComputeCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setBufferOffset:attributeStride:atIndex:\0"),
+                sel!(b"setBufferOffset:attributeStride:atIndex:\0"),
                 offset,
                 stride,
                 index,
@@ -1410,7 +1410,7 @@ impl ComputeCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setBuffer:offset:attributeStride:atIndex:\0"),
+                sel!(b"setBuffer:offset:attributeStride:atIndex:\0"),
                 buffer.raw,
                 offset,
                 stride,
@@ -1431,7 +1431,7 @@ impl ComputeCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setBuffers:offsets:attributeStrides:withRange:\0"),
+                sel!(b"setBuffers:offsets:attributeStrides:withRange:\0"),
                 buffers.as_ptr() as *const id,
                 offsets.as_ptr(),
                 strides.as_ptr(),
@@ -1446,7 +1446,7 @@ impl ComputeCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setBytes:length:attributeStride:atIndex:\0"),
+                sel!(b"setBytes:length:attributeStride:atIndex:\0"),
                 value as *const T as *const c_void,
                 std::mem::size_of::<T>(),
                 stride,
@@ -1467,7 +1467,7 @@ impl ComputeCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setSamplerState:lodMinClamp:lodMaxClamp:atIndex:\0"),
+                sel!(b"setSamplerState:lodMinClamp:lodMaxClamp:atIndex:\0"),
                 sampler.raw,
                 lod_min_clamp,
                 lod_max_clamp,
@@ -1488,7 +1488,7 @@ impl ComputeCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setSamplerStates:lodMinClamps:lodMaxClamps:withRange:\0"),
+                sel!(b"setSamplerStates:lodMinClamps:lodMaxClamps:withRange:\0"),
                 samplers.as_ptr() as *const id,
                 lod_min_clamps.as_ptr(),
                 lod_max_clamps.as_ptr(),
@@ -1503,7 +1503,7 @@ impl ComputeCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setThreadgroupMemoryLength:atIndex:\0"),
+                sel!(b"setThreadgroupMemoryLength:atIndex:\0"),
                 length,
                 index,
             );
@@ -1516,7 +1516,7 @@ impl ComputeCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setImageblockWidth:height:\0"),
+                sel!(b"setImageblockWidth:height:\0"),
                 width,
                 height,
             );
@@ -1526,7 +1526,7 @@ impl ComputeCommandEncoder {
     pub fn set_stage_in_region(&self, region: Region) {
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, Region) = transmute(objc_msgSend as *const c_void);
-            f(self.raw, sel(b"setStageInRegion:\0"), region);
+            f(self.raw, sel!(b"setStageInRegion:\0"), region);
         }
     }
 
@@ -1537,7 +1537,7 @@ impl ComputeCommandEncoder {
     ) {
         msg_void_id_usize(
             self.raw,
-            sel(b"setStageInRegionWithIndirectBuffer:indirectBufferOffset:\0"),
+            sel!(b"setStageInRegionWithIndirectBuffer:indirectBufferOffset:\0"),
             indirect_buffer.raw,
             indirect_buffer_offset,
         );
@@ -1554,7 +1554,7 @@ impl ComputeCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"dispatchThreadgroupsWithIndirectBuffer:indirectBufferOffset:threadsPerThreadgroup:\0"),
+                sel!(b"dispatchThreadgroupsWithIndirectBuffer:indirectBufferOffset:threadsPerThreadgroup:\0"),
                 indirect_buffer.raw,
                 indirect_buffer_offset,
                 threads_per_threadgroup,
@@ -1568,7 +1568,7 @@ impl ComputeCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"useResources:count:usage:\0"),
+                sel!(b"useResources:count:usage:\0"),
                 resources.as_ptr(),
                 resources.len(),
                 usage.as_raw(),
@@ -1582,7 +1582,7 @@ impl ComputeCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"useHeaps:count:\0"),
+                sel!(b"useHeaps:count:\0"),
                 heaps.as_ptr(),
                 heaps.len(),
             );
@@ -1600,7 +1600,7 @@ impl ComputeCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"executeCommandsInBuffer:indirectBuffer:indirectBufferOffset:\0"),
+                sel!(b"executeCommandsInBuffer:indirectBuffer:indirectBufferOffset:\0"),
                 indirect_command_buffer.raw,
                 indirect_range_buffer.raw,
                 indirect_buffer_offset,
@@ -1609,7 +1609,7 @@ impl ComputeCommandEncoder {
     }
 
     pub fn memory_barrier_with_scope(&self, scope: BarrierScope) {
-        msg_void_usize(self.raw, sel(b"memoryBarrierWithScope:\0"), scope.0);
+        msg_void_usize(self.raw, sel!(b"memoryBarrierWithScope:\0"), scope.0);
     }
 
     pub fn memory_barrier_with_resources(&self, resources: &[id]) {
@@ -1618,7 +1618,7 @@ impl ComputeCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"memoryBarrierWithResources:count:\0"),
+                sel!(b"memoryBarrierWithResources:count:\0"),
                 resources.as_ptr(),
                 resources.len(),
             );
@@ -1626,12 +1626,12 @@ impl ComputeCommandEncoder {
     }
 
     pub fn device(&self) -> Device {
-        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        let ptr = retain(msg_id(self.raw, sel!(b"device\0")));
         Device { raw: ptr }
     }
 
     pub fn label(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"label\0"));
+        let ptr = msg_id(self.raw, sel!(b"label\0"));
         if ptr.is_null() {
             None
         } else {
@@ -1641,25 +1641,25 @@ impl ComputeCommandEncoder {
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 
     pub fn insert_debug_signpost(&self, string: &str) {
         let ns_str = NSString::new(string);
-        msg_void_id(self.raw, sel(b"insertDebugSignpost:\0"), ns_str.raw());
+        msg_void_id(self.raw, sel!(b"insertDebugSignpost:\0"), ns_str.raw());
     }
 
     pub fn push_debug_group(&self, string: &str) {
         let ns_str = NSString::new(string);
-        msg_void_id(self.raw, sel(b"pushDebugGroup:\0"), ns_str.raw());
+        msg_void_id(self.raw, sel!(b"pushDebugGroup:\0"), ns_str.raw());
     }
 
     pub fn pop_debug_group(&self) {
-        msg_void(self.raw, sel(b"popDebugGroup\0"));
+        msg_void(self.raw, sel!(b"popDebugGroup\0"));
     }
 
     pub fn end_encoding(&self) {
-        msg_void(self.raw, sel(b"endEncoding\0"));
+        msg_void(self.raw, sel!(b"endEncoding\0"));
     }
 }
 
@@ -1676,7 +1676,7 @@ pub struct ResourceStateCommandEncoder {
 
 impl ResourceStateCommandEncoder {
     pub fn use_resource(&self, resource: id, usage: ResourceUsage) -> Result<(), MetalError> {
-        let selector = sel(b"useResource:usage:\0");
+        let selector = sel!(b"useResource:usage:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "useResource:usage: not supported on this ResourceStateCommandEncoder",
@@ -1687,7 +1687,7 @@ impl ResourceStateCommandEncoder {
     }
 
     pub fn use_resources(&self, resources: &[id], usage: ResourceUsage) -> Result<(), MetalError> {
-        let selector = sel(b"useResources:count:usage:\0");
+        let selector = sel!(b"useResources:count:usage:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "useResources:count:usage: not supported on this ResourceStateCommandEncoder",
@@ -1708,7 +1708,7 @@ impl ResourceStateCommandEncoder {
     }
 
     pub fn use_heap(&self, heap: &Heap) -> Result<(), MetalError> {
-        let selector = sel(b"useHeap:\0");
+        let selector = sel!(b"useHeap:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "useHeap: not supported on this ResourceStateCommandEncoder",
@@ -1719,7 +1719,7 @@ impl ResourceStateCommandEncoder {
     }
 
     pub fn use_heaps(&self, heaps: &[id]) -> Result<(), MetalError> {
-        let selector = sel(b"useHeaps:count:\0");
+        let selector = sel!(b"useHeaps:count:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "useHeaps:count: not supported on this ResourceStateCommandEncoder",
@@ -1734,7 +1734,7 @@ impl ResourceStateCommandEncoder {
     }
 
     pub fn memory_barrier_with_scope(&self, scope: BarrierScope) -> Result<(), MetalError> {
-        let selector = sel(b"memoryBarrierWithScope:\0");
+        let selector = sel!(b"memoryBarrierWithScope:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "memoryBarrierWithScope: not supported on this ResourceStateCommandEncoder",
@@ -1745,7 +1745,7 @@ impl ResourceStateCommandEncoder {
     }
 
     pub fn memory_barrier_with_resources(&self, resources: &[id]) -> Result<(), MetalError> {
-        let selector = sel(b"memoryBarrierWithResources:count:\0");
+        let selector = sel!(b"memoryBarrierWithResources:count:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "memoryBarrierWithResources:count: not supported on this ResourceStateCommandEncoder",
@@ -1760,7 +1760,7 @@ impl ResourceStateCommandEncoder {
     }
 
     pub fn update_fence(&self, fence: &Fence) -> Result<(), MetalError> {
-        let selector = sel(b"updateFence:\0");
+        let selector = sel!(b"updateFence:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "updateFence: not supported on this ResourceStateCommandEncoder",
@@ -1771,7 +1771,7 @@ impl ResourceStateCommandEncoder {
     }
 
     pub fn wait_for_fence(&self, fence: &Fence) -> Result<(), MetalError> {
-        let selector = sel(b"waitForFence:\0");
+        let selector = sel!(b"waitForFence:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "waitForFence: not supported on this ResourceStateCommandEncoder",
@@ -1782,12 +1782,12 @@ impl ResourceStateCommandEncoder {
     }
 
     pub fn device(&self) -> Device {
-        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        let ptr = retain(msg_id(self.raw, sel!(b"device\0")));
         Device { raw: ptr }
     }
 
     pub fn label(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"label\0"));
+        let ptr = msg_id(self.raw, sel!(b"label\0"));
         if ptr.is_null() {
             None
         } else {
@@ -1797,25 +1797,25 @@ impl ResourceStateCommandEncoder {
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 
     pub fn insert_debug_signpost(&self, string: &str) {
         let ns_str = NSString::new(string);
-        msg_void_id(self.raw, sel(b"insertDebugSignpost:\0"), ns_str.raw());
+        msg_void_id(self.raw, sel!(b"insertDebugSignpost:\0"), ns_str.raw());
     }
 
     pub fn push_debug_group(&self, string: &str) {
         let ns_str = NSString::new(string);
-        msg_void_id(self.raw, sel(b"pushDebugGroup:\0"), ns_str.raw());
+        msg_void_id(self.raw, sel!(b"pushDebugGroup:\0"), ns_str.raw());
     }
 
     pub fn pop_debug_group(&self) {
-        msg_void(self.raw, sel(b"popDebugGroup\0"));
+        msg_void(self.raw, sel!(b"popDebugGroup\0"));
     }
 
     pub fn end_encoding(&self) {
-        msg_void(self.raw, sel(b"endEncoding\0"));
+        msg_void(self.raw, sel!(b"endEncoding\0"));
     }
 }
 
@@ -1880,7 +1880,7 @@ impl BlitCommandEncoder {
             ) = transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"copyFromTexture:sourceSlice:sourceLevel:sourceOrigin:sourceSize:toTexture:destinationSlice:destinationLevel:destinationOrigin:\0"),
+                sel!(b"copyFromTexture:sourceSlice:sourceLevel:sourceOrigin:sourceSize:toTexture:destinationSlice:destinationLevel:destinationOrigin:\0"),
                 source.raw,
                 source_slice,
                 source_level,
@@ -1895,7 +1895,7 @@ impl BlitCommandEncoder {
     }
 
     pub fn copy_textures(&self, source: &Texture, destination: &Texture) -> Result<(), MetalError> {
-        let selector = sel(b"copyFromTexture:toTexture:\0");
+        let selector = sel!(b"copyFromTexture:toTexture:\0");
         if responds_to_selector(self.raw, selector) {
             unsafe {
                 let f: unsafe extern "C" fn(id, SEL, id, id) =
@@ -1920,7 +1920,7 @@ impl BlitCommandEncoder {
         level_count: usize,
     ) -> Result<(), MetalError> {
         unsafe {
-            let selector = sel(
+            let selector = sel!(
                 b"copyFromTexture:sourceSlice:sourceLevel:toTexture:destinationSlice:destinationLevel:sliceCount:levelCount:\0",
             );
             if !responds_to_selector(self.raw, selector) {
@@ -1959,7 +1959,7 @@ impl BlitCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"copyFromBuffer:sourceOffset:toBuffer:destinationOffset:size:\0"),
+                sel!(b"copyFromBuffer:sourceOffset:toBuffer:destinationOffset:size:\0"),
                 source.raw,
                 source_offset,
                 destination.raw,
@@ -2023,7 +2023,7 @@ impl BlitCommandEncoder {
             ) = transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"copyFromBuffer:sourceOffset:sourceBytesPerRow:sourceBytesPerImage:sourceSize:toTexture:destinationSlice:destinationLevel:destinationOrigin:options:\0"),
+                sel!(b"copyFromBuffer:sourceOffset:sourceBytesPerRow:sourceBytesPerImage:sourceSize:toTexture:destinationSlice:destinationLevel:destinationOrigin:options:\0"),
                 source.raw,
                 source_offset,
                 source_bytes_per_row,
@@ -2092,7 +2092,7 @@ impl BlitCommandEncoder {
             ) = transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"copyFromTexture:sourceSlice:sourceLevel:sourceOrigin:sourceSize:toBuffer:destinationOffset:destinationBytesPerRow:destinationBytesPerImage:options:\0"),
+                sel!(b"copyFromTexture:sourceSlice:sourceLevel:sourceOrigin:sourceSize:toBuffer:destinationOffset:destinationBytesPerRow:destinationBytesPerImage:options:\0"),
                 source.raw,
                 source_slice,
                 source_level,
@@ -2113,7 +2113,7 @@ impl BlitCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"fillBuffer:range:value:\0"),
+                sel!(b"fillBuffer:range:value:\0"),
                 buffer.raw,
                 range,
                 value,
@@ -2122,15 +2122,15 @@ impl BlitCommandEncoder {
     }
 
     pub fn generate_mipmaps(&self, texture: &Texture) {
-        msg_void_id(self.raw, sel(b"generateMipmapsForTexture:\0"), texture.raw);
+        msg_void_id(self.raw, sel!(b"generateMipmapsForTexture:\0"), texture.raw);
     }
 
     pub fn synchronize_resource(&self, resource: &Buffer) {
-        msg_void_id(self.raw, sel(b"synchronizeResource:\0"), resource.raw);
+        msg_void_id(self.raw, sel!(b"synchronizeResource:\0"), resource.raw);
     }
 
     pub fn synchronize_texture(&self, texture: &Texture) {
-        msg_void_id(self.raw, sel(b"synchronizeResource:\0"), texture.raw);
+        msg_void_id(self.raw, sel!(b"synchronizeResource:\0"), texture.raw);
     }
 
     pub fn synchronize_texture_slice_level(
@@ -2139,7 +2139,7 @@ impl BlitCommandEncoder {
         slice: usize,
         level: usize,
     ) -> Result<(), MetalError> {
-        let selector = sel(b"synchronizeTexture:slice:level:\0");
+        let selector = sel!(b"synchronizeTexture:slice:level:\0");
         if responds_to_selector(self.raw, selector) {
             unsafe {
                 let f: unsafe extern "C" fn(id, SEL, id, usize, usize) =
@@ -2155,7 +2155,7 @@ impl BlitCommandEncoder {
     }
 
     pub fn optimize_contents_for_gpu_access(&self, texture: &Texture) -> Result<(), MetalError> {
-        let selector = sel(b"optimizeContentsForGPUAccess:\0");
+        let selector = sel!(b"optimizeContentsForGPUAccess:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_id(self.raw, selector, texture.raw);
             Ok(())
@@ -2172,7 +2172,7 @@ impl BlitCommandEncoder {
         slice: usize,
         level: usize,
     ) -> Result<(), MetalError> {
-        let selector = sel(b"optimizeContentsForGPUAccess:slice:level:\0");
+        let selector = sel!(b"optimizeContentsForGPUAccess:slice:level:\0");
         if responds_to_selector(self.raw, selector) {
             unsafe {
                 let f: unsafe extern "C" fn(id, SEL, id, usize, usize) =
@@ -2188,7 +2188,7 @@ impl BlitCommandEncoder {
     }
 
     pub fn optimize_contents_for_cpu_access(&self, texture: &Texture) -> Result<(), MetalError> {
-        let selector = sel(b"optimizeContentsForCPUAccess:\0");
+        let selector = sel!(b"optimizeContentsForCPUAccess:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_id(self.raw, selector, texture.raw);
             Ok(())
@@ -2205,7 +2205,7 @@ impl BlitCommandEncoder {
         slice: usize,
         level: usize,
     ) -> Result<(), MetalError> {
-        let selector = sel(b"optimizeContentsForCPUAccess:slice:level:\0");
+        let selector = sel!(b"optimizeContentsForCPUAccess:slice:level:\0");
         if responds_to_selector(self.raw, selector) {
             unsafe {
                 let f: unsafe extern "C" fn(id, SEL, id, usize, usize) =
@@ -2226,7 +2226,7 @@ impl BlitCommandEncoder {
         range: Range,
     ) -> Result<(), MetalError> {
         buffer.validate_reset_range(range)?;
-        let selector = sel(b"resetCommandsInBuffer:withRange:\0");
+        let selector = sel!(b"resetCommandsInBuffer:withRange:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_id_range(self.raw, selector, buffer.raw, range);
             Ok(())
@@ -2245,7 +2245,7 @@ impl BlitCommandEncoder {
         destination_index: usize,
     ) -> Result<(), MetalError> {
         let selector =
-            sel(b"copyIndirectCommandBuffer:sourceRange:destination:destinationIndex:\0");
+            sel!(b"copyIndirectCommandBuffer:sourceRange:destination:destinationIndex:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "copyIndirectCommandBuffer:sourceRange:destination:destinationIndex: not supported",
@@ -2272,7 +2272,7 @@ impl BlitCommandEncoder {
         range: Range,
     ) -> Result<(), MetalError> {
         buffer.validate_reset_range(range)?;
-        let selector = sel(b"optimizeIndirectCommandBuffer:withRange:\0");
+        let selector = sel!(b"optimizeIndirectCommandBuffer:withRange:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_id_range(self.raw, selector, buffer.raw, range);
             Ok(())
@@ -2284,7 +2284,7 @@ impl BlitCommandEncoder {
     }
 
     pub fn update_fence(&self, fence: &Fence) -> Result<(), MetalError> {
-        let selector = sel(b"updateFence:\0");
+        let selector = sel!(b"updateFence:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_id(self.raw, selector, fence.raw);
             Ok(())
@@ -2294,7 +2294,7 @@ impl BlitCommandEncoder {
     }
 
     pub fn wait_for_fence(&self, fence: &Fence) -> Result<(), MetalError> {
-        let selector = sel(b"waitForFence:\0");
+        let selector = sel!(b"waitForFence:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_id(self.raw, selector, fence.raw);
             Ok(())
@@ -2304,12 +2304,12 @@ impl BlitCommandEncoder {
     }
 
     pub fn device(&self) -> Device {
-        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        let ptr = retain(msg_id(self.raw, sel!(b"device\0")));
         Device { raw: ptr }
     }
 
     pub fn label(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"label\0"));
+        let ptr = msg_id(self.raw, sel!(b"label\0"));
         if ptr.is_null() {
             None
         } else {
@@ -2319,25 +2319,25 @@ impl BlitCommandEncoder {
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 
     pub fn insert_debug_signpost(&self, string: &str) {
         let ns_str = NSString::new(string);
-        msg_void_id(self.raw, sel(b"insertDebugSignpost:\0"), ns_str.raw());
+        msg_void_id(self.raw, sel!(b"insertDebugSignpost:\0"), ns_str.raw());
     }
 
     pub fn push_debug_group(&self, string: &str) {
         let ns_str = NSString::new(string);
-        msg_void_id(self.raw, sel(b"pushDebugGroup:\0"), ns_str.raw());
+        msg_void_id(self.raw, sel!(b"pushDebugGroup:\0"), ns_str.raw());
     }
 
     pub fn pop_debug_group(&self) {
-        msg_void(self.raw, sel(b"popDebugGroup\0"));
+        msg_void(self.raw, sel!(b"popDebugGroup\0"));
     }
 
     pub fn end_encoding(&self) {
-        msg_void(self.raw, sel(b"endEncoding\0"));
+        msg_void(self.raw, sel!(b"endEncoding\0"));
     }
 }
 

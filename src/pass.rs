@@ -53,103 +53,103 @@ pub struct RenderPassAttachmentDescriptor {
 
 impl RenderPassAttachmentDescriptor {
     pub fn texture(&self) -> Option<Texture> {
-        let t = msg_id(self.raw, sel(b"texture\0"));
+        let t = msg_id(self.raw, sel!(b"texture\0"));
         (!t.is_null()).then_some(Texture { raw: retain(t) })
     }
 
     pub fn set_texture(&self, texture: Option<&Texture>) {
         msg_void_id(
             self.raw,
-            sel(b"setTexture:\0"),
+            sel!(b"setTexture:\0"),
             texture.map_or(NIL, |t| t.raw),
         );
     }
 
     pub fn level(&self) -> usize {
-        msg_usize(self.raw, sel(b"level\0"))
+        msg_usize(self.raw, sel!(b"level\0"))
     }
 
     pub fn set_level(&self, level: usize) {
-        msg_void_usize(self.raw, sel(b"setLevel:\0"), level);
+        msg_void_usize(self.raw, sel!(b"setLevel:\0"), level);
     }
 
     pub fn slice(&self) -> usize {
-        msg_usize(self.raw, sel(b"slice\0"))
+        msg_usize(self.raw, sel!(b"slice\0"))
     }
 
     pub fn set_slice(&self, slice: usize) {
-        msg_void_usize(self.raw, sel(b"setSlice:\0"), slice);
+        msg_void_usize(self.raw, sel!(b"setSlice:\0"), slice);
     }
 
     pub fn depth_plane(&self) -> usize {
-        msg_usize(self.raw, sel(b"depthPlane\0"))
+        msg_usize(self.raw, sel!(b"depthPlane\0"))
     }
 
     pub fn set_depth_plane(&self, depth_plane: usize) {
-        msg_void_usize(self.raw, sel(b"setDepthPlane:\0"), depth_plane);
+        msg_void_usize(self.raw, sel!(b"setDepthPlane:\0"), depth_plane);
     }
 
     pub fn resolve_texture(&self) -> Option<Texture> {
-        let t = msg_id(self.raw, sel(b"resolveTexture\0"));
+        let t = msg_id(self.raw, sel!(b"resolveTexture\0"));
         (!t.is_null()).then_some(Texture { raw: retain(t) })
     }
 
     pub fn set_resolve_texture(&self, texture: Option<&Texture>) {
         msg_void_id(
             self.raw,
-            sel(b"setResolveTexture:\0"),
+            sel!(b"setResolveTexture:\0"),
             texture.map_or(NIL, |t| t.raw),
         );
     }
 
     pub fn resolve_level(&self) -> usize {
-        msg_usize(self.raw, sel(b"resolveLevel\0"))
+        msg_usize(self.raw, sel!(b"resolveLevel\0"))
     }
 
     pub fn set_resolve_level(&self, level: usize) {
-        msg_void_usize(self.raw, sel(b"setResolveLevel:\0"), level);
+        msg_void_usize(self.raw, sel!(b"setResolveLevel:\0"), level);
     }
 
     pub fn resolve_slice(&self) -> usize {
-        msg_usize(self.raw, sel(b"resolveSlice\0"))
+        msg_usize(self.raw, sel!(b"resolveSlice\0"))
     }
 
     pub fn set_resolve_slice(&self, slice: usize) {
-        msg_void_usize(self.raw, sel(b"setResolveSlice:\0"), slice);
+        msg_void_usize(self.raw, sel!(b"setResolveSlice:\0"), slice);
     }
 
     pub fn resolve_depth_plane(&self) -> usize {
-        msg_usize(self.raw, sel(b"resolveDepthPlane\0"))
+        msg_usize(self.raw, sel!(b"resolveDepthPlane\0"))
     }
 
     pub fn set_resolve_depth_plane(&self, depth_plane: usize) {
-        msg_void_usize(self.raw, sel(b"setResolveDepthPlane:\0"), depth_plane);
+        msg_void_usize(self.raw, sel!(b"setResolveDepthPlane:\0"), depth_plane);
     }
 
     pub fn load_action(&self) -> Result<LoadAction, MetalError> {
-        let val = msg_usize(self.raw, sel(b"loadAction\0"));
+        let val = msg_usize(self.raw, sel!(b"loadAction\0"));
         LoadAction::from_raw(val).ok_or_else(|| {
             MetalError::new(format!("invalid MTLLoadAction value from Metal: {}", val))
         })
     }
 
     pub fn set_load_action(&self, load_action: LoadAction) {
-        msg_void_usize(self.raw, sel(b"setLoadAction:\0"), load_action as usize);
+        msg_void_usize(self.raw, sel!(b"setLoadAction:\0"), load_action as usize);
     }
 
     pub fn store_action(&self) -> Result<StoreAction, MetalError> {
-        let val = msg_usize(self.raw, sel(b"storeAction\0"));
+        let val = msg_usize(self.raw, sel!(b"storeAction\0"));
         StoreAction::from_raw(val).ok_or_else(|| {
             MetalError::new(format!("invalid MTLStoreAction value from Metal: {}", val))
         })
     }
 
     pub fn set_store_action(&self, store_action: StoreAction) {
-        msg_void_usize(self.raw, sel(b"setStoreAction:\0"), store_action as usize);
+        msg_void_usize(self.raw, sel!(b"setStoreAction:\0"), store_action as usize);
     }
 
     pub fn store_action_options(&self) -> Result<StoreActionOptions, MetalError> {
-        let selector = sel(b"storeActionOptions\0");
+        let selector = sel!(b"storeActionOptions\0");
         if responds_to_selector(self.raw, selector) {
             Ok(StoreActionOptions(msg_usize(self.raw, selector)))
         } else {
@@ -158,7 +158,7 @@ impl RenderPassAttachmentDescriptor {
     }
 
     pub fn set_store_action_options(&self, options: StoreActionOptions) -> Result<(), MetalError> {
-        let selector = sel(b"setStoreActionOptions:\0");
+        let selector = sel!(b"setStoreActionOptions:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_usize(self.raw, selector, options.0);
             Ok(())
@@ -182,12 +182,12 @@ impl RenderPassColorAttachmentDescriptor {
         unsafe {
             let f: unsafe extern "C" fn(id, SEL) -> ClearColor =
                 transmute(objc_msgSend as *const c_void);
-            f(self.raw, sel(b"clearColor\0"))
+            f(self.raw, sel!(b"clearColor\0"))
         }
     }
 
     pub fn set_clear_color(&self, color: ClearColor) {
-        msg_void_clear_color(self.raw, sel(b"setClearColor:\0"), color);
+        msg_void_clear_color(self.raw, sel!(b"setClearColor:\0"), color);
     }
 }
 
@@ -202,15 +202,15 @@ impl RenderPassDepthAttachmentDescriptor {
     }
 
     pub fn clear_depth(&self) -> f64 {
-        msg_f64(self.raw, sel(b"clearDepth\0"))
+        msg_f64(self.raw, sel!(b"clearDepth\0"))
     }
 
     pub fn set_clear_depth(&self, depth: f64) {
-        msg_void_f64(self.raw, sel(b"setClearDepth:\0"), depth);
+        msg_void_f64(self.raw, sel!(b"setClearDepth:\0"), depth);
     }
 
     pub fn depth_resolve_filter(&self) -> Result<MultisampleDepthResolveFilter, MetalError> {
-        let selector = sel(b"depthResolveFilter\0");
+        let selector = sel!(b"depthResolveFilter\0");
         if responds_to_selector(self.raw, selector) {
             let val = msg_usize(self.raw, selector);
             MultisampleDepthResolveFilter::from_raw(val).ok_or_else(|| {
@@ -227,7 +227,7 @@ impl RenderPassDepthAttachmentDescriptor {
         &self,
         filter: MultisampleDepthResolveFilter,
     ) -> Result<(), MetalError> {
-        let selector = sel(b"setDepthResolveFilter:\0");
+        let selector = sel!(b"setDepthResolveFilter:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_usize(self.raw, selector, filter as usize);
             Ok(())
@@ -248,15 +248,15 @@ impl RenderPassStencilAttachmentDescriptor {
     }
 
     pub fn clear_stencil(&self) -> u32 {
-        msg_usize(self.raw, sel(b"clearStencil\0")) as u32
+        msg_usize(self.raw, sel!(b"clearStencil\0")) as u32
     }
 
     pub fn set_clear_stencil(&self, stencil: u32) {
-        msg_void_usize(self.raw, sel(b"setClearStencil:\0"), stencil as usize);
+        msg_void_usize(self.raw, sel!(b"setClearStencil:\0"), stencil as usize);
     }
 
     pub fn stencil_resolve_filter(&self) -> Result<MultisampleStencilResolveFilter, MetalError> {
-        let selector = sel(b"stencilResolveFilter\0");
+        let selector = sel!(b"stencilResolveFilter\0");
         if responds_to_selector(self.raw, selector) {
             let val = msg_usize(self.raw, selector);
             MultisampleStencilResolveFilter::from_raw(val).ok_or_else(|| {
@@ -273,7 +273,7 @@ impl RenderPassStencilAttachmentDescriptor {
         &self,
         filter: MultisampleStencilResolveFilter,
     ) -> Result<(), MetalError> {
-        let selector = sel(b"setStencilResolveFilter:\0");
+        let selector = sel!(b"setStencilResolveFilter:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_usize(self.raw, selector, filter as usize);
             Ok(())
@@ -290,7 +290,7 @@ pub struct RenderPassColorAttachmentDescriptorArray {
 
 impl RenderPassColorAttachmentDescriptorArray {
     pub fn object_at_indexed_subscript(&self, index: usize) -> RenderPassColorAttachmentDescriptor {
-        let attachment = msg_id_usize(self.raw, sel(b"objectAtIndexedSubscript:\0"), index);
+        let attachment = msg_id_usize(self.raw, sel!(b"objectAtIndexedSubscript:\0"), index);
         RenderPassColorAttachmentDescriptor { raw: attachment }
     }
 
@@ -301,7 +301,7 @@ impl RenderPassColorAttachmentDescriptorArray {
     ) {
         msg_void_id_usize(
             self.raw,
-            sel(b"setObject:atIndexedSubscript:\0"),
+            sel!(b"setObject:atIndexedSubscript:\0"),
             attachment.map_or(NIL, |a| a.raw),
             index,
         );
@@ -315,48 +315,48 @@ pub struct RenderPassSampleBufferAttachmentDescriptor {
 
 impl RenderPassSampleBufferAttachmentDescriptor {
     pub fn sample_buffer(&self) -> Option<CounterSampleBuffer> {
-        let sb = msg_id(self.raw, sel(b"sampleBuffer\0"));
+        let sb = msg_id(self.raw, sel!(b"sampleBuffer\0"));
         (!sb.is_null()).then_some(CounterSampleBuffer { raw: retain(sb) })
     }
 
     pub fn set_sample_buffer(&self, buffer: Option<&CounterSampleBuffer>) {
         msg_void_id(
             self.raw,
-            sel(b"setSampleBuffer:\0"),
+            sel!(b"setSampleBuffer:\0"),
             buffer.map_or(NIL, |b| b.raw),
         );
     }
 
     pub fn start_of_vertex_sample_index(&self) -> usize {
-        msg_usize(self.raw, sel(b"startOfVertexSampleIndex\0"))
+        msg_usize(self.raw, sel!(b"startOfVertexSampleIndex\0"))
     }
 
     pub fn set_start_of_vertex_sample_index(&self, index: usize) {
-        msg_void_usize(self.raw, sel(b"setStartOfVertexSampleIndex:\0"), index);
+        msg_void_usize(self.raw, sel!(b"setStartOfVertexSampleIndex:\0"), index);
     }
 
     pub fn end_of_vertex_sample_index(&self) -> usize {
-        msg_usize(self.raw, sel(b"endOfVertexSampleIndex\0"))
+        msg_usize(self.raw, sel!(b"endOfVertexSampleIndex\0"))
     }
 
     pub fn set_end_of_vertex_sample_index(&self, index: usize) {
-        msg_void_usize(self.raw, sel(b"setEndOfVertexSampleIndex:\0"), index);
+        msg_void_usize(self.raw, sel!(b"setEndOfVertexSampleIndex:\0"), index);
     }
 
     pub fn start_of_fragment_sample_index(&self) -> usize {
-        msg_usize(self.raw, sel(b"startOfFragmentSampleIndex\0"))
+        msg_usize(self.raw, sel!(b"startOfFragmentSampleIndex\0"))
     }
 
     pub fn set_start_of_fragment_sample_index(&self, index: usize) {
-        msg_void_usize(self.raw, sel(b"setStartOfFragmentSampleIndex:\0"), index);
+        msg_void_usize(self.raw, sel!(b"setStartOfFragmentSampleIndex:\0"), index);
     }
 
     pub fn end_of_fragment_sample_index(&self) -> usize {
-        msg_usize(self.raw, sel(b"endOfFragmentSampleIndex\0"))
+        msg_usize(self.raw, sel!(b"endOfFragmentSampleIndex\0"))
     }
 
     pub fn set_end_of_fragment_sample_index(&self, index: usize) {
-        msg_void_usize(self.raw, sel(b"setEndOfFragmentSampleIndex:\0"), index);
+        msg_void_usize(self.raw, sel!(b"setEndOfFragmentSampleIndex:\0"), index);
     }
 }
 
@@ -370,7 +370,7 @@ impl RenderPassSampleBufferAttachmentDescriptorArray {
         &self,
         index: usize,
     ) -> RenderPassSampleBufferAttachmentDescriptor {
-        let attachment = msg_id_usize(self.raw, sel(b"objectAtIndexedSubscript:\0"), index);
+        let attachment = msg_id_usize(self.raw, sel!(b"objectAtIndexedSubscript:\0"), index);
         RenderPassSampleBufferAttachmentDescriptor { raw: attachment }
     }
 }
@@ -384,7 +384,7 @@ impl RenderPassDescriptor {
     pub fn new() -> Self {
         let raw = retain(msg_id(
             class(b"MTLRenderPassDescriptor\0"),
-            sel(b"renderPassDescriptor\0"),
+            sel!(b"renderPassDescriptor\0"),
         ));
         Self { raw }
     }
@@ -394,17 +394,17 @@ impl RenderPassDescriptor {
     }
 
     pub fn color_attachments(&self) -> RenderPassColorAttachmentDescriptorArray {
-        let attachments = msg_id(self.raw, sel(b"colorAttachments\0"));
+        let attachments = msg_id(self.raw, sel!(b"colorAttachments\0"));
         RenderPassColorAttachmentDescriptorArray { raw: attachments }
     }
 
     pub fn depth_attachment(&self) -> RenderPassDepthAttachmentDescriptor {
-        let attachment = msg_id(self.raw, sel(b"depthAttachment\0"));
+        let attachment = msg_id(self.raw, sel!(b"depthAttachment\0"));
         RenderPassDepthAttachmentDescriptor { raw: attachment }
     }
 
     pub fn stencil_attachment(&self) -> RenderPassStencilAttachmentDescriptor {
-        let attachment = msg_id(self.raw, sel(b"stencilAttachment\0"));
+        let attachment = msg_id(self.raw, sel!(b"stencilAttachment\0"));
         RenderPassStencilAttachmentDescriptor { raw: attachment }
     }
 
@@ -417,23 +417,23 @@ impl RenderPassDescriptor {
         clear_color: ClearColor,
     ) {
         let attachment = self.color_attachments().object_at_indexed_subscript(index);
-        msg_void_id(attachment.raw, sel(b"setTexture:\0"), texture.raw);
+        msg_void_id(attachment.raw, sel!(b"setTexture:\0"), texture.raw);
         msg_void_usize(
             attachment.raw,
-            sel(b"setLoadAction:\0"),
+            sel!(b"setLoadAction:\0"),
             load_action as usize,
         );
         msg_void_usize(
             attachment.raw,
-            sel(b"setStoreAction:\0"),
+            sel!(b"setStoreAction:\0"),
             store_action as usize,
         );
-        msg_void_clear_color(attachment.raw, sel(b"setClearColor:\0"), clear_color);
+        msg_void_clear_color(attachment.raw, sel!(b"setClearColor:\0"), clear_color);
     }
 
     pub fn set_color_attachment_resolve_texture(&self, index: usize, texture: &Texture) {
         let attachment = self.color_attachments().object_at_indexed_subscript(index);
-        msg_void_id(attachment.raw, sel(b"setResolveTexture:\0"), texture.raw);
+        msg_void_id(attachment.raw, sel!(b"setResolveTexture:\0"), texture.raw);
     }
 
     pub fn set_depth_attachment(
@@ -443,16 +443,16 @@ impl RenderPassDescriptor {
         store_action: StoreAction,
         clear_depth: f64,
     ) {
-        let attachment = msg_id(self.raw, sel(b"depthAttachment\0"));
-        msg_void_id(attachment, sel(b"setTexture:\0"), texture.raw);
-        msg_void_usize(attachment, sel(b"setLoadAction:\0"), load_action as usize);
-        msg_void_usize(attachment, sel(b"setStoreAction:\0"), store_action as usize);
-        msg_void_f64(attachment, sel(b"setClearDepth:\0"), clear_depth);
+        let attachment = msg_id(self.raw, sel!(b"depthAttachment\0"));
+        msg_void_id(attachment, sel!(b"setTexture:\0"), texture.raw);
+        msg_void_usize(attachment, sel!(b"setLoadAction:\0"), load_action as usize);
+        msg_void_usize(attachment, sel!(b"setStoreAction:\0"), store_action as usize);
+        msg_void_f64(attachment, sel!(b"setClearDepth:\0"), clear_depth);
     }
 
     pub fn set_depth_resolve_texture(&self, texture: &Texture) {
-        let attachment = msg_id(self.raw, sel(b"depthAttachment\0"));
-        msg_void_id(attachment, sel(b"setResolveTexture:\0"), texture.raw);
+        let attachment = msg_id(self.raw, sel!(b"depthAttachment\0"));
+        msg_void_id(attachment, sel!(b"setResolveTexture:\0"), texture.raw);
     }
 
     pub fn set_stencil_attachment(
@@ -462,69 +462,69 @@ impl RenderPassDescriptor {
         store_action: StoreAction,
         clear_stencil: u32,
     ) {
-        let attachment = msg_id(self.raw, sel(b"stencilAttachment\0"));
-        msg_void_id(attachment, sel(b"setTexture:\0"), texture.raw);
-        msg_void_usize(attachment, sel(b"setLoadAction:\0"), load_action as usize);
-        msg_void_usize(attachment, sel(b"setStoreAction:\0"), store_action as usize);
+        let attachment = msg_id(self.raw, sel!(b"stencilAttachment\0"));
+        msg_void_id(attachment, sel!(b"setTexture:\0"), texture.raw);
+        msg_void_usize(attachment, sel!(b"setLoadAction:\0"), load_action as usize);
+        msg_void_usize(attachment, sel!(b"setStoreAction:\0"), store_action as usize);
         msg_void_usize(
             attachment,
-            sel(b"setClearStencil:\0"),
+            sel!(b"setClearStencil:\0"),
             clear_stencil as usize,
         );
     }
 
     pub fn visibility_result_buffer(&self) -> Option<Buffer> {
-        let b = msg_id(self.raw, sel(b"visibilityResultBuffer\0"));
+        let b = msg_id(self.raw, sel!(b"visibilityResultBuffer\0"));
         (!b.is_null()).then_some(Buffer { raw: retain(b) })
     }
 
     pub fn set_visibility_result_buffer(&self, buffer: Option<&Buffer>) {
         msg_void_id(
             self.raw,
-            sel(b"setVisibilityResultBuffer:\0"),
+            sel!(b"setVisibilityResultBuffer:\0"),
             buffer.map_or(NIL, |b| b.raw),
         );
     }
 
     pub fn render_target_array_length(&self) -> usize {
-        msg_usize(self.raw, sel(b"renderTargetArrayLength\0"))
+        msg_usize(self.raw, sel!(b"renderTargetArrayLength\0"))
     }
 
     pub fn set_render_target_array_length(&self, length: usize) {
-        msg_void_usize(self.raw, sel(b"setRenderTargetArrayLength:\0"), length);
+        msg_void_usize(self.raw, sel!(b"setRenderTargetArrayLength:\0"), length);
     }
 
     pub fn imageblock_sample_length(&self) -> usize {
-        msg_usize(self.raw, sel(b"imageblockSampleLength\0"))
+        msg_usize(self.raw, sel!(b"imageblockSampleLength\0"))
     }
 
     pub fn set_imageblock_sample_length(&self, length: usize) {
-        msg_void_usize(self.raw, sel(b"setImageblockSampleLength:\0"), length);
+        msg_void_usize(self.raw, sel!(b"setImageblockSampleLength:\0"), length);
     }
 
     pub fn tile_width(&self) -> usize {
-        msg_usize(self.raw, sel(b"tileWidth\0"))
+        msg_usize(self.raw, sel!(b"tileWidth\0"))
     }
 
     pub fn set_tile_width(&self, width: usize) {
-        msg_void_usize(self.raw, sel(b"setTileWidth:\0"), width);
+        msg_void_usize(self.raw, sel!(b"setTileWidth:\0"), width);
     }
 
     pub fn tile_height(&self) -> usize {
-        msg_usize(self.raw, sel(b"tileHeight\0"))
+        msg_usize(self.raw, sel!(b"tileHeight\0"))
     }
 
     pub fn set_tile_height(&self, height: usize) {
-        msg_void_usize(self.raw, sel(b"setTileHeight:\0"), height);
+        msg_void_usize(self.raw, sel!(b"setTileHeight:\0"), height);
     }
 
     pub fn sample_buffer_attachments(&self) -> RenderPassSampleBufferAttachmentDescriptorArray {
-        let array = msg_id(self.raw, sel(b"sampleBufferAttachments\0"));
+        let array = msg_id(self.raw, sel!(b"sampleBufferAttachments\0"));
         RenderPassSampleBufferAttachmentDescriptorArray { raw: array }
     }
 
     pub fn rasterization_rate_map(&self) -> Option<RasterizationRateMap> {
-        let selector = sel(b"rasterizationRateMap\0");
+        let selector = sel!(b"rasterizationRateMap\0");
         if !responds_to_selector(self.raw, selector) {
             return None;
         }
@@ -540,7 +540,7 @@ impl RenderPassDescriptor {
         &self,
         map: Option<&RasterizationRateMap>,
     ) -> Result<(), MetalError> {
-        let selector = sel(b"setRasterizationRateMap:\0");
+        let selector = sel!(b"setRasterizationRateMap:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new("setRasterizationRateMap: is not supported"));
         }
@@ -549,7 +549,7 @@ impl RenderPassDescriptor {
     }
 
     pub fn default_raster_sample_count(&self) -> Result<usize, MetalError> {
-        let selector = sel(b"defaultRasterSampleCount\0");
+        let selector = sel!(b"defaultRasterSampleCount\0");
         if responds_to_selector(self.raw, selector) {
             Ok(msg_usize(self.raw, selector))
         } else {
@@ -558,7 +558,7 @@ impl RenderPassDescriptor {
     }
 
     pub fn set_default_raster_sample_count(&self, count: usize) -> Result<(), MetalError> {
-        let selector = sel(b"setDefaultRasterSampleCount:\0");
+        let selector = sel!(b"setDefaultRasterSampleCount:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_usize(self.raw, selector, count);
             Ok(())
@@ -570,7 +570,7 @@ impl RenderPassDescriptor {
     }
 
     pub fn render_target_width(&self) -> Result<usize, MetalError> {
-        let selector = sel(b"renderTargetWidth\0");
+        let selector = sel!(b"renderTargetWidth\0");
         if responds_to_selector(self.raw, selector) {
             Ok(msg_usize(self.raw, selector))
         } else {
@@ -579,7 +579,7 @@ impl RenderPassDescriptor {
     }
 
     pub fn set_render_target_width(&self, width: usize) -> Result<(), MetalError> {
-        let selector = sel(b"setRenderTargetWidth:\0");
+        let selector = sel!(b"setRenderTargetWidth:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_usize(self.raw, selector, width);
             Ok(())
@@ -589,7 +589,7 @@ impl RenderPassDescriptor {
     }
 
     pub fn render_target_height(&self) -> Result<usize, MetalError> {
-        let selector = sel(b"renderTargetHeight\0");
+        let selector = sel!(b"renderTargetHeight\0");
         if responds_to_selector(self.raw, selector) {
             Ok(msg_usize(self.raw, selector))
         } else {
@@ -598,7 +598,7 @@ impl RenderPassDescriptor {
     }
 
     pub fn set_render_target_height(&self, height: usize) -> Result<(), MetalError> {
-        let selector = sel(b"setRenderTargetHeight:\0");
+        let selector = sel!(b"setRenderTargetHeight:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_usize(self.raw, selector, height);
             Ok(())
@@ -608,7 +608,7 @@ impl RenderPassDescriptor {
     }
 
     pub fn threadgroup_memory_length(&self) -> Result<usize, MetalError> {
-        let selector = sel(b"threadgroupMemoryLength\0");
+        let selector = sel!(b"threadgroupMemoryLength\0");
         if responds_to_selector(self.raw, selector) {
             Ok(msg_usize(self.raw, selector))
         } else {
@@ -617,7 +617,7 @@ impl RenderPassDescriptor {
     }
 
     pub fn set_threadgroup_memory_length(&self, length: usize) -> Result<(), MetalError> {
-        let selector = sel(b"setThreadgroupMemoryLength:\0");
+        let selector = sel!(b"setThreadgroupMemoryLength:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_usize(self.raw, selector, length);
             Ok(())
@@ -627,7 +627,7 @@ impl RenderPassDescriptor {
     }
 
     pub fn visibility_result_type(&self) -> Result<VisibilityResultType, MetalError> {
-        let selector = sel(b"visibilityResultType\0");
+        let selector = sel!(b"visibilityResultType\0");
         if responds_to_selector(self.raw, selector) {
             match msg_usize(self.raw, selector) {
                 0 => Ok(VisibilityResultType::Reset),
@@ -645,7 +645,7 @@ impl RenderPassDescriptor {
         &self,
         result_type: VisibilityResultType,
     ) -> Result<(), MetalError> {
-        let selector = sel(b"setVisibilityResultType:\0");
+        let selector = sel!(b"setVisibilityResultType:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_usize(self.raw, selector, result_type as usize);
             Ok(())
@@ -655,7 +655,7 @@ impl RenderPassDescriptor {
     }
 
     pub fn set_sample_positions(&self, positions: &[SamplePosition]) -> Result<(), MetalError> {
-        let selector = sel(b"setSamplePositions:count:\0");
+        let selector = sel!(b"setSamplePositions:count:\0");
         if responds_to_selector(self.raw, selector) {
             unsafe {
                 let f: unsafe extern "C" fn(id, SEL, *const SamplePosition, usize) =
@@ -672,7 +672,7 @@ impl RenderPassDescriptor {
         &self,
         positions: &mut [SamplePosition],
     ) -> Result<usize, MetalError> {
-        let selector = sel(b"getSamplePositions:count:\0");
+        let selector = sel!(b"getSamplePositions:count:\0");
         if responds_to_selector(self.raw, selector) {
             let count = unsafe {
                 let f: unsafe extern "C" fn(id, SEL, *mut SamplePosition, usize) -> usize =
@@ -705,32 +705,32 @@ pub struct ComputePassSampleBufferAttachmentDescriptor {
 
 impl ComputePassSampleBufferAttachmentDescriptor {
     pub fn sample_buffer(&self) -> Option<CounterSampleBuffer> {
-        let sb = msg_id(self.raw, sel(b"sampleBuffer\0"));
+        let sb = msg_id(self.raw, sel!(b"sampleBuffer\0"));
         (!sb.is_null()).then_some(CounterSampleBuffer { raw: retain(sb) })
     }
 
     pub fn set_sample_buffer(&self, buffer: Option<&CounterSampleBuffer>) {
         msg_void_id(
             self.raw,
-            sel(b"setSampleBuffer:\0"),
+            sel!(b"setSampleBuffer:\0"),
             buffer.map_or(NIL, |b| b.raw),
         );
     }
 
     pub fn start_of_encoder_sample_index(&self) -> usize {
-        msg_usize(self.raw, sel(b"startOfEncoderSampleIndex\0"))
+        msg_usize(self.raw, sel!(b"startOfEncoderSampleIndex\0"))
     }
 
     pub fn set_start_of_encoder_sample_index(&self, index: usize) {
-        msg_void_usize(self.raw, sel(b"setStartOfEncoderSampleIndex:\0"), index);
+        msg_void_usize(self.raw, sel!(b"setStartOfEncoderSampleIndex:\0"), index);
     }
 
     pub fn end_of_encoder_sample_index(&self) -> usize {
-        msg_usize(self.raw, sel(b"endOfEncoderSampleIndex\0"))
+        msg_usize(self.raw, sel!(b"endOfEncoderSampleIndex\0"))
     }
 
     pub fn set_end_of_encoder_sample_index(&self, index: usize) {
-        msg_void_usize(self.raw, sel(b"setEndOfEncoderSampleIndex:\0"), index);
+        msg_void_usize(self.raw, sel!(b"setEndOfEncoderSampleIndex:\0"), index);
     }
 }
 
@@ -748,7 +748,7 @@ impl ComputePassSampleBufferAttachmentDescriptorArray {
             index < 4,
             "ComputePass sample buffer attachment index must be < 4"
         );
-        let attachment = msg_id_usize(self.raw, sel(b"objectAtIndexedSubscript:\0"), index);
+        let attachment = msg_id_usize(self.raw, sel!(b"objectAtIndexedSubscript:\0"), index);
         ComputePassSampleBufferAttachmentDescriptor { raw: attachment }
     }
 
@@ -763,7 +763,7 @@ impl ComputePassSampleBufferAttachmentDescriptorArray {
         );
         msg_void_id_usize(
             self.raw,
-            sel(b"setObject:atIndexedSubscript:\0"),
+            sel!(b"setObject:atIndexedSubscript:\0"),
             attachment.map_or(NIL, |a| a.raw),
             index,
         );
@@ -781,7 +781,7 @@ impl ComputePassDescriptor {
         if class_ptr.is_null() {
             return Err(MetalError::new("MTLComputePassDescriptor is not available"));
         }
-        let raw = retain(msg_id(class_ptr, sel(b"computePassDescriptor\0")));
+        let raw = retain(msg_id(class_ptr, sel!(b"computePassDescriptor\0")));
         if raw.is_null() {
             Err(MetalError::new("failed to create MTLComputePassDescriptor"))
         } else {
@@ -790,18 +790,18 @@ impl ComputePassDescriptor {
     }
 
     pub fn dispatch_type(&self) -> Result<DispatchType, MetalError> {
-        let raw = msg_usize(self.raw, sel(b"dispatchType\0"));
+        let raw = msg_usize(self.raw, sel!(b"dispatchType\0"));
         DispatchType::from_raw(raw).ok_or_else(|| {
             MetalError::new(format!("invalid MTLDispatchType value from Metal: {}", raw))
         })
     }
 
     pub fn set_dispatch_type(&self, dispatch_type: DispatchType) {
-        msg_void_usize(self.raw, sel(b"setDispatchType:\0"), dispatch_type as usize);
+        msg_void_usize(self.raw, sel!(b"setDispatchType:\0"), dispatch_type as usize);
     }
 
     pub fn sample_buffer_attachments(&self) -> ComputePassSampleBufferAttachmentDescriptorArray {
-        let array = msg_id(self.raw, sel(b"sampleBufferAttachments\0"));
+        let array = msg_id(self.raw, sel!(b"sampleBufferAttachments\0"));
         ComputePassSampleBufferAttachmentDescriptorArray { raw: array }
     }
 }
@@ -815,7 +815,7 @@ impl Default for ComputePassDescriptor {
 impl Clone for ComputePassDescriptor {
     fn clone(&self) -> Self {
         Self {
-            raw: retain(msg_id(self.raw, sel(b"copy\0"))),
+            raw: retain(msg_id(self.raw, sel!(b"copy\0"))),
         }
     }
 }
@@ -833,32 +833,32 @@ pub struct BlitPassSampleBufferAttachmentDescriptor {
 
 impl BlitPassSampleBufferAttachmentDescriptor {
     pub fn sample_buffer(&self) -> Option<CounterSampleBuffer> {
-        let sb = msg_id(self.raw, sel(b"sampleBuffer\0"));
+        let sb = msg_id(self.raw, sel!(b"sampleBuffer\0"));
         (!sb.is_null()).then_some(CounterSampleBuffer { raw: retain(sb) })
     }
 
     pub fn set_sample_buffer(&self, buffer: Option<&CounterSampleBuffer>) {
         msg_void_id(
             self.raw,
-            sel(b"setSampleBuffer:\0"),
+            sel!(b"setSampleBuffer:\0"),
             buffer.map_or(NIL, |b| b.raw),
         );
     }
 
     pub fn start_of_encoder_sample_index(&self) -> usize {
-        msg_usize(self.raw, sel(b"startOfEncoderSampleIndex\0"))
+        msg_usize(self.raw, sel!(b"startOfEncoderSampleIndex\0"))
     }
 
     pub fn set_start_of_encoder_sample_index(&self, index: usize) {
-        msg_void_usize(self.raw, sel(b"setStartOfEncoderSampleIndex:\0"), index);
+        msg_void_usize(self.raw, sel!(b"setStartOfEncoderSampleIndex:\0"), index);
     }
 
     pub fn end_of_encoder_sample_index(&self) -> usize {
-        msg_usize(self.raw, sel(b"endOfEncoderSampleIndex\0"))
+        msg_usize(self.raw, sel!(b"endOfEncoderSampleIndex\0"))
     }
 
     pub fn set_end_of_encoder_sample_index(&self, index: usize) {
-        msg_void_usize(self.raw, sel(b"setEndOfEncoderSampleIndex:\0"), index);
+        msg_void_usize(self.raw, sel!(b"setEndOfEncoderSampleIndex:\0"), index);
     }
 }
 
@@ -876,7 +876,7 @@ impl BlitPassSampleBufferAttachmentDescriptorArray {
             index < 4,
             "BlitPass sample buffer attachment index must be < 4"
         );
-        let attachment = msg_id_usize(self.raw, sel(b"objectAtIndexedSubscript:\0"), index);
+        let attachment = msg_id_usize(self.raw, sel!(b"objectAtIndexedSubscript:\0"), index);
         BlitPassSampleBufferAttachmentDescriptor { raw: attachment }
     }
 
@@ -891,7 +891,7 @@ impl BlitPassSampleBufferAttachmentDescriptorArray {
         );
         msg_void_id_usize(
             self.raw,
-            sel(b"setObject:atIndexedSubscript:\0"),
+            sel!(b"setObject:atIndexedSubscript:\0"),
             attachment.map_or(NIL, |a| a.raw),
             index,
         );
@@ -909,7 +909,7 @@ impl BlitPassDescriptor {
         if class_ptr.is_null() {
             return Err(MetalError::new("MTLBlitPassDescriptor is not available"));
         }
-        let raw = retain(msg_id(class_ptr, sel(b"blitPassDescriptor\0")));
+        let raw = retain(msg_id(class_ptr, sel!(b"blitPassDescriptor\0")));
         if raw.is_null() {
             Err(MetalError::new("failed to create MTLBlitPassDescriptor"))
         } else {
@@ -918,7 +918,7 @@ impl BlitPassDescriptor {
     }
 
     pub fn sample_buffer_attachments(&self) -> BlitPassSampleBufferAttachmentDescriptorArray {
-        let array = msg_id(self.raw, sel(b"sampleBufferAttachments\0"));
+        let array = msg_id(self.raw, sel!(b"sampleBufferAttachments\0"));
         BlitPassSampleBufferAttachmentDescriptorArray { raw: array }
     }
 }
@@ -932,7 +932,7 @@ impl Default for BlitPassDescriptor {
 impl Clone for BlitPassDescriptor {
     fn clone(&self) -> Self {
         Self {
-            raw: retain(msg_id(self.raw, sel(b"copy\0"))),
+            raw: retain(msg_id(self.raw, sel!(b"copy\0"))),
         }
     }
 }
@@ -950,32 +950,32 @@ pub struct ResourceStatePassSampleBufferAttachmentDescriptor {
 
 impl ResourceStatePassSampleBufferAttachmentDescriptor {
     pub fn sample_buffer(&self) -> Option<CounterSampleBuffer> {
-        let sb = msg_id(self.raw, sel(b"sampleBuffer\0"));
+        let sb = msg_id(self.raw, sel!(b"sampleBuffer\0"));
         (!sb.is_null()).then_some(CounterSampleBuffer { raw: retain(sb) })
     }
 
     pub fn set_sample_buffer(&self, buffer: Option<&CounterSampleBuffer>) {
         msg_void_id(
             self.raw,
-            sel(b"setSampleBuffer:\0"),
+            sel!(b"setSampleBuffer:\0"),
             buffer.map_or(NIL, |b| b.raw),
         );
     }
 
     pub fn start_of_encoder_sample_index(&self) -> usize {
-        msg_usize(self.raw, sel(b"startOfEncoderSampleIndex\0"))
+        msg_usize(self.raw, sel!(b"startOfEncoderSampleIndex\0"))
     }
 
     pub fn set_start_of_encoder_sample_index(&self, index: usize) {
-        msg_void_usize(self.raw, sel(b"setStartOfEncoderSampleIndex:\0"), index);
+        msg_void_usize(self.raw, sel!(b"setStartOfEncoderSampleIndex:\0"), index);
     }
 
     pub fn end_of_encoder_sample_index(&self) -> usize {
-        msg_usize(self.raw, sel(b"endOfEncoderSampleIndex\0"))
+        msg_usize(self.raw, sel!(b"endOfEncoderSampleIndex\0"))
     }
 
     pub fn set_end_of_encoder_sample_index(&self, index: usize) {
-        msg_void_usize(self.raw, sel(b"setEndOfEncoderSampleIndex:\0"), index);
+        msg_void_usize(self.raw, sel!(b"setEndOfEncoderSampleIndex:\0"), index);
     }
 }
 
@@ -993,7 +993,7 @@ impl ResourceStatePassSampleBufferAttachmentDescriptorArray {
             index < 4,
             "ResourceStatePass sample buffer attachment index must be < 4"
         );
-        let attachment = msg_id_usize(self.raw, sel(b"objectAtIndexedSubscript:\0"), index);
+        let attachment = msg_id_usize(self.raw, sel!(b"objectAtIndexedSubscript:\0"), index);
         ResourceStatePassSampleBufferAttachmentDescriptor { raw: attachment }
     }
 
@@ -1008,7 +1008,7 @@ impl ResourceStatePassSampleBufferAttachmentDescriptorArray {
         );
         msg_void_id_usize(
             self.raw,
-            sel(b"setObject:atIndexedSubscript:\0"),
+            sel!(b"setObject:atIndexedSubscript:\0"),
             attachment.map_or(NIL, |a| a.raw),
             index,
         );
@@ -1028,7 +1028,7 @@ impl ResourceStatePassDescriptor {
                 "MTLResourceStatePassDescriptor is not available",
             ));
         }
-        let raw = retain(msg_id(class_ptr, sel(b"resourceStatePassDescriptor\0")));
+        let raw = retain(msg_id(class_ptr, sel!(b"resourceStatePassDescriptor\0")));
         if raw.is_null() {
             Err(MetalError::new(
                 "failed to create MTLResourceStatePassDescriptor",
@@ -1041,7 +1041,7 @@ impl ResourceStatePassDescriptor {
     pub fn sample_buffer_attachments(
         &self,
     ) -> ResourceStatePassSampleBufferAttachmentDescriptorArray {
-        let array = msg_id(self.raw, sel(b"sampleBufferAttachments\0"));
+        let array = msg_id(self.raw, sel!(b"sampleBufferAttachments\0"));
         ResourceStatePassSampleBufferAttachmentDescriptorArray { raw: array }
     }
 }
@@ -1055,7 +1055,7 @@ impl Default for ResourceStatePassDescriptor {
 impl Clone for ResourceStatePassDescriptor {
     fn clone(&self) -> Self {
         Self {
-            raw: retain(msg_id(self.raw, sel(b"copy\0"))),
+            raw: retain(msg_id(self.raw, sel!(b"copy\0"))),
         }
     }
 }
@@ -1086,7 +1086,7 @@ impl ParallelRenderCommandEncoder {
                 "cannot create child render command encoder after parallel render command encoder has ended encoding",
             ));
         }
-        let raw = retain(msg_id(self.raw, sel(b"renderCommandEncoder\0")));
+        let raw = retain(msg_id(self.raw, sel!(b"renderCommandEncoder\0")));
         if raw.is_null() {
             Err(MetalError::new(
                 "failed to create child RenderCommandEncoder",
@@ -1102,7 +1102,7 @@ impl ParallelRenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setColorStoreAction:atIndex:\0"),
+                sel!(b"setColorStoreAction:atIndex:\0"),
                 store_action as usize,
                 index,
             );
@@ -1112,7 +1112,7 @@ impl ParallelRenderCommandEncoder {
     pub fn set_depth_store_action(&self, store_action: StoreAction) {
         msg_void_usize(
             self.raw,
-            sel(b"setDepthStoreAction:\0"),
+            sel!(b"setDepthStoreAction:\0"),
             store_action as usize,
         );
     }
@@ -1120,7 +1120,7 @@ impl ParallelRenderCommandEncoder {
     pub fn set_stencil_store_action(&self, store_action: StoreAction) {
         msg_void_usize(
             self.raw,
-            sel(b"setStencilStoreAction:\0"),
+            sel!(b"setStencilStoreAction:\0"),
             store_action as usize,
         );
     }
@@ -1131,7 +1131,7 @@ impl ParallelRenderCommandEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setColorStoreActionOptions:atIndex:\0"),
+                sel!(b"setColorStoreActionOptions:atIndex:\0"),
                 options.0,
                 index,
             );
@@ -1139,20 +1139,20 @@ impl ParallelRenderCommandEncoder {
     }
 
     pub fn set_depth_store_action_options(&self, options: StoreActionOptions) {
-        msg_void_usize(self.raw, sel(b"setDepthStoreActionOptions:\0"), options.0);
+        msg_void_usize(self.raw, sel!(b"setDepthStoreActionOptions:\0"), options.0);
     }
 
     pub fn set_stencil_store_action_options(&self, options: StoreActionOptions) {
-        msg_void_usize(self.raw, sel(b"setStencilStoreActionOptions:\0"), options.0);
+        msg_void_usize(self.raw, sel!(b"setStencilStoreActionOptions:\0"), options.0);
     }
 
     pub fn device(&self) -> Device {
-        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        let ptr = retain(msg_id(self.raw, sel!(b"device\0")));
         Device { raw: ptr }
     }
 
     pub fn label(&self) -> Option<NSString> {
-        let ptr = msg_id(self.raw, sel(b"label\0"));
+        let ptr = msg_id(self.raw, sel!(b"label\0"));
         if ptr.is_null() {
             None
         } else {
@@ -1162,25 +1162,25 @@ impl ParallelRenderCommandEncoder {
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 
     pub fn insert_debug_signpost(&self, string: &str) {
         let ns_str = NSString::new(string);
-        msg_void_id(self.raw, sel(b"insertDebugSignpost:\0"), ns_str.raw());
+        msg_void_id(self.raw, sel!(b"insertDebugSignpost:\0"), ns_str.raw());
     }
 
     pub fn push_debug_group(&self, string: &str) {
         let ns_str = NSString::new(string);
-        msg_void_id(self.raw, sel(b"pushDebugGroup:\0"), ns_str.raw());
+        msg_void_id(self.raw, sel!(b"pushDebugGroup:\0"), ns_str.raw());
     }
 
     pub fn pop_debug_group(&self) {
-        msg_void(self.raw, sel(b"popDebugGroup\0"));
+        msg_void(self.raw, sel!(b"popDebugGroup\0"));
     }
 
     pub fn end_encoding(&self) {
-        msg_void(self.raw, sel(b"endEncoding\0"));
+        msg_void(self.raw, sel!(b"endEncoding\0"));
         self.ended.set(true);
     }
 }
@@ -1200,15 +1200,15 @@ impl AccelerationStructurePassSampleBufferAttachmentDescriptor {
     pub fn new() -> Self {
         let allocated = msg_id(
             class(b"MTLAccelerationStructurePassSampleBufferAttachmentDescriptor\0"),
-            sel(b"alloc\0"),
+            sel!(b"alloc\0"),
         );
         Self {
-            raw: msg_id(allocated, sel(b"init\0")),
+            raw: msg_id(allocated, sel!(b"init\0")),
         }
     }
 
     pub fn sample_buffer(&self) -> Option<CounterSampleBuffer> {
-        let ptr = msg_id(self.raw, sel(b"sampleBuffer\0"));
+        let ptr = msg_id(self.raw, sel!(b"sampleBuffer\0"));
         if ptr.is_null() {
             None
         } else {
@@ -1218,23 +1218,23 @@ impl AccelerationStructurePassSampleBufferAttachmentDescriptor {
 
     pub fn set_sample_buffer(&self, sample_buffer: Option<&CounterSampleBuffer>) {
         let ptr = sample_buffer.map(|b| b.raw).unwrap_or(NIL);
-        msg_void_id(self.raw, sel(b"setSampleBuffer:\0"), ptr);
+        msg_void_id(self.raw, sel!(b"setSampleBuffer:\0"), ptr);
     }
 
     pub fn start_of_encoder_sample_index(&self) -> usize {
-        msg_usize(self.raw, sel(b"startOfEncoderSampleIndex\0"))
+        msg_usize(self.raw, sel!(b"startOfEncoderSampleIndex\0"))
     }
 
     pub fn set_start_of_encoder_sample_index(&self, index: usize) {
-        msg_void_usize(self.raw, sel(b"setStartOfEncoderSampleIndex:\0"), index);
+        msg_void_usize(self.raw, sel!(b"setStartOfEncoderSampleIndex:\0"), index);
     }
 
     pub fn end_of_encoder_sample_index(&self) -> usize {
-        msg_usize(self.raw, sel(b"endOfEncoderSampleIndex\0"))
+        msg_usize(self.raw, sel!(b"endOfEncoderSampleIndex\0"))
     }
 
     pub fn set_end_of_encoder_sample_index(&self, index: usize) {
-        msg_void_usize(self.raw, sel(b"setEndOfEncoderSampleIndex:\0"), index);
+        msg_void_usize(self.raw, sel!(b"setEndOfEncoderSampleIndex:\0"), index);
     }
 }
 
@@ -1272,7 +1272,7 @@ impl AccelerationStructurePassSampleBufferAttachmentDescriptorArray {
             index < 4,
             "AccelerationStructurePass sample buffer attachment index must be < 4"
         );
-        let ptr = msg_id_usize(self.raw, sel(b"objectAtIndexedSubscript:\0"), index);
+        let ptr = msg_id_usize(self.raw, sel!(b"objectAtIndexedSubscript:\0"), index);
         if ptr.is_null() {
             None
         } else {
@@ -1295,7 +1295,7 @@ impl AccelerationStructurePassSampleBufferAttachmentDescriptorArray {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setObject:atIndexedSubscript:\0"),
+                sel!(b"setObject:atIndexedSubscript:\0"),
                 ptr,
                 index,
             );
@@ -1318,7 +1318,7 @@ impl AccelerationStructurePassDescriptor {
         }
         let raw = retain(msg_id(
             class_ptr,
-            sel(b"accelerationStructurePassDescriptor\0"),
+            sel!(b"accelerationStructurePassDescriptor\0"),
         ));
         if raw.is_null() {
             Err(MetalError::new(
@@ -1332,7 +1332,7 @@ impl AccelerationStructurePassDescriptor {
     pub fn sample_buffer_attachments(
         &self,
     ) -> AccelerationStructurePassSampleBufferAttachmentDescriptorArray {
-        let array = msg_id(self.raw, sel(b"sampleBufferAttachments\0"));
+        let array = msg_id(self.raw, sel!(b"sampleBufferAttachments\0"));
         AccelerationStructurePassSampleBufferAttachmentDescriptorArray { raw: array }
     }
 }

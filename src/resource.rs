@@ -7,7 +7,7 @@ fn resource_label(raw: id) -> Option<NSString> {
     if raw.is_null() {
         return None;
     }
-    let ptr = msg_id(raw, sel(b"label\0"));
+    let ptr = msg_id(raw, sel!(b"label\0"));
     if ptr.is_null() {
         None
     } else {
@@ -30,7 +30,7 @@ impl Buffer {
     }
 
     pub fn len(&self) -> usize {
-        msg_usize(self.raw, sel(b"length\0"))
+        msg_usize(self.raw, sel!(b"length\0"))
     }
 
     pub fn is_empty(&self) -> bool {
@@ -38,11 +38,11 @@ impl Buffer {
     }
 
     pub fn contents(&self) -> *mut c_void {
-        msg_id(self.raw, sel(b"contents\0")).0
+        msg_id(self.raw, sel!(b"contents\0")).0
     }
 
     pub fn did_modify_range(&self, range: Range) {
-        msg_void_range(self.raw, sel(b"didModifyRange:\0"), range);
+        msg_void_range(self.raw, sel!(b"didModifyRange:\0"), range);
     }
 
     pub fn write<T: Copy>(&self, value: &T) {
@@ -95,11 +95,11 @@ impl Buffer {
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 
     pub fn gpu_address(&self) -> Result<u64, MetalError> {
-        let selector = sel(b"gpuAddress\0");
+        let selector = sel!(b"gpuAddress\0");
         if responds_to_selector(self.raw, selector) {
             Ok(msg_u64(self.raw, selector))
         } else {
@@ -108,12 +108,12 @@ impl Buffer {
     }
 
     pub fn device(&self) -> Device {
-        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        let ptr = retain(msg_id(self.raw, sel!(b"device\0")));
         Device { raw: ptr }
     }
 
     pub fn cpu_cache_mode(&self) -> CpuCacheMode {
-        let val = msg_usize(self.raw, sel(b"cpuCacheMode\0"));
+        let val = msg_usize(self.raw, sel!(b"cpuCacheMode\0"));
         match val {
             1 => CpuCacheMode::WriteCombined,
             _ => CpuCacheMode::DefaultCache,
@@ -121,7 +121,7 @@ impl Buffer {
     }
 
     pub fn storage_mode(&self) -> StorageMode {
-        let val = msg_usize(self.raw, sel(b"storageMode\0"));
+        let val = msg_usize(self.raw, sel!(b"storageMode\0"));
         match val {
             0 => StorageMode::Shared,
             1 => StorageMode::Managed,
@@ -132,7 +132,7 @@ impl Buffer {
     }
 
     pub fn hazard_tracking_mode(&self) -> HazardTrackingMode {
-        let selector = sel(b"hazardTrackingMode\0");
+        let selector = sel!(b"hazardTrackingMode\0");
         if responds_to_selector(self.raw, selector) {
             let val = msg_usize(self.raw, selector);
             match val {
@@ -146,7 +146,7 @@ impl Buffer {
     }
 
     pub fn resource_options(&self) -> ResourceOptions {
-        let selector = sel(b"resourceOptions\0");
+        let selector = sel!(b"resourceOptions\0");
         if responds_to_selector(self.raw, selector) {
             ResourceOptions::from_raw(msg_usize(self.raw, selector))
         } else {
@@ -155,7 +155,7 @@ impl Buffer {
     }
 
     pub fn set_purgeable_state(&self, state: PurgeableState) -> PurgeableState {
-        let val = msg_usize_usize(self.raw, sel(b"setPurgeableState:\0"), state as usize);
+        let val = msg_usize_usize(self.raw, sel!(b"setPurgeableState:\0"), state as usize);
         match val {
             1 => PurgeableState::KeepCurrent,
             2 => PurgeableState::NonVolatile,
@@ -166,7 +166,7 @@ impl Buffer {
     }
 
     pub fn heap(&self) -> Option<Heap> {
-        let selector = sel(b"heap\0");
+        let selector = sel!(b"heap\0");
         if responds_to_selector(self.raw, selector) {
             let ptr = msg_id(self.raw, selector);
             if ptr.is_null() {
@@ -180,7 +180,7 @@ impl Buffer {
     }
 
     pub fn heap_offset(&self) -> usize {
-        let selector = sel(b"heapOffset\0");
+        let selector = sel!(b"heapOffset\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -189,7 +189,7 @@ impl Buffer {
     }
 
     pub fn allocated_size(&self) -> usize {
-        let selector = sel(b"allocatedSize\0");
+        let selector = sel!(b"allocatedSize\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -198,14 +198,14 @@ impl Buffer {
     }
 
     pub fn make_aliasable(&self) {
-        let selector = sel(b"makeAliasable\0");
+        let selector = sel!(b"makeAliasable\0");
         if responds_to_selector(self.raw, selector) {
             msg_void(self.raw, selector);
         }
     }
 
     pub fn is_aliasable(&self) -> bool {
-        let selector = sel(b"isAliasable\0");
+        let selector = sel!(b"isAliasable\0");
         if responds_to_selector(self.raw, selector) {
             msg_bool(self.raw, selector) != 0
         } else {
@@ -214,7 +214,7 @@ impl Buffer {
     }
 
     pub fn set_owner_with_identity(&self, task_id_token: u32) -> i32 {
-        let selector = sel(b"setOwnerWithIdentity:\0");
+        let selector = sel!(b"setOwnerWithIdentity:\0");
         if responds_to_selector(self.raw, selector) {
             unsafe {
                 let f: unsafe extern "C" fn(id, SEL, u32) -> i32 =
@@ -233,7 +233,7 @@ impl Buffer {
         bytes_per_row: usize,
     ) -> Result<Texture, MetalError> {
         unsafe {
-            let selector = sel(b"newTextureWithDescriptor:offset:bytesPerRow:\0");
+            let selector = sel!(b"newTextureWithDescriptor:offset:bytesPerRow:\0");
             if !responds_to_selector(self.raw, selector) {
                 return Err(MetalError::new(
                     "newTextureWithDescriptor:offset:bytesPerRow: not supported",
@@ -251,7 +251,7 @@ impl Buffer {
     }
 
     pub fn add_debug_marker(&self, marker: &str, range: Range) -> Result<(), MetalError> {
-        let selector = sel(b"addDebugMarker:range:\0");
+        let selector = sel!(b"addDebugMarker:range:\0");
         if responds_to_selector(self.raw, selector) {
             let ns_marker = NSString::new(marker);
             msg_void_id_range(self.raw, selector, ns_marker.raw(), range);
@@ -262,7 +262,7 @@ impl Buffer {
     }
 
     pub fn remove_all_debug_markers(&self) -> Result<(), MetalError> {
-        let selector = sel(b"removeAllDebugMarkers\0");
+        let selector = sel!(b"removeAllDebugMarkers\0");
         if responds_to_selector(self.raw, selector) {
             msg_void(self.raw, selector);
             Ok(())
@@ -272,7 +272,7 @@ impl Buffer {
     }
 
     pub fn remote_storage_buffer(&self) -> Option<Buffer> {
-        let selector = sel(b"remoteStorageBuffer\0");
+        let selector = sel!(b"remoteStorageBuffer\0");
         if responds_to_selector(self.raw, selector) {
             let ptr = msg_id(self.raw, selector);
             if ptr.is_null() {
@@ -286,7 +286,7 @@ impl Buffer {
     }
 
     pub fn new_remote_buffer_view_for_device(&self, device: &Device) -> Result<Buffer, MetalError> {
-        let selector = sel(b"newRemoteBufferViewForDevice:\0");
+        let selector = sel!(b"newRemoteBufferViewForDevice:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "newRemoteBufferViewForDevice: not supported",
@@ -305,7 +305,7 @@ impl Buffer {
         descriptor: &TensorDescriptor,
         offset: usize,
     ) -> Result<Tensor, MetalError> {
-        let selector = sel(b"newTensorWithDescriptor:offset:error:\0");
+        let selector = sel!(b"newTensorWithDescriptor:offset:error:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "newTensorWithDescriptor:offset:error: is not supported on this macOS version",
@@ -347,9 +347,9 @@ pub struct TextureDescriptor {
 
 impl TextureDescriptor {
     pub fn new() -> Self {
-        let allocated = msg_id(class(b"MTLTextureDescriptor\0"), sel(b"alloc\0"));
+        let allocated = msg_id(class(b"MTLTextureDescriptor\0"), sel!(b"alloc\0"));
         Self {
-            raw: msg_id(allocated, sel(b"init\0")),
+            raw: msg_id(allocated, sel!(b"init\0")),
         }
     }
 
@@ -360,7 +360,7 @@ impl TextureDescriptor {
         usage: TextureUsage,
     ) -> Self {
         let selector =
-            sel(b"textureBufferDescriptorWithPixelFormat:width:resourceOptions:usage:\0");
+            sel!(b"textureBufferDescriptorWithPixelFormat:width:resourceOptions:usage:\0");
         let raw = unsafe {
             let f: unsafe extern "C" fn(id, SEL, usize, usize, usize, usize) -> id =
                 transmute(objc_msgSend as *const c_void);
@@ -387,7 +387,7 @@ impl TextureDescriptor {
                 transmute(objc_msgSend as *const c_void);
             let raw = retain(f(
                 class(b"MTLTextureDescriptor\0"),
-                sel(b"texture2DDescriptorWithPixelFormat:width:height:mipmapped:\0"),
+                sel!(b"texture2DDescriptorWithPixelFormat:width:height:mipmapped:\0"),
                 pixel_format.as_raw(),
                 width,
                 height,
@@ -441,47 +441,47 @@ impl TextureDescriptor {
     }
 
     pub fn set_texture_type(&self, texture_type: TextureType) {
-        msg_void_usize(self.raw, sel(b"setTextureType:\0"), texture_type as usize);
+        msg_void_usize(self.raw, sel!(b"setTextureType:\0"), texture_type as usize);
     }
 
     pub fn set_pixel_format(&self, pixel_format: PixelFormat) {
-        msg_void_usize(self.raw, sel(b"setPixelFormat:\0"), pixel_format.as_raw());
+        msg_void_usize(self.raw, sel!(b"setPixelFormat:\0"), pixel_format.as_raw());
     }
 
     pub fn set_width(&self, width: usize) {
-        msg_void_usize(self.raw, sel(b"setWidth:\0"), width);
+        msg_void_usize(self.raw, sel!(b"setWidth:\0"), width);
     }
 
     pub fn set_height(&self, height: usize) {
-        msg_void_usize(self.raw, sel(b"setHeight:\0"), height);
+        msg_void_usize(self.raw, sel!(b"setHeight:\0"), height);
     }
 
     pub fn set_depth(&self, depth: usize) {
-        msg_void_usize(self.raw, sel(b"setDepth:\0"), depth);
+        msg_void_usize(self.raw, sel!(b"setDepth:\0"), depth);
     }
 
     pub fn set_mipmap_level_count(&self, mipmap_level_count: usize) {
-        msg_void_usize(self.raw, sel(b"setMipmapLevelCount:\0"), mipmap_level_count);
+        msg_void_usize(self.raw, sel!(b"setMipmapLevelCount:\0"), mipmap_level_count);
     }
 
     pub fn set_array_length(&self, array_length: usize) {
-        msg_void_usize(self.raw, sel(b"setArrayLength:\0"), array_length);
+        msg_void_usize(self.raw, sel!(b"setArrayLength:\0"), array_length);
     }
 
     pub fn set_sample_count(&self, sample_count: usize) {
-        msg_void_usize(self.raw, sel(b"setSampleCount:\0"), sample_count);
+        msg_void_usize(self.raw, sel!(b"setSampleCount:\0"), sample_count);
     }
 
     pub fn set_usage(&self, usage: TextureUsage) {
-        msg_void_usize(self.raw, sel(b"setUsage:\0"), usage.as_raw());
+        msg_void_usize(self.raw, sel!(b"setUsage:\0"), usage.as_raw());
     }
 
     pub fn set_storage_mode(&self, storage_mode: StorageMode) {
-        msg_void_usize(self.raw, sel(b"setStorageMode:\0"), storage_mode as usize);
+        msg_void_usize(self.raw, sel!(b"setStorageMode:\0"), storage_mode as usize);
     }
 
     pub fn texture_type(&self) -> TextureType {
-        let val = msg_usize(self.raw, sel(b"textureType\0"));
+        let val = msg_usize(self.raw, sel!(b"textureType\0"));
         match val {
             0 => TextureType::D1,
             1 => TextureType::D1Array,
@@ -498,39 +498,39 @@ impl TextureDescriptor {
     }
 
     pub fn pixel_format(&self) -> PixelFormat {
-        PixelFormat::from_raw(msg_usize(self.raw, sel(b"pixelFormat\0")))
+        PixelFormat::from_raw(msg_usize(self.raw, sel!(b"pixelFormat\0")))
     }
 
     pub fn width(&self) -> usize {
-        msg_usize(self.raw, sel(b"width\0"))
+        msg_usize(self.raw, sel!(b"width\0"))
     }
 
     pub fn height(&self) -> usize {
-        msg_usize(self.raw, sel(b"height\0"))
+        msg_usize(self.raw, sel!(b"height\0"))
     }
 
     pub fn depth(&self) -> usize {
-        msg_usize(self.raw, sel(b"depth\0"))
+        msg_usize(self.raw, sel!(b"depth\0"))
     }
 
     pub fn mipmap_level_count(&self) -> usize {
-        msg_usize(self.raw, sel(b"mipmapLevelCount\0"))
+        msg_usize(self.raw, sel!(b"mipmapLevelCount\0"))
     }
 
     pub fn array_length(&self) -> usize {
-        msg_usize(self.raw, sel(b"arrayLength\0"))
+        msg_usize(self.raw, sel!(b"arrayLength\0"))
     }
 
     pub fn sample_count(&self) -> usize {
-        msg_usize(self.raw, sel(b"sampleCount\0"))
+        msg_usize(self.raw, sel!(b"sampleCount\0"))
     }
 
     pub fn usage(&self) -> TextureUsage {
-        TextureUsage::from_raw(msg_usize(self.raw, sel(b"usage\0")))
+        TextureUsage::from_raw(msg_usize(self.raw, sel!(b"usage\0")))
     }
 
     pub fn storage_mode(&self) -> StorageMode {
-        let val = msg_usize(self.raw, sel(b"storageMode\0"));
+        let val = msg_usize(self.raw, sel!(b"storageMode\0"));
         match val {
             0 => StorageMode::Shared,
             1 => StorageMode::Managed,
@@ -541,7 +541,7 @@ impl TextureDescriptor {
     }
 
     pub fn cpu_cache_mode(&self) -> CpuCacheMode {
-        let val = msg_usize(self.raw, sel(b"cpuCacheMode\0"));
+        let val = msg_usize(self.raw, sel!(b"cpuCacheMode\0"));
         match val {
             1 => CpuCacheMode::WriteCombined,
             _ => CpuCacheMode::DefaultCache,
@@ -551,13 +551,13 @@ impl TextureDescriptor {
     pub fn set_cpu_cache_mode(&self, cpu_cache_mode: CpuCacheMode) {
         msg_void_usize(
             self.raw,
-            sel(b"setCpuCacheMode:\0"),
+            sel!(b"setCpuCacheMode:\0"),
             cpu_cache_mode as usize,
         );
     }
 
     pub fn hazard_tracking_mode(&self) -> HazardTrackingMode {
-        let selector = sel(b"hazardTrackingMode\0");
+        let selector = sel!(b"hazardTrackingMode\0");
         if responds_to_selector(self.raw, selector) {
             let val = msg_usize(self.raw, selector);
             match val {
@@ -571,14 +571,14 @@ impl TextureDescriptor {
     }
 
     pub fn set_hazard_tracking_mode(&self, hazard_tracking_mode: HazardTrackingMode) {
-        let selector = sel(b"setHazardTrackingMode:\0");
+        let selector = sel!(b"setHazardTrackingMode:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_usize(self.raw, selector, hazard_tracking_mode as usize);
         }
     }
 
     pub fn resource_options(&self) -> ResourceOptions {
-        let selector = sel(b"resourceOptions\0");
+        let selector = sel!(b"resourceOptions\0");
         if responds_to_selector(self.raw, selector) {
             ResourceOptions::from_raw(msg_usize(self.raw, selector))
         } else {
@@ -589,13 +589,13 @@ impl TextureDescriptor {
     pub fn set_resource_options(&self, resource_options: ResourceOptions) {
         msg_void_usize(
             self.raw,
-            sel(b"setResourceOptions:\0"),
+            sel!(b"setResourceOptions:\0"),
             resource_options.as_raw(),
         );
     }
 
     pub fn allow_gpu_optimized_contents(&self) -> bool {
-        let selector = sel(b"allowGPUOptimizedContents\0");
+        let selector = sel!(b"allowGPUOptimizedContents\0");
         if responds_to_selector(self.raw, selector) {
             msg_bool(self.raw, selector) != 0
         } else {
@@ -604,14 +604,14 @@ impl TextureDescriptor {
     }
 
     pub fn set_allow_gpu_optimized_contents(&self, allow: bool) {
-        let selector = sel(b"setAllowGPUOptimizedContents:\0");
+        let selector = sel!(b"setAllowGPUOptimizedContents:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_bool(self.raw, selector, if allow { YES } else { NO });
         }
     }
 
     pub fn compression_type(&self) -> TextureCompressionType {
-        let selector = sel(b"compressionType\0");
+        let selector = sel!(b"compressionType\0");
         if responds_to_selector(self.raw, selector) {
             let val = msg_usize(self.raw, selector);
             match val {
@@ -624,14 +624,14 @@ impl TextureDescriptor {
     }
 
     pub fn set_compression_type(&self, compression_type: TextureCompressionType) {
-        let selector = sel(b"setCompressionType:\0");
+        let selector = sel!(b"setCompressionType:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_usize(self.raw, selector, compression_type as usize);
         }
     }
 
     pub fn swizzle(&self) -> TextureSwizzleChannels {
-        let selector = sel(b"swizzle\0");
+        let selector = sel!(b"swizzle\0");
         if responds_to_selector(self.raw, selector) {
             unsafe {
                 let f: unsafe extern "C" fn(id, SEL) -> TextureSwizzleChannels =
@@ -644,7 +644,7 @@ impl TextureDescriptor {
     }
 
     pub fn set_swizzle(&self, swizzle: TextureSwizzleChannels) {
-        let selector = sel(b"setSwizzle:\0");
+        let selector = sel!(b"setSwizzle:\0");
         if responds_to_selector(self.raw, selector) {
             unsafe {
                 let f: unsafe extern "C" fn(id, SEL, TextureSwizzleChannels) =
@@ -693,7 +693,7 @@ impl Texture {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"replaceRegion:mipmapLevel:withBytes:bytesPerRow:\0"),
+                sel!(b"replaceRegion:mipmapLevel:withBytes:bytesPerRow:\0"),
                 region,
                 mipmap_level,
                 bytes.as_ptr() as *const c_void,
@@ -714,7 +714,7 @@ impl Texture {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"getBytes:bytesPerRow:fromRegion:mipmapLevel:\0"),
+                sel!(b"getBytes:bytesPerRow:fromRegion:mipmapLevel:\0"),
                 out.as_mut_ptr() as *mut c_void,
                 bytes_per_row,
                 region,
@@ -726,7 +726,7 @@ impl Texture {
     pub fn new_texture_view(&self, pixel_format: PixelFormat) -> Result<Texture, MetalError> {
         let raw = msg_id_usize(
             self.raw,
-            sel(b"newTextureViewWithPixelFormat:\0"),
+            sel!(b"newTextureViewWithPixelFormat:\0"),
             pixel_format.as_raw(),
         );
         if raw.is_null() {
@@ -743,7 +743,7 @@ impl Texture {
         levels: Range,
         slices: Range,
     ) -> Result<Texture, MetalError> {
-        let selector = sel(b"newTextureViewWithPixelFormat:textureType:levels:slices:\0");
+        let selector = sel!(b"newTextureViewWithPixelFormat:textureType:levels:slices:\0");
         let raw = unsafe {
             let f: unsafe extern "C" fn(id, SEL, usize, usize, Range, Range) -> id =
                 transmute(objc_msgSend as *const c_void);
@@ -771,7 +771,7 @@ impl Texture {
         slices: Range,
         swizzle: TextureSwizzleChannels,
     ) -> Result<Texture, MetalError> {
-        let selector = sel(b"newTextureViewWithPixelFormat:textureType:levels:slices:swizzle:\0");
+        let selector = sel!(b"newTextureViewWithPixelFormat:textureType:levels:slices:swizzle:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "swizzled texture views are not supported on this macOS version",
@@ -808,7 +808,7 @@ impl Texture {
         &self,
         descriptor: &TextureViewDescriptor,
     ) -> Result<Texture, MetalError> {
-        let selector = sel(b"newTextureViewWithDescriptor:\0");
+        let selector = sel!(b"newTextureViewWithDescriptor:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "newTextureViewWithDescriptor: not supported on this macOS version",
@@ -825,7 +825,7 @@ impl Texture {
     }
 
     pub fn new_shared_texture_handle(&self) -> Option<SharedTextureHandle> {
-        let selector = sel(b"newSharedTextureHandle\0");
+        let selector = sel!(b"newSharedTextureHandle\0");
         if responds_to_selector(self.raw, selector) {
             let ptr = msg_id(self.raw, selector);
             if ptr.is_null() {
@@ -839,7 +839,7 @@ impl Texture {
     }
 
     pub fn parent_texture(&self) -> Option<Texture> {
-        let selector = sel(b"parentTexture\0");
+        let selector = sel!(b"parentTexture\0");
         if responds_to_selector(self.raw, selector) {
             let ptr = msg_id(self.raw, selector);
             if ptr.is_null() {
@@ -853,7 +853,7 @@ impl Texture {
     }
 
     pub fn parent_relative_level(&self) -> usize {
-        let selector = sel(b"parentRelativeLevel\0");
+        let selector = sel!(b"parentRelativeLevel\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -862,7 +862,7 @@ impl Texture {
     }
 
     pub fn parent_relative_slice(&self) -> usize {
-        let selector = sel(b"parentRelativeSlice\0");
+        let selector = sel!(b"parentRelativeSlice\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -871,7 +871,7 @@ impl Texture {
     }
 
     pub fn buffer(&self) -> Option<Buffer> {
-        let selector = sel(b"buffer\0");
+        let selector = sel!(b"buffer\0");
         if responds_to_selector(self.raw, selector) {
             let ptr = msg_id(self.raw, selector);
             if ptr.is_null() {
@@ -885,7 +885,7 @@ impl Texture {
     }
 
     pub fn buffer_offset(&self) -> usize {
-        let selector = sel(b"bufferOffset\0");
+        let selector = sel!(b"bufferOffset\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -894,7 +894,7 @@ impl Texture {
     }
 
     pub fn buffer_bytes_per_row(&self) -> usize {
-        let selector = sel(b"bufferBytesPerRow\0");
+        let selector = sel!(b"bufferBytesPerRow\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -903,7 +903,7 @@ impl Texture {
     }
 
     pub fn iosurface(&self) -> Option<id> {
-        let selector = sel(b"iosurface\0");
+        let selector = sel!(b"iosurface\0");
         if responds_to_selector(self.raw, selector) {
             let ptr = msg_id(self.raw, selector);
             if ptr.is_null() { None } else { Some(ptr) }
@@ -913,7 +913,7 @@ impl Texture {
     }
 
     pub fn iosurface_plane(&self) -> usize {
-        let selector = sel(b"iosurfacePlane\0");
+        let selector = sel!(b"iosurfacePlane\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -922,7 +922,7 @@ impl Texture {
     }
 
     pub fn texture_type(&self) -> TextureType {
-        let val = msg_usize(self.raw, sel(b"textureType\0"));
+        let val = msg_usize(self.raw, sel!(b"textureType\0"));
         match val {
             0 => TextureType::D1,
             1 => TextureType::D1Array,
@@ -939,27 +939,27 @@ impl Texture {
     }
 
     pub fn depth(&self) -> usize {
-        msg_usize(self.raw, sel(b"depth\0"))
+        msg_usize(self.raw, sel!(b"depth\0"))
     }
 
     pub fn mipmap_level_count(&self) -> usize {
-        msg_usize(self.raw, sel(b"mipmapLevelCount\0"))
+        msg_usize(self.raw, sel!(b"mipmapLevelCount\0"))
     }
 
     pub fn sample_count(&self) -> usize {
-        msg_usize(self.raw, sel(b"sampleCount\0"))
+        msg_usize(self.raw, sel!(b"sampleCount\0"))
     }
 
     pub fn array_length(&self) -> usize {
-        msg_usize(self.raw, sel(b"arrayLength\0"))
+        msg_usize(self.raw, sel!(b"arrayLength\0"))
     }
 
     pub fn usage(&self) -> TextureUsage {
-        TextureUsage::from_raw(msg_usize(self.raw, sel(b"usage\0")))
+        TextureUsage::from_raw(msg_usize(self.raw, sel!(b"usage\0")))
     }
 
     pub fn is_shareable(&self) -> bool {
-        let selector = sel(b"isShareable\0");
+        let selector = sel!(b"isShareable\0");
         if responds_to_selector(self.raw, selector) {
             msg_bool(self.raw, selector) != 0
         } else {
@@ -968,7 +968,7 @@ impl Texture {
     }
 
     pub fn is_framebuffer_only(&self) -> bool {
-        let selector = sel(b"isFramebufferOnly\0");
+        let selector = sel!(b"isFramebufferOnly\0");
         if responds_to_selector(self.raw, selector) {
             msg_bool(self.raw, selector) != 0
         } else {
@@ -977,7 +977,7 @@ impl Texture {
     }
 
     pub fn first_mipmap_in_tail(&self) -> usize {
-        let selector = sel(b"firstMipmapInTail\0");
+        let selector = sel!(b"firstMipmapInTail\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -986,7 +986,7 @@ impl Texture {
     }
 
     pub fn tail_size_in_bytes(&self) -> usize {
-        let selector = sel(b"tailSizeInBytes\0");
+        let selector = sel!(b"tailSizeInBytes\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -995,7 +995,7 @@ impl Texture {
     }
 
     pub fn is_sparse(&self) -> bool {
-        let selector = sel(b"isSparse\0");
+        let selector = sel!(b"isSparse\0");
         if responds_to_selector(self.raw, selector) {
             msg_bool(self.raw, selector) != 0
         } else {
@@ -1004,7 +1004,7 @@ impl Texture {
     }
 
     pub fn allow_gpu_optimized_contents(&self) -> bool {
-        let selector = sel(b"allowGPUOptimizedContents\0");
+        let selector = sel!(b"allowGPUOptimizedContents\0");
         if responds_to_selector(self.raw, selector) {
             msg_bool(self.raw, selector) != 0
         } else {
@@ -1013,7 +1013,7 @@ impl Texture {
     }
 
     pub fn compression_type(&self) -> TextureCompressionType {
-        let selector = sel(b"compressionType\0");
+        let selector = sel!(b"compressionType\0");
         if responds_to_selector(self.raw, selector) {
             let val = msg_usize(self.raw, selector);
             match val {
@@ -1026,7 +1026,7 @@ impl Texture {
     }
 
     pub fn swizzle(&self) -> TextureSwizzleChannels {
-        let selector = sel(b"swizzle\0");
+        let selector = sel!(b"swizzle\0");
         if responds_to_selector(self.raw, selector) {
             unsafe {
                 let f: unsafe extern "C" fn(id, SEL) -> TextureSwizzleChannels =
@@ -1039,15 +1039,15 @@ impl Texture {
     }
 
     pub fn width(&self) -> usize {
-        msg_usize(self.raw, sel(b"width\0"))
+        msg_usize(self.raw, sel!(b"width\0"))
     }
 
     pub fn height(&self) -> usize {
-        msg_usize(self.raw, sel(b"height\0"))
+        msg_usize(self.raw, sel!(b"height\0"))
     }
 
     pub fn pixel_format(&self) -> usize {
-        msg_usize(self.raw, sel(b"pixelFormat\0"))
+        msg_usize(self.raw, sel!(b"pixelFormat\0"))
     }
 
     pub fn label(&self) -> Option<NSString> {
@@ -1056,11 +1056,11 @@ impl Texture {
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 
     pub fn gpu_resource_id(&self) -> Result<ResourceID, MetalError> {
-        let selector = sel(b"gpuResourceID\0");
+        let selector = sel!(b"gpuResourceID\0");
         if responds_to_selector(self.raw, selector) {
             Ok(msg_resource_id(self.raw, selector))
         } else {
@@ -1071,12 +1071,12 @@ impl Texture {
     }
 
     pub fn device(&self) -> Device {
-        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        let ptr = retain(msg_id(self.raw, sel!(b"device\0")));
         Device { raw: ptr }
     }
 
     pub fn cpu_cache_mode(&self) -> CpuCacheMode {
-        let val = msg_usize(self.raw, sel(b"cpuCacheMode\0"));
+        let val = msg_usize(self.raw, sel!(b"cpuCacheMode\0"));
         match val {
             1 => CpuCacheMode::WriteCombined,
             _ => CpuCacheMode::DefaultCache,
@@ -1084,7 +1084,7 @@ impl Texture {
     }
 
     pub fn storage_mode(&self) -> StorageMode {
-        let val = msg_usize(self.raw, sel(b"storageMode\0"));
+        let val = msg_usize(self.raw, sel!(b"storageMode\0"));
         match val {
             0 => StorageMode::Shared,
             1 => StorageMode::Managed,
@@ -1095,7 +1095,7 @@ impl Texture {
     }
 
     pub fn hazard_tracking_mode(&self) -> HazardTrackingMode {
-        let selector = sel(b"hazardTrackingMode\0");
+        let selector = sel!(b"hazardTrackingMode\0");
         if responds_to_selector(self.raw, selector) {
             let val = msg_usize(self.raw, selector);
             match val {
@@ -1109,7 +1109,7 @@ impl Texture {
     }
 
     pub fn resource_options(&self) -> ResourceOptions {
-        let selector = sel(b"resourceOptions\0");
+        let selector = sel!(b"resourceOptions\0");
         if responds_to_selector(self.raw, selector) {
             ResourceOptions::from_raw(msg_usize(self.raw, selector))
         } else {
@@ -1118,7 +1118,7 @@ impl Texture {
     }
 
     pub fn set_purgeable_state(&self, state: PurgeableState) -> PurgeableState {
-        let val = msg_usize_usize(self.raw, sel(b"setPurgeableState:\0"), state as usize);
+        let val = msg_usize_usize(self.raw, sel!(b"setPurgeableState:\0"), state as usize);
         match val {
             1 => PurgeableState::KeepCurrent,
             2 => PurgeableState::NonVolatile,
@@ -1129,7 +1129,7 @@ impl Texture {
     }
 
     pub fn heap(&self) -> Option<Heap> {
-        let selector = sel(b"heap\0");
+        let selector = sel!(b"heap\0");
         if responds_to_selector(self.raw, selector) {
             let ptr = msg_id(self.raw, selector);
             if ptr.is_null() {
@@ -1143,7 +1143,7 @@ impl Texture {
     }
 
     pub fn heap_offset(&self) -> usize {
-        let selector = sel(b"heapOffset\0");
+        let selector = sel!(b"heapOffset\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -1152,7 +1152,7 @@ impl Texture {
     }
 
     pub fn allocated_size(&self) -> usize {
-        let selector = sel(b"allocatedSize\0");
+        let selector = sel!(b"allocatedSize\0");
         if responds_to_selector(self.raw, selector) {
             msg_usize(self.raw, selector)
         } else {
@@ -1161,14 +1161,14 @@ impl Texture {
     }
 
     pub fn make_aliasable(&self) {
-        let selector = sel(b"makeAliasable\0");
+        let selector = sel!(b"makeAliasable\0");
         if responds_to_selector(self.raw, selector) {
             msg_void(self.raw, selector);
         }
     }
 
     pub fn is_aliasable(&self) -> bool {
-        let selector = sel(b"isAliasable\0");
+        let selector = sel!(b"isAliasable\0");
         if responds_to_selector(self.raw, selector) {
             msg_bool(self.raw, selector) != 0
         } else {
@@ -1177,7 +1177,7 @@ impl Texture {
     }
 
     pub fn set_owner_with_identity(&self, task_id_token: u32) -> i32 {
-        let selector = sel(b"setOwnerWithIdentity:\0");
+        let selector = sel!(b"setOwnerWithIdentity:\0");
         if responds_to_selector(self.raw, selector) {
             unsafe {
                 let f: unsafe extern "C" fn(id, SEL, u32) -> i32 =
@@ -1209,14 +1209,14 @@ pub struct HeapDescriptor {
 
 impl HeapDescriptor {
     pub fn new() -> Self {
-        let allocated = msg_id(class(b"MTLHeapDescriptor\0"), sel(b"alloc\0"));
+        let allocated = msg_id(class(b"MTLHeapDescriptor\0"), sel!(b"alloc\0"));
         Self {
-            raw: msg_id(allocated, sel(b"init\0")),
+            raw: msg_id(allocated, sel!(b"init\0")),
         }
     }
 
     pub fn heap_type(&self) -> HeapType {
-        let selector = sel(b"type\0");
+        let selector = sel!(b"type\0");
         if responds_to_selector(self.raw, selector) {
             let val = msg_usize(self.raw, selector);
             match val {
@@ -1230,11 +1230,11 @@ impl HeapDescriptor {
     }
 
     pub fn set_heap_type(&self, heap_type: HeapType) {
-        msg_void_usize(self.raw, sel(b"setType:\0"), heap_type as usize);
+        msg_void_usize(self.raw, sel!(b"setType:\0"), heap_type as usize);
     }
 
     pub fn storage_mode(&self) -> StorageMode {
-        let val = msg_usize(self.raw, sel(b"storageMode\0"));
+        let val = msg_usize(self.raw, sel!(b"storageMode\0"));
         match val {
             0 => StorageMode::Shared,
             1 => StorageMode::Managed,
@@ -1245,11 +1245,11 @@ impl HeapDescriptor {
     }
 
     pub fn set_storage_mode(&self, storage_mode: StorageMode) {
-        msg_void_usize(self.raw, sel(b"setStorageMode:\0"), storage_mode as usize);
+        msg_void_usize(self.raw, sel!(b"setStorageMode:\0"), storage_mode as usize);
     }
 
     pub fn cpu_cache_mode(&self) -> CpuCacheMode {
-        let val = msg_usize(self.raw, sel(b"cpuCacheMode\0"));
+        let val = msg_usize(self.raw, sel!(b"cpuCacheMode\0"));
         match val {
             1 => CpuCacheMode::WriteCombined,
             _ => CpuCacheMode::DefaultCache,
@@ -1259,13 +1259,13 @@ impl HeapDescriptor {
     pub fn set_cpu_cache_mode(&self, cpu_cache_mode: CpuCacheMode) {
         msg_void_usize(
             self.raw,
-            sel(b"setCpuCacheMode:\0"),
+            sel!(b"setCpuCacheMode:\0"),
             cpu_cache_mode as usize,
         );
     }
 
     pub fn hazard_tracking_mode(&self) -> HazardTrackingMode {
-        let selector = sel(b"hazardTrackingMode\0");
+        let selector = sel!(b"hazardTrackingMode\0");
         if responds_to_selector(self.raw, selector) {
             let val = msg_usize(self.raw, selector);
             match val {
@@ -1281,13 +1281,13 @@ impl HeapDescriptor {
     pub fn set_hazard_tracking_mode(&self, hazard_tracking_mode: HazardTrackingMode) {
         msg_void_usize(
             self.raw,
-            sel(b"setHazardTrackingMode:\0"),
+            sel!(b"setHazardTrackingMode:\0"),
             hazard_tracking_mode as usize,
         );
     }
 
     pub fn resource_options(&self) -> ResourceOptions {
-        let selector = sel(b"resourceOptions\0");
+        let selector = sel!(b"resourceOptions\0");
         if responds_to_selector(self.raw, selector) {
             ResourceOptions::from_raw(msg_usize(self.raw, selector))
         } else {
@@ -1298,21 +1298,21 @@ impl HeapDescriptor {
     pub fn set_resource_options(&self, resource_options: ResourceOptions) {
         msg_void_usize(
             self.raw,
-            sel(b"setResourceOptions:\0"),
+            sel!(b"setResourceOptions:\0"),
             resource_options.as_raw(),
         );
     }
 
     pub fn size(&self) -> usize {
-        msg_usize(self.raw, sel(b"size\0"))
+        msg_usize(self.raw, sel!(b"size\0"))
     }
 
     pub fn set_size(&self, size: usize) {
-        msg_void_usize(self.raw, sel(b"setSize:\0"), size);
+        msg_void_usize(self.raw, sel!(b"setSize:\0"), size);
     }
 
     pub fn sparse_page_size(&self) -> SparsePageSize {
-        let val = msg_usize(self.raw, sel(b"sparsePageSize\0"));
+        let val = msg_usize(self.raw, sel!(b"sparsePageSize\0"));
         match val {
             102 => SparsePageSize::Size64,
             103 => SparsePageSize::Size256,
@@ -1321,7 +1321,7 @@ impl HeapDescriptor {
     }
 
     pub fn set_sparse_page_size(&self, size: SparsePageSize) {
-        msg_void_usize(self.raw, sel(b"setSparsePageSize:\0"), size as usize);
+        msg_void_usize(self.raw, sel!(b"setSparsePageSize:\0"), size as usize);
     }
 }
 
@@ -1351,7 +1351,7 @@ impl Heap {
     ) -> Result<Buffer, MetalError> {
         let raw = msg_id_usize_usize(
             self.raw,
-            sel(b"newBufferWithLength:options:\0"),
+            sel!(b"newBufferWithLength:options:\0"),
             length,
             options.as_raw(),
         );
@@ -1373,7 +1373,7 @@ impl Heap {
                 transmute(objc_msgSend as *const c_void);
             let raw = f(
                 self.raw,
-                sel(b"newBufferWithLength:options:offset:\0"),
+                sel!(b"newBufferWithLength:options:offset:\0"),
                 length,
                 options.as_raw(),
                 offset,
@@ -1391,7 +1391,7 @@ impl Heap {
     pub fn new_texture(&self, descriptor: &TextureDescriptor) -> Result<Texture, MetalError> {
         let raw = msg_id_id(
             self.raw,
-            sel(b"newTextureWithDescriptor:\0"),
+            sel!(b"newTextureWithDescriptor:\0"),
             descriptor.raw,
         );
         if raw.is_null() {
@@ -1408,7 +1408,7 @@ impl Heap {
     ) -> Result<Texture, MetalError> {
         let raw = msg_id_id_usize(
             self.raw,
-            sel(b"newTextureWithDescriptor:offset:\0"),
+            sel!(b"newTextureWithDescriptor:offset:\0"),
             descriptor.raw,
             offset,
         );
@@ -1425,7 +1425,7 @@ impl Heap {
         &self,
         size: usize,
     ) -> Result<AccelerationStructure, MetalError> {
-        let selector = sel(b"newAccelerationStructureWithSize:\0");
+        let selector = sel!(b"newAccelerationStructureWithSize:\0");
         if responds_to_selector(self.raw, selector) {
             let raw = msg_id_usize(self.raw, selector, size);
             if raw.is_null() {
@@ -1447,7 +1447,7 @@ impl Heap {
         size: usize,
         offset: usize,
     ) -> Result<AccelerationStructure, MetalError> {
-        let selector = sel(b"newAccelerationStructureWithSize:offset:\0");
+        let selector = sel!(b"newAccelerationStructureWithSize:offset:\0");
         if responds_to_selector(self.raw, selector) {
             let raw = msg_id_usize_usize(self.raw, selector, size, offset);
             if raw.is_null() {
@@ -1468,7 +1468,7 @@ impl Heap {
         &self,
         descriptor: &PrimitiveAccelerationStructureDescriptor,
     ) -> Result<AccelerationStructure, MetalError> {
-        let selector = sel(b"newAccelerationStructureWithDescriptor:\0");
+        let selector = sel!(b"newAccelerationStructureWithDescriptor:\0");
         if responds_to_selector(self.raw, selector) {
             let raw = msg_id_id(self.raw, selector, descriptor.raw);
             if raw.is_null() {
@@ -1490,7 +1490,7 @@ impl Heap {
         descriptor: &PrimitiveAccelerationStructureDescriptor,
         offset: usize,
     ) -> Result<AccelerationStructure, MetalError> {
-        let selector = sel(b"newAccelerationStructureWithDescriptor:offset:\0");
+        let selector = sel!(b"newAccelerationStructureWithDescriptor:offset:\0");
         if responds_to_selector(self.raw, selector) {
             let raw = msg_id_id_usize(self.raw, selector, descriptor.raw, offset);
             if raw.is_null() {
@@ -1511,7 +1511,7 @@ impl Heap {
         &self,
         descriptor: &InstanceAccelerationStructureDescriptor,
     ) -> Result<AccelerationStructure, MetalError> {
-        let selector = sel(b"newAccelerationStructureWithDescriptor:\0");
+        let selector = sel!(b"newAccelerationStructureWithDescriptor:\0");
         if responds_to_selector(self.raw, selector) {
             let raw = msg_id_id(self.raw, selector, descriptor.raw);
             if raw.is_null() {
@@ -1533,7 +1533,7 @@ impl Heap {
         descriptor: &InstanceAccelerationStructureDescriptor,
         offset: usize,
     ) -> Result<AccelerationStructure, MetalError> {
-        let selector = sel(b"newAccelerationStructureWithDescriptor:offset:\0");
+        let selector = sel!(b"newAccelerationStructureWithDescriptor:offset:\0");
         if responds_to_selector(self.raw, selector) {
             let raw = msg_id_id_usize(self.raw, selector, descriptor.raw, offset);
             if raw.is_null() {
@@ -1551,11 +1551,11 @@ impl Heap {
     }
 
     pub fn used_size(&self) -> usize {
-        msg_usize(self.raw, sel(b"usedSize\0"))
+        msg_usize(self.raw, sel!(b"usedSize\0"))
     }
 
     pub fn current_allocated_size(&self) -> usize {
-        msg_usize(self.raw, sel(b"currentAllocatedSize\0"))
+        msg_usize(self.raw, sel!(b"currentAllocatedSize\0"))
     }
 
     pub fn max_available_size(&self, alignment: usize) -> usize {
@@ -1564,7 +1564,7 @@ impl Heap {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"maxAvailableSizeWithAlignment:\0"),
+                sel!(b"maxAvailableSizeWithAlignment:\0"),
                 alignment,
             )
         }
@@ -1576,16 +1576,16 @@ impl Heap {
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 
     pub fn device(&self) -> Device {
-        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        let ptr = retain(msg_id(self.raw, sel!(b"device\0")));
         Device { raw: ptr }
     }
 
     pub fn storage_mode(&self) -> StorageMode {
-        let val = msg_usize(self.raw, sel(b"storageMode\0"));
+        let val = msg_usize(self.raw, sel!(b"storageMode\0"));
         match val {
             0 => StorageMode::Shared,
             1 => StorageMode::Managed,
@@ -1596,7 +1596,7 @@ impl Heap {
     }
 
     pub fn cpu_cache_mode(&self) -> CpuCacheMode {
-        let val = msg_usize(self.raw, sel(b"cpuCacheMode\0"));
+        let val = msg_usize(self.raw, sel!(b"cpuCacheMode\0"));
         match val {
             1 => CpuCacheMode::WriteCombined,
             _ => CpuCacheMode::DefaultCache,
@@ -1604,7 +1604,7 @@ impl Heap {
     }
 
     pub fn hazard_tracking_mode(&self) -> HazardTrackingMode {
-        let selector = sel(b"hazardTrackingMode\0");
+        let selector = sel!(b"hazardTrackingMode\0");
         if responds_to_selector(self.raw, selector) {
             let val = msg_usize(self.raw, selector);
             match val {
@@ -1618,7 +1618,7 @@ impl Heap {
     }
 
     pub fn resource_options(&self) -> ResourceOptions {
-        let selector = sel(b"resourceOptions\0");
+        let selector = sel!(b"resourceOptions\0");
         if responds_to_selector(self.raw, selector) {
             ResourceOptions::from_raw(msg_usize(self.raw, selector))
         } else {
@@ -1627,11 +1627,11 @@ impl Heap {
     }
 
     pub fn size(&self) -> usize {
-        msg_usize(self.raw, sel(b"size\0"))
+        msg_usize(self.raw, sel!(b"size\0"))
     }
 
     pub fn set_purgeable_state(&self, state: PurgeableState) -> PurgeableState {
-        let val = msg_usize_usize(self.raw, sel(b"setPurgeableState:\0"), state as usize);
+        let val = msg_usize_usize(self.raw, sel!(b"setPurgeableState:\0"), state as usize);
         match val {
             1 => PurgeableState::KeepCurrent,
             2 => PurgeableState::NonVolatile,
@@ -1642,7 +1642,7 @@ impl Heap {
     }
 
     pub fn heap_type(&self) -> HeapType {
-        let selector = sel(b"type\0");
+        let selector = sel!(b"type\0");
         if responds_to_selector(self.raw, selector) {
             let val = msg_usize(self.raw, selector);
             match val {
@@ -1680,29 +1680,29 @@ impl ArgumentDescriptor {
     pub fn new() -> Self {
         let raw = retain(msg_id(
             class(b"MTLArgumentDescriptor\0"),
-            sel(b"argumentDescriptor\0"),
+            sel!(b"argumentDescriptor\0"),
         ));
         Self { raw }
     }
 
     pub fn set_data_type(&self, data_type: DataType) {
-        msg_void_usize(self.raw, sel(b"setDataType:\0"), data_type as usize);
+        msg_void_usize(self.raw, sel!(b"setDataType:\0"), data_type as usize);
     }
 
     pub fn set_index(&self, index: usize) {
-        msg_void_usize(self.raw, sel(b"setIndex:\0"), index);
+        msg_void_usize(self.raw, sel!(b"setIndex:\0"), index);
     }
 
     pub fn set_access(&self, access: ArgumentAccess) {
-        msg_void_usize(self.raw, sel(b"setAccess:\0"), access as usize);
+        msg_void_usize(self.raw, sel!(b"setAccess:\0"), access as usize);
     }
 
     pub fn set_texture_type(&self, texture_type: TextureType) {
-        msg_void_usize(self.raw, sel(b"setTextureType:\0"), texture_type as usize);
+        msg_void_usize(self.raw, sel!(b"setTextureType:\0"), texture_type as usize);
     }
 
     pub fn set_array_length(&self, array_length: usize) {
-        msg_void_usize(self.raw, sel(b"setArrayLength:\0"), array_length);
+        msg_void_usize(self.raw, sel!(b"setArrayLength:\0"), array_length);
     }
 }
 
@@ -1746,16 +1746,16 @@ impl ArgumentEncoder {
     }
 
     pub fn device(&self) -> Device {
-        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        let ptr = retain(msg_id(self.raw, sel!(b"device\0")));
         Device { raw: ptr }
     }
 
     pub fn encoded_length(&self) -> usize {
-        msg_usize(self.raw, sel(b"encodedLength\0"))
+        msg_usize(self.raw, sel!(b"encodedLength\0"))
     }
 
     pub fn alignment(&self) -> usize {
-        msg_usize(self.raw, sel(b"alignment\0"))
+        msg_usize(self.raw, sel!(b"alignment\0"))
     }
 
     pub fn set_argument_buffer(
@@ -1769,7 +1769,7 @@ impl ArgumentEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setArgumentBuffer:offset:\0"),
+                sel!(b"setArgumentBuffer:offset:\0"),
                 buffer.map_or(NIL, |b| b.raw),
                 offset,
             );
@@ -1784,7 +1784,7 @@ impl ArgumentEncoder {
         array_element: usize,
     ) -> Result<(), MetalError> {
         self.validate_argument_buffer_offset(start_offset)?;
-        let selector = sel(b"setArgumentBuffer:startOffset:arrayElement:\0");
+        let selector = sel!(b"setArgumentBuffer:startOffset:arrayElement:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "setArgumentBuffer:startOffset:arrayElement: not supported",
@@ -1815,7 +1815,7 @@ impl ArgumentEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setBuffer:offset:atIndex:\0"),
+                sel!(b"setBuffer:offset:atIndex:\0"),
                 buffer.map_or(NIL, |b| b.raw),
                 offset,
                 index,
@@ -1828,7 +1828,7 @@ impl ArgumentEncoder {
         unsafe {
             let f: unsafe extern "C" fn(id, SEL, id, usize) =
                 transmute(objc_msgSend as *const c_void);
-            f(self.raw, sel(b"setTexture:atIndex:\0"), texture.raw, index);
+            f(self.raw, sel!(b"setTexture:atIndex:\0"), texture.raw, index);
         }
     }
 
@@ -1838,7 +1838,7 @@ impl ArgumentEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setSamplerState:atIndex:\0"),
+                sel!(b"setSamplerState:atIndex:\0"),
                 sampler.raw,
                 index,
             );
@@ -1851,7 +1851,7 @@ impl ArgumentEncoder {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"setBytes:length:atIndex:\0"),
+                sel!(b"setBytes:length:atIndex:\0"),
                 bytes.as_ptr() as *const c_void,
                 bytes.len(),
                 index,
@@ -1865,7 +1865,7 @@ impl ArgumentEncoder {
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 
     pub fn set_buffers(
@@ -1884,7 +1884,7 @@ impl ArgumentEncoder {
         }
         msg_void_ptr_ptr_range(
             self.raw,
-            sel(b"setBuffers:offsets:withRange:\0"),
+            sel!(b"setBuffers:offsets:withRange:\0"),
             buffers.as_ptr() as *const id,
             offsets.as_ptr(),
             range,
@@ -1896,7 +1896,7 @@ impl ArgumentEncoder {
         self.validate_range(range, textures.len())?;
         msg_void_ptr_range(
             self.raw,
-            sel(b"setTextures:withRange:\0"),
+            sel!(b"setTextures:withRange:\0"),
             textures.as_ptr() as *const id,
             range,
         );
@@ -1911,7 +1911,7 @@ impl ArgumentEncoder {
         self.validate_range(range, samplers.len())?;
         msg_void_ptr_range(
             self.raw,
-            sel(b"setSamplerStates:withRange:\0"),
+            sel!(b"setSamplerStates:withRange:\0"),
             samplers.as_ptr() as *const id,
             range,
         );
@@ -1923,7 +1923,7 @@ impl ArgumentEncoder {
         table: Option<&VisibleFunctionTable>,
         index: usize,
     ) -> Result<(), MetalError> {
-        let selector = sel(b"setVisibleFunctionTable:atIndex:\0");
+        let selector = sel!(b"setVisibleFunctionTable:atIndex:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_id_usize(self.raw, selector, table.map_or(NIL, |t| t.raw), index);
             Ok(())
@@ -1940,7 +1940,7 @@ impl ArgumentEncoder {
         range: Range,
     ) -> Result<(), MetalError> {
         self.validate_range(range, tables.len())?;
-        let selector = sel(b"setVisibleFunctionTables:withRange:\0");
+        let selector = sel!(b"setVisibleFunctionTables:withRange:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_ptr_range(self.raw, selector, tables.as_ptr() as *const id, range);
             Ok(())
@@ -1956,7 +1956,7 @@ impl ArgumentEncoder {
         table: Option<&IntersectionFunctionTable>,
         index: usize,
     ) -> Result<(), MetalError> {
-        let selector = sel(b"setIntersectionFunctionTable:atIndex:\0");
+        let selector = sel!(b"setIntersectionFunctionTable:atIndex:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_id_usize(self.raw, selector, table.map_or(NIL, |t| t.raw), index);
             Ok(())
@@ -1973,7 +1973,7 @@ impl ArgumentEncoder {
         range: Range,
     ) -> Result<(), MetalError> {
         self.validate_range(range, tables.len())?;
-        let selector = sel(b"setIntersectionFunctionTables:withRange:\0");
+        let selector = sel!(b"setIntersectionFunctionTables:withRange:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_ptr_range(self.raw, selector, tables.as_ptr() as *const id, range);
             Ok(())
@@ -1989,7 +1989,7 @@ impl ArgumentEncoder {
         structure: Option<&AccelerationStructure>,
         index: usize,
     ) -> Result<(), MetalError> {
-        let selector = sel(b"setAccelerationStructure:atIndex:\0");
+        let selector = sel!(b"setAccelerationStructure:atIndex:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_id_usize(self.raw, selector, structure.map_or(NIL, |a| a.raw), index);
             Ok(())
@@ -2001,7 +2001,7 @@ impl ArgumentEncoder {
     }
 
     pub fn constant_data_at_index(&self, index: usize) -> Result<*mut c_void, MetalError> {
-        let selector = sel(b"constantDataAtIndex:\0");
+        let selector = sel!(b"constantDataAtIndex:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new("constantDataAtIndex: not supported"));
         }
@@ -2025,7 +2025,7 @@ impl ArgumentEncoder {
         pipeline: Option<&RenderPipelineState>,
         index: usize,
     ) -> Result<(), MetalError> {
-        let selector = sel(b"setRenderPipelineState:atIndex:\0");
+        let selector = sel!(b"setRenderPipelineState:atIndex:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_id_usize(self.raw, selector, pipeline.map_or(NIL, |p| p.raw), index);
             Ok(())
@@ -2042,7 +2042,7 @@ impl ArgumentEncoder {
         range: Range,
     ) -> Result<(), MetalError> {
         self.validate_range(range, pipelines.len())?;
-        let selector = sel(b"setRenderPipelineStates:withRange:\0");
+        let selector = sel!(b"setRenderPipelineStates:withRange:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "setRenderPipelineStates:withRange: not supported",
@@ -2057,7 +2057,7 @@ impl ArgumentEncoder {
         pipeline: Option<&ComputePipelineState>,
         index: usize,
     ) -> Result<(), MetalError> {
-        let selector = sel(b"setComputePipelineState:atIndex:\0");
+        let selector = sel!(b"setComputePipelineState:atIndex:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_id_usize(self.raw, selector, pipeline.map_or(NIL, |p| p.raw), index);
             Ok(())
@@ -2074,7 +2074,7 @@ impl ArgumentEncoder {
         range: Range,
     ) -> Result<(), MetalError> {
         self.validate_range(range, pipelines.len())?;
-        let selector = sel(b"setComputePipelineStates:withRange:\0");
+        let selector = sel!(b"setComputePipelineStates:withRange:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "setComputePipelineStates:withRange: not supported",
@@ -2089,7 +2089,7 @@ impl ArgumentEncoder {
         buffer: Option<&IndirectCommandBuffer>,
         index: usize,
     ) -> Result<(), MetalError> {
-        let selector = sel(b"setIndirectCommandBuffer:atIndex:\0");
+        let selector = sel!(b"setIndirectCommandBuffer:atIndex:\0");
         if responds_to_selector(self.raw, selector) {
             msg_void_id_usize(self.raw, selector, buffer.map_or(NIL, |b| b.raw), index);
             Ok(())
@@ -2106,7 +2106,7 @@ impl ArgumentEncoder {
         range: Range,
     ) -> Result<(), MetalError> {
         self.validate_range(range, buffers.len())?;
-        let selector = sel(b"setIndirectCommandBuffers:withRange:\0");
+        let selector = sel!(b"setIndirectCommandBuffers:withRange:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "setIndirectCommandBuffers:withRange: not supported",
@@ -2130,7 +2130,7 @@ impl ArgumentEncoder {
         &self,
         index: usize,
     ) -> Result<ArgumentEncoder, MetalError> {
-        let selector = sel(b"newArgumentEncoderForBufferAtIndex:\0");
+        let selector = sel!(b"newArgumentEncoderForBufferAtIndex:\0");
         if !responds_to_selector(self.raw, selector) {
             return Err(MetalError::new(
                 "newArgumentEncoderForBufferAtIndex: not supported",
@@ -2161,7 +2161,7 @@ pub struct Event {
 
 impl Event {
     pub fn device(&self) -> Option<Device> {
-        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        let ptr = retain(msg_id(self.raw, sel!(b"device\0")));
         if ptr.is_null() {
             None
         } else {
@@ -2175,7 +2175,7 @@ impl Event {
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 }
 
@@ -2192,7 +2192,7 @@ pub struct SharedEvent {
 
 impl SharedEvent {
     pub fn device(&self) -> Option<Device> {
-        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        let ptr = retain(msg_id(self.raw, sel!(b"device\0")));
         if ptr.is_null() {
             None
         } else {
@@ -2206,7 +2206,7 @@ impl SharedEvent {
 
     pub fn set_label(&self, label: &str) {
         let ns_label = NSString::new(label);
-        msg_void_id(self.raw, sel(b"setLabel:\0"), ns_label.raw());
+        msg_void_id(self.raw, sel!(b"setLabel:\0"), ns_label.raw());
     }
 
     pub fn as_event(&self) -> Event {
@@ -2216,15 +2216,15 @@ impl SharedEvent {
     }
 
     pub fn signaled_value(&self) -> u64 {
-        msg_u64(self.raw, sel(b"signaledValue\0"))
+        msg_u64(self.raw, sel!(b"signaledValue\0"))
     }
 
     pub fn set_signaled_value(&self, value: u64) {
-        msg_void_u64(self.raw, sel(b"setSignaledValue:\0"), value);
+        msg_void_u64(self.raw, sel!(b"setSignaledValue:\0"), value);
     }
 
     pub fn new_shared_event_handle(&self) -> Result<SharedEventHandle, MetalError> {
-        let raw = retain(msg_id(self.raw, sel(b"newSharedEventHandle\0")));
+        let raw = retain(msg_id(self.raw, sel!(b"newSharedEventHandle\0")));
         if raw.is_null() {
             Err(MetalError::new("failed to create new shared event handle"))
         } else {
@@ -2238,7 +2238,7 @@ impl SharedEvent {
                 transmute(objc_msgSend as *const c_void);
             f(
                 self.raw,
-                sel(b"waitUntilSignaledValue:timeoutMS:\0"),
+                sel!(b"waitUntilSignaledValue:timeoutMS:\0"),
                 value,
                 timeout_ms,
             ) != 0
@@ -2283,8 +2283,8 @@ pub struct SharedEventListener {
 impl SharedEventListener {
     pub fn new() -> Result<Self, MetalError> {
         let cls = class(b"MTLSharedEventListener\0");
-        let obj = retain(msg_id(cls, sel(b"alloc\0")));
-        let raw = msg_id(obj, sel(b"init\0"));
+        let obj = retain(msg_id(cls, sel!(b"alloc\0")));
+        let raw = msg_id(obj, sel!(b"init\0"));
         if raw.is_null() {
             Err(MetalError::new("failed to create MTLSharedEventListener"))
         } else {
@@ -2295,10 +2295,10 @@ impl SharedEventListener {
     pub fn with_dispatch_queue(queue: *mut c_void) -> Result<Self, MetalError> {
         unsafe {
             let cls = class(b"MTLSharedEventListener\0");
-            let obj = retain(msg_id(cls, sel(b"alloc\0")));
+            let obj = retain(msg_id(cls, sel!(b"alloc\0")));
             let f: unsafe extern "C" fn(id, SEL, *mut c_void) -> id =
                 transmute(objc_msgSend as *const c_void);
-            let raw = f(obj, sel(b"initWithDispatchQueue:\0"), queue);
+            let raw = f(obj, sel!(b"initWithDispatchQueue:\0"), queue);
             if raw.is_null() {
                 Err(MetalError::new(
                     "failed to create MTLSharedEventListener with dispatch queue",
@@ -2329,7 +2329,7 @@ impl Drop for SharedTextureHandle {
 
 impl SharedTextureHandle {
     pub fn device(&self) -> Device {
-        let ptr = retain(msg_id(self.raw, sel(b"device\0")));
+        let ptr = retain(msg_id(self.raw, sel!(b"device\0")));
         Device { raw: ptr }
     }
 
@@ -2351,20 +2351,20 @@ impl Drop for TextureViewDescriptor {
 
 impl TextureViewDescriptor {
     pub fn new() -> Self {
-        let raw = retain(msg_id(class(b"MTLTextureViewDescriptor\0"), sel(b"new\0")));
+        let raw = retain(msg_id(class(b"MTLTextureViewDescriptor\0"), sel!(b"new\0")));
         Self { raw }
     }
 
     pub fn pixel_format(&self) -> PixelFormat {
-        PixelFormat::from_raw(msg_usize(self.raw, sel(b"pixelFormat\0")))
+        PixelFormat::from_raw(msg_usize(self.raw, sel!(b"pixelFormat\0")))
     }
 
     pub fn set_pixel_format(&self, format: PixelFormat) {
-        msg_void_usize(self.raw, sel(b"setPixelFormat:\0"), format.as_raw());
+        msg_void_usize(self.raw, sel!(b"setPixelFormat:\0"), format.as_raw());
     }
 
     pub fn texture_type(&self) -> TextureType {
-        let val = msg_usize(self.raw, sel(b"textureType\0"));
+        let val = msg_usize(self.raw, sel!(b"textureType\0"));
         match val {
             0 => TextureType::D1,
             1 => TextureType::D1Array,
@@ -2381,27 +2381,27 @@ impl TextureViewDescriptor {
     }
 
     pub fn set_texture_type(&self, texture_type: TextureType) {
-        msg_void_usize(self.raw, sel(b"setTextureType:\0"), texture_type as usize);
+        msg_void_usize(self.raw, sel!(b"setTextureType:\0"), texture_type as usize);
     }
 
     pub fn level_range(&self) -> Range {
-        msg_range(self.raw, sel(b"levelRange\0"))
+        msg_range(self.raw, sel!(b"levelRange\0"))
     }
 
     pub fn set_level_range(&self, range: Range) {
-        msg_void_range(self.raw, sel(b"setLevelRange:\0"), range);
+        msg_void_range(self.raw, sel!(b"setLevelRange:\0"), range);
     }
 
     pub fn slice_range(&self) -> Range {
-        msg_range(self.raw, sel(b"sliceRange\0"))
+        msg_range(self.raw, sel!(b"sliceRange\0"))
     }
 
     pub fn set_slice_range(&self, range: Range) {
-        msg_void_range(self.raw, sel(b"setSliceRange:\0"), range);
+        msg_void_range(self.raw, sel!(b"setSliceRange:\0"), range);
     }
 
     pub fn swizzle(&self) -> TextureSwizzleChannels {
-        let selector = sel(b"swizzle\0");
+        let selector = sel!(b"swizzle\0");
         if responds_to_selector(self.raw, selector) {
             unsafe {
                 let f: unsafe extern "C" fn(id, SEL) -> TextureSwizzleChannels =
@@ -2414,7 +2414,7 @@ impl TextureViewDescriptor {
     }
 
     pub fn set_swizzle(&self, swizzle: TextureSwizzleChannels) {
-        let selector = sel(b"setSwizzle:\0");
+        let selector = sel!(b"setSwizzle:\0");
         if responds_to_selector(self.raw, selector) {
             unsafe {
                 let f: unsafe extern "C" fn(id, SEL, TextureSwizzleChannels) =

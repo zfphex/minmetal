@@ -49,6 +49,15 @@ pub fn sel(name: &[u8]) -> SEL {
     unsafe { sel_registerName(name.as_ptr() as *const c_char) }
 }
 
+#[macro_export]
+macro_rules! sel {
+    ($name:expr $(,)?) => {{
+        static SEL_CACHE: std::sync::OnceLock<usize> = std::sync::OnceLock::new();
+        let ptr = *SEL_CACHE.get_or_init(|| $crate::sel($name) as usize);
+        ptr as $crate::SEL
+    }};
+}
+
 pub(crate) fn msg_id(obj: id, selector: SEL) -> id {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL) -> id = transmute(objc_msgSend as *const c_void);
@@ -181,7 +190,7 @@ pub(crate) fn objc_copy(obj: id) -> id {
     if obj.is_null() {
         obj
     } else {
-        msg_id(obj, sel(b"copy\0"))
+        msg_id(obj, sel!(b"copy\0"))
     }
 }
 
@@ -259,7 +268,7 @@ pub(crate) fn ns_array_from_ids(objects: &[id]) -> id {
             transmute(objc_msgSend as *const c_void);
         f(
             class(b"NSArray\0"),
-            sel(b"arrayWithObjects:count:\0"),
+            sel!(b"arrayWithObjects:count:\0"),
             objects.as_ptr(),
             objects.len(),
         )
@@ -270,7 +279,7 @@ pub(crate) fn ns_array_count(array: id) -> usize {
     if array.is_null() {
         0
     } else {
-        msg_usize(array, sel(b"count\0"))
+        msg_usize(array, sel!(b"count\0"))
     }
 }
 
@@ -278,7 +287,7 @@ pub(crate) fn ns_array_object_at_index(array: id, index: usize) -> id {
     if array.is_null() {
         NIL
     } else {
-        msg_id_usize(array, sel(b"objectAtIndex:\0"), index)
+        msg_id_usize(array, sel!(b"objectAtIndex:\0"), index)
     }
 }
 
@@ -357,7 +366,7 @@ impl<T: FromRawId> ExactSizeIterator for NSArrayIterator<T> {}
 
 pub fn retain(obj: id) -> id {
     if !obj.0.is_null() {
-        msg_id(obj, sel(b"retain\0"))
+        msg_id(obj, sel!(b"retain\0"))
     } else {
         obj
     }
@@ -365,7 +374,7 @@ pub fn retain(obj: id) -> id {
 
 pub fn release(obj: id) {
     if !obj.0.is_null() {
-        msg_void(obj, sel(b"release\0"));
+        msg_void(obj, sel!(b"release\0"));
     }
 }
 
@@ -391,12 +400,12 @@ impl FromRawId for NSString {
 impl NSString {
     pub fn new(value: &str) -> Self {
         unsafe {
-            let allocated = msg_id(class(b"NSString\0"), sel(b"alloc\0"));
+            let allocated = msg_id(class(b"NSString\0"), sel!(b"alloc\0"));
             let init: unsafe extern "C" fn(id, SEL, *const c_void, usize, usize) -> id =
                 transmute(objc_msgSend as *const c_void);
             let raw = init(
                 allocated,
-                sel(b"initWithBytes:length:encoding:\0"),
+                sel!(b"initWithBytes:length:encoding:\0"),
                 value.as_ptr() as *const c_void,
                 value.len(),
                 4,
@@ -418,7 +427,7 @@ impl NSString {
             return None;
         }
         unsafe {
-            let utf8_ptr = msg_id(self.raw, sel(b"UTF8String\0")).0 as *const std::ffi::c_char;
+            let utf8_ptr = msg_id(self.raw, sel!(b"UTF8String\0")).0 as *const std::ffi::c_char;
             if utf8_ptr.is_null() {
                 None
             } else {
@@ -506,8 +515,8 @@ impl NSData {
             return &[];
         }
         unsafe {
-            let bytes_ptr = msg_id(self.raw, sel(b"bytes\0")).0 as *const u8;
-            let length = msg_usize(self.raw, sel(b"length\0"));
+            let bytes_ptr = msg_id(self.raw, sel!(b"bytes\0")).0 as *const u8;
+            let length = msg_usize(self.raw, sel!(b"length\0"));
             if bytes_ptr.is_null() || length == 0 {
                 &[]
             } else {
@@ -538,7 +547,7 @@ pub fn ns_string_to_string(raw: id) -> Option<String> {
     unsafe {
         let utf8: unsafe extern "C" fn(id, SEL) -> *const c_char =
             transmute(objc_msgSend as *const c_void);
-        let ptr = utf8(raw, sel(b"UTF8String\0"));
+        let ptr = utf8(raw, sel!(b"UTF8String\0"));
         if ptr.is_null() {
             None
         } else {
@@ -567,7 +576,7 @@ pub(crate) fn format_error_message(error: id, fallback: &str) -> String {
     if error.is_null() {
         return fallback.to_string();
     }
-    let description = msg_id(error, sel(b"localizedDescription\0"));
+    let description = msg_id(error, sel!(b"localizedDescription\0"));
     if let Some(msg) = ns_string_to_string(description) {
         if let Some(domain) = error_domain(error) {
             return format!("{} (domain: {}, code: {})", msg, domain, error_code(error));
@@ -592,8 +601,8 @@ pub struct AutoreleasePool {
 impl AutoreleasePool {
     pub fn new() -> Self {
         let pool = msg_id(
-            msg_id(class(b"NSAutoreleasePool\0"), sel(b"alloc\0")),
-            sel(b"init\0"),
+            msg_id(class(b"NSAutoreleasePool\0"), sel!(b"alloc\0")),
+            sel!(b"init\0"),
         );
         Self { raw: pool }
     }
@@ -607,7 +616,7 @@ impl Default for AutoreleasePool {
 
 impl Drop for AutoreleasePool {
     fn drop(&mut self) {
-        msg_void(self.raw, sel(b"drain\0"));
+        msg_void(self.raw, sel!(b"drain\0"));
     }
 }
 
@@ -698,7 +707,7 @@ pub fn responds_to_selector(obj: id, selector: SEL) -> bool {
     unsafe {
         let f: unsafe extern "C" fn(id, SEL, SEL) -> BOOL =
             transmute(objc_msgSend as *const c_void);
-        f(obj, sel(b"respondsToSelector:\0"), selector) != NO
+        f(obj, sel!(b"respondsToSelector:\0"), selector) != NO
     }
 }
 
@@ -741,14 +750,14 @@ pub(crate) fn msg_void_ptr_range(obj: id, selector: SEL, arg1: *const id, arg2: 
 
 pub fn ns_url_from_path(path: &str) -> id {
     let ns_path = NSString::new(path);
-    msg_id_id(class(b"NSURL\0"), sel(b"fileURLWithPath:\0"), ns_path.raw())
+    msg_id_id(class(b"NSURL\0"), sel!(b"fileURLWithPath:\0"), ns_path.raw())
 }
 
 pub fn ns_url_to_path(url: id) -> Option<NSString> {
     if url.is_null() {
         return None;
     }
-    let ptr = msg_id(url, sel(b"path\0"));
+    let ptr = msg_id(url, sel!(b"path\0"));
     if ptr.is_null() {
         None
     } else {
@@ -759,7 +768,7 @@ pub fn ns_url_to_path(url: id) -> Option<NSString> {
 pub(crate) fn ns_data_from_bytes(bytes: &[u8]) -> id {
     msg_id_ptr_usize(
         class(b"NSData\0"),
-        sel(b"dataWithBytes:length:\0"),
+        sel!(b"dataWithBytes:length:\0"),
         bytes.as_ptr() as *const c_void,
         bytes.len(),
     )
@@ -769,7 +778,7 @@ pub(crate) fn ns_dictionary_object_for_key(dictionary: id, key: id) -> id {
     if dictionary.is_null() {
         NIL
     } else {
-        msg_id_id(dictionary, sel(b"objectForKey:\0"), key)
+        msg_id_id(dictionary, sel!(b"objectForKey:\0"), key)
     }
 }
 
@@ -777,19 +786,19 @@ pub(crate) fn ns_dictionary_all_keys(dictionary: id) -> id {
     if dictionary.is_null() {
         NIL
     } else {
-        msg_id(dictionary, sel(b"allKeys\0"))
+        msg_id(dictionary, sel!(b"allKeys\0"))
     }
 }
 
 pub fn ns_bundle_main() -> id {
-    msg_id(class(b"NSBundle\0"), sel(b"mainBundle\0"))
+    msg_id(class(b"NSBundle\0"), sel!(b"mainBundle\0"))
 }
 
 pub(crate) fn error_domain(error: id) -> Option<String> {
     if error.is_null() {
         None
     } else {
-        ns_string_to_string(msg_id(error, sel(b"domain\0")))
+        ns_string_to_string(msg_id(error, sel!(b"domain\0")))
     }
 }
 
@@ -800,7 +809,7 @@ pub(crate) fn error_code(error: id) -> isize {
         unsafe {
             let f: unsafe extern "C" fn(id, SEL) -> isize =
                 transmute(objc_msgSend as *const c_void);
-            f(error, sel(b"code\0"))
+            f(error, sel!(b"code\0"))
         }
     }
 }
@@ -809,6 +818,6 @@ pub(crate) fn error_user_info(error: id) -> id {
     if error.is_null() {
         NIL
     } else {
-        msg_id(error, sel(b"userInfo\0"))
+        msg_id(error, sel!(b"userInfo\0"))
     }
 }
