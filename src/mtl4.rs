@@ -41,6 +41,19 @@ pub struct M4TimestampHeapEntry {
     pub timestamp: u64,
 }
 
+/// Nanoseconds per tick for Metal 4 timestamp heap entries.
+pub fn timestamp_nanoseconds_per_tick() -> Result<f64, MetalError> {
+    unsafe extern "C" {
+        fn mach_timebase_info(info: *mut [u32; 2]) -> i32;
+    }
+    let mut timebase = [0u32; 2];
+    let status = unsafe { mach_timebase_info(&mut timebase) };
+    if status != 0 || timebase[1] == 0 {
+        return Err(MetalError::new("failed to read Mach timebase"));
+    }
+    Ok(timebase[0] as f64 / timebase[1] as f64)
+}
+
 // ---------------------------------------------------------------------------
 // Shared helpers
 // ---------------------------------------------------------------------------
@@ -531,6 +544,12 @@ pub struct M4SpecializedFunctionDescriptor {
 }
 
 impl M4SpecializedFunctionDescriptor {
+    pub fn as_function_descriptor(&self) -> M4FunctionDescriptor {
+        M4FunctionDescriptor {
+            raw: retain(self.raw),
+        }
+    }
+
     pub fn new() -> Self {
         Self {
             raw: m4_alloc_init(b"MTL4SpecializedFunctionDescriptor\0"),
@@ -1859,6 +1878,7 @@ impl M4CounterHeap {
         }
     }
 
+    /// Takes effect immediately on the CPU. The heap must not be in use on the GPU.
     pub fn invalidate_counter_range(&self, range: Range) {
         msg_void_range(self.raw, sel!(b"invalidateCounterRange:\0"), range);
     }
@@ -2621,12 +2641,93 @@ pub struct M4CopySparseBufferMappingOperation {
     pub destination_offset: usize,
 }
 
+/// A reusable callback that can be registered without allocating another Rust closure.
+/// Metal retains registered callbacks independently of this handle.
+pub struct M4CommitFeedbackHandler {
+    callback: std::sync::Arc<CommitFeedbackFn>,
+}
+
+impl M4CommitFeedbackHandler {
+    /// Panicking in the callback aborts the process.
+    pub fn new<F>(callback: F) -> Self
+    where
+        F: Fn(&M4CommitFeedback) + Send + Sync + 'static,
+    {
+        Self {
+            callback: std::sync::Arc::new(Box::new(callback)),
+        }
+    }
+}
+
+type CommitFeedbackFn = Box<dyn Fn(&M4CommitFeedback) + Send + Sync>;
+
+#[repr(C)]
+struct CommitFeedbackBlock {
+    isa: *const c_void,
+    flags: i32,
+    reserved: i32,
+    invoke: unsafe extern "C" fn(*mut CommitFeedbackBlock, id),
+    descriptor: *const CommitFeedbackBlockDescriptor,
+    callback: *const CommitFeedbackFn,
+}
+
+#[repr(C)]
+struct CommitFeedbackBlockDescriptor {
+    reserved: usize,
+    size: usize,
+    copy: unsafe extern "C" fn(*mut CommitFeedbackBlock, *const CommitFeedbackBlock),
+    dispose: unsafe extern "C" fn(*mut CommitFeedbackBlock),
+}
+
+static COMMIT_FEEDBACK_BLOCK_DESCRIPTOR: CommitFeedbackBlockDescriptor =
+    CommitFeedbackBlockDescriptor {
+        reserved: 0,
+        size: size_of::<CommitFeedbackBlock>(),
+        copy: copy_commit_feedback,
+        dispose: dispose_commit_feedback,
+    };
+
+unsafe extern "C" fn copy_commit_feedback(
+    _dst: *mut CommitFeedbackBlock,
+    src: *const CommitFeedbackBlock,
+) {
+    unsafe { std::sync::Arc::increment_strong_count((*src).callback) };
+}
+
+unsafe extern "C" fn dispose_commit_feedback(block: *mut CommitFeedbackBlock) {
+    unsafe { std::sync::Arc::decrement_strong_count((*block).callback) };
+}
+
+unsafe extern "C" fn invoke_commit_feedback(block: *mut CommitFeedbackBlock, raw: id) {
+    let feedback = M4CommitFeedback::from_raw(raw);
+    unsafe { (&*(*block).callback)(&feedback) };
+}
+
 #[derive(Debug)]
 pub struct M4CommitOptions {
     pub raw: id,
 }
 
 impl M4CommitOptions {
+    /// Registers feedback for the next commit. Register again before each subsequent commit.
+    pub fn add_feedback_handler(&self, handler: &M4CommitFeedbackHandler) {
+        unsafe extern "C" {
+            static _NSConcreteStackBlock: c_void;
+        }
+        let mut block = CommitFeedbackBlock {
+            isa: &raw const _NSConcreteStackBlock,
+            flags: 1 << 25, // BLOCK_HAS_COPY_DISPOSE
+            reserved: 0,
+            invoke: invoke_commit_feedback,
+            descriptor: &COMMIT_FEEDBACK_BLOCK_DESCRIPTOR,
+            callback: std::sync::Arc::as_ptr(&handler.callback),
+        };
+        msg_void_id(
+            self.raw,
+            sel!(b"addFeedbackHandler:\0"),
+            id((&mut block as *mut CommitFeedbackBlock).cast()),
+        );
+    }
     pub fn new() -> Self {
         Self {
             raw: m4_alloc_init(b"MTL4CommitOptions\0"),
@@ -2682,6 +2783,14 @@ impl Drop for M4CommandQueueDescriptor {
 #[derive(Debug)]
 pub struct M4CommandQueue {
     pub raw: id,
+}
+
+impl Clone for M4CommandQueue {
+    fn clone(&self) -> Self {
+        Self {
+            raw: retain(self.raw),
+        }
+    }
 }
 
 impl M4CommandQueue {
@@ -4151,6 +4260,38 @@ impl M4RenderCommandEncoder {
                 primitive_type as usize,
                 indirect_buffer,
             );
+        }
+    }
+
+    /// Draw indexed instances with signed base-vertex and base-instance offsets.
+    pub fn draw_indexed_primitives_with_base_vertex(
+        &self,
+        primitive_type: PrimitiveType,
+        index_count: usize,
+        index_type: IndexType,
+        index_buffer: u64,
+        index_buffer_length: usize,
+        instance_count: usize,
+        base_vertex: isize,
+        base_instance: usize,
+    ) {
+        unsafe {
+            let f: unsafe extern "C" fn(
+                id,
+                SEL,
+                usize,
+                usize,
+                usize,
+                u64,
+                usize,
+                usize,
+                isize,
+                usize,
+            ) = transmute(objc_msgSend as *const c_void);
+            f(self.raw,
+                sel!(b"drawIndexedPrimitives:indexCount:indexType:indexBuffer:indexBufferLength:instanceCount:baseVertex:baseInstance:\0"),
+                primitive_type as usize, index_count, index_type as usize,
+                index_buffer, index_buffer_length, instance_count, base_vertex, base_instance);
         }
     }
 

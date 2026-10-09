@@ -733,6 +733,14 @@ impl Drop for ComputePipelineState {
 }
 
 impl ComputePipelineState {
+    /// Borrows a pipeline without changing its retain count.
+    ///
+    /// # Safety
+    /// `raw` must name a live ComputePipelineState for the entire returned borrow.
+    pub unsafe fn from_raw_borrowed(raw: &id) -> &Self {
+        unsafe { &*(raw as *const id).cast::<Self>() }
+    }
+
     #[inline]
     pub const fn null() -> Self {
         Self {
@@ -1614,6 +1622,14 @@ impl Drop for RenderPipelineState {
 }
 
 impl RenderPipelineState {
+    /// Borrows a pipeline without changing its retain count.
+    ///
+    /// # Safety
+    /// `raw` must name a live RenderPipelineState for the entire returned borrow.
+    pub unsafe fn from_raw_borrowed(raw: &id) -> &Self {
+        unsafe { &*(raw as *const id).cast::<Self>() }
+    }
+
     #[inline]
     pub const fn null() -> Self {
         Self {

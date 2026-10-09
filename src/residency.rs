@@ -10,6 +10,10 @@ pub struct Allocation {
 }
 
 impl Allocation {
+    pub fn from_texture_view_pool(pool: &TextureViewPool) -> Self {
+        Self { raw: pool.raw }
+    }
+
     pub fn from_buffer(buffer: &Buffer) -> Self {
         Self { raw: buffer.raw }
     }
