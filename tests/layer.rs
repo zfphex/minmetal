@@ -1,6 +1,24 @@
 use minmetal::*;
 
 #[test]
+#[ignore = "requires a device supporting layer residency sets"]
+fn layer_residency_set() -> Result<(), Box<dyn std::error::Error>> {
+    let device = Device::system_default().expect("Metal device");
+    let layer = MetalLayer::new()?;
+    assert!(layer.residency_set()?.is_none());
+    layer.set_device(&device);
+    let residency = layer.residency_set()?.expect("layer residency set");
+    assert_eq!(residency.device().raw, device.raw);
+    for (width, height) in [(16, 16), (32, 24), (16, 16)] {
+        layer.set_drawable_size(width, height);
+        assert_eq!(layer.residency_set()?.unwrap().raw, residency.raw);
+    }
+    drop(layer);
+    assert_eq!(residency.device().raw, device.raw);
+    Ok(())
+}
+
+#[test]
 fn layer_module_permutations() -> Result<(), Box<dyn std::error::Error>> {
     let Some(device) = Device::system_default() else {
         println!("No Metal device available, skipping layer tests.");

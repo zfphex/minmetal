@@ -56,6 +56,19 @@ impl MetalLayer {
         }
     }
 
+    pub fn residency_set(&self) -> Result<Option<ResidencySet>, MetalError> {
+        let selector = sel!(b"residencySet\0");
+        if !responds_to_selector(self.raw, selector) {
+            return Err(MetalError::new("residencySet is not supported"));
+        }
+        let ptr = msg_id(self.raw, selector);
+        if ptr.is_null() {
+            Ok(None)
+        } else {
+            Ok(Some(ResidencySet { raw: retain(ptr) }))
+        }
+    }
+
     pub fn preferred_device(&self) -> Result<Option<Device>, MetalError> {
         let selector = sel!(b"preferredDevice\0");
         if !responds_to_selector(self.raw, selector) {
