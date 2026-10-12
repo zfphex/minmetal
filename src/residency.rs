@@ -241,6 +241,12 @@ impl ResidencySet {
     }
 }
 
+impl Clone for ResidencySet {
+    fn clone(&self) -> Self {
+        Self { raw: retain(self.raw) }
+    }
+}
+
 impl Drop for ResidencySet {
     fn drop(&mut self) {
         release(self.raw);
